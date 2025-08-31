@@ -245,7 +245,7 @@ local function createGlimmerCounter()
         end
     end)
     
-    return glimmerGui -- Return the instance, not the function
+    return glimmerGui
 end
 
 local function toggleGlimmerCounter(state)
@@ -254,11 +254,9 @@ local function toggleGlimmerCounter(state)
     saveConfig(config)
     
     if state then
-        -- Call the function to create the GUI
         createGlimmerCounter()
         Window:Notify("Glimmer Counter Enabled", 2)
     else
-        -- Check if glimmerGui exists and is a valid instance
         if glimmerGui and typeof(glimmerGui) == "Instance" then
             glimmerGui:Destroy()
             glimmerGui = nil
@@ -267,10 +265,13 @@ local function toggleGlimmerCounter(state)
     end
 end
 
--- Add toggle for Glimmering Counter with proper function reference
-EventSection:Toggle("Enable Glimmering Counter", glimmerCounterEnabled, function(state)
+-- FIXED: Use the correct toggle method from the UI library
+-- Create a toggle using the Section:Toggle method instead of EventSection:Toggle
+local glimmerToggle = EventSection:Toggle("Enable Glimmering Counter", function(state)
     toggleGlimmerCounter(state)
-end)
+end, {
+    default = glimmerCounterEnabled
+})
 
 -- Initialize glimmer counter if enabled
 if glimmerCounterEnabled then
