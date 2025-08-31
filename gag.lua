@@ -189,27 +189,31 @@ local glimmerGui = nil
 local glimmerCount = 0
 
 local function createGlimmerCounter()
-    if glimmerGui then
+    -- Destroy existing GUI if it exists
+    if glimmerGui and typeof(glimmerGui) == "Instance" then
         glimmerGui:Destroy()
     end
     
     local player = game.Players.LocalPlayer
     local rs = game:GetService('ReplicatedStorage')
     
-    glimmerGui = Instance.new('ScreenGui', player:WaitForChild('PlayerGui'))
+    -- Create the GUI
+    glimmerGui = Instance.new('ScreenGui')
     glimmerGui.Name = 'GlimmerCounter'
     glimmerGui.ResetOnSpawn = false
     glimmerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    glimmerGui.Parent = player:WaitForChild('PlayerGui')
     
-    local frame = Instance.new('Frame', glimmerGui)
+    local frame = Instance.new('Frame')
     frame.Size = UDim2.new(0, 380, 0, 70)
     frame.Position = UDim2.new(1, -400, 0, 20)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     frame.BackgroundTransparency = 0.15
     frame.BorderSizePixel = 1
     frame.BorderColor3 = Color3.fromRGB(150, 50, 200)
+    frame.Parent = glimmerGui
     
-    local header = Instance.new('TextLabel', frame)
+    local header = Instance.new('TextLabel')
     header.Size = UDim2.new(1, -20, 0, 28)
     header.Position = UDim2.new(0, 10, 0, 5)
     header.BackgroundTransparency = 1
@@ -218,8 +222,9 @@ local function createGlimmerCounter()
     header.TextSize = 20
     header.Font = Enum.Font.Code
     header.TextXAlignment = Enum.TextXAlignment.Left
+    header.Parent = frame
     
-    local counter = Instance.new('TextLabel', frame)
+    local counter = Instance.new('TextLabel')
     counter.Size = UDim2.new(1, -20, 0, 35)
     counter.Position = UDim2.new(0, 10, 0, 28)
     counter.BackgroundTransparency = 1
@@ -228,6 +233,7 @@ local function createGlimmerCounter()
     counter.TextSize = 16
     counter.Font = Enum.Font.Code
     counter.TextXAlignment = Enum.TextXAlignment.Left
+    counter.Parent = frame
     
     glimmerCount = 0
     
@@ -238,6 +244,8 @@ local function createGlimmerCounter()
             counter.Text = 'Count: ' .. glimmerCount
         end
     end)
+    
+    return glimmerGui -- Return the instance, not the function
 end
 
 local function toggleGlimmerCounter(state)
@@ -246,12 +254,12 @@ local function toggleGlimmerCounter(state)
     saveConfig(config)
     
     if state then
-        -- Ensure we're calling the function, not referencing it
+        -- Call the function to create the GUI
         createGlimmerCounter()
         Window:Notify("Glimmer Counter Enabled", 2)
     else
         -- Check if glimmerGui exists and is a valid instance
-        if glimmerGui and typeof(glimmerGui) ~= "function" then
+        if glimmerGui and typeof(glimmerGui) == "Instance" then
             glimmerGui:Destroy()
             glimmerGui = nil
         end
@@ -259,7 +267,7 @@ local function toggleGlimmerCounter(state)
     end
 end
 
--- Add toggle for Glimmering Counter
+-- Add toggle for Glimmering Counter with proper function reference
 EventSection:Toggle("Enable Glimmering Counter", glimmerCounterEnabled, function(state)
     toggleGlimmerCounter(state)
 end)
