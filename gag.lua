@@ -66,14 +66,63 @@ local InfoTab = Window:Tab("Information")
 -- Main Tab
 local MainSection = MainTab:Section("Rejoin Configuration")
 
--- Job ID input with current job as placeholder
+-- Current Job ID display
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Job ID text box
-local jobIdText = ""
-local jobIdButton = MainSection:Button("Set Job ID (Leave blank for current)", function()
-    jobIdText = game:GetService("CoreGui"):FindFirstChild("JobIdInput") and "" or jobIdText
-    -- Implementation for job ID input would go here
+-- Create a container frame for the TextBox
+local container = Instance.new("Frame")
+container.BackgroundTransparency = 1
+container.Size = UDim2.new(1, 0, 0, 40)
+container.LayoutOrder = 1 -- Make sure it appears in the right order
+
+-- Create the TextBox
+local JobIdBox = Instance.new("TextBox")
+JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
+JobIdBox.Text = config.JobId or ""
+JobIdBox.Size = UDim2.new(0.9, 0, 0, 30)
+JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
+JobIdBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+JobIdBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+JobIdBox.Font = Enum.Font.SourceSans
+JobIdBox.TextSize = 14
+JobIdBox.ClearTextOnFocus = false
+
+-- Add a corner to match UI library style
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 4)
+UICorner.Parent = JobIdBox
+
+-- Add the TextBox to the container
+JobIdBox.Parent = container
+
+-- Function to add the custom TextBox to the UI
+local function addTextBoxToUI()
+    -- Find the section container in the UI
+    for _, obj in pairs(MainSection:GetChildren()) do
+        if obj:IsA("Frame") and obj.Name == "SectionContainer" then
+            container.Parent = obj
+            break
+        end
+    end
+    
+    -- If we couldn't find the container, parent to the main UI
+    if not container.Parent then
+        container.Parent = MainSection
+    end
+end
+
+-- Call this after a brief delay to ensure UI is created
+task.spawn(function()
+    task.wait(0.5)
+    addTextBoxToUI()
+end)
+
+-- Save Job ID when text changes
+JobIdBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        config.JobId = JobIdBox.Text
+        saveConfig(config)
+    end
 end)
 
 -- Delay slider
