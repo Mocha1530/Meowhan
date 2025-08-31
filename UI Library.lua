@@ -391,18 +391,6 @@ function Library:CreateWindow(title)
     Text0verflow.TextXAlignment = Enum.TextXAlignment.Right
     Text0verflow.ZIndex = 1000
     
-    local TextHub = Instance.new("TextLabel")
-    TextHub.Parent = TextContainer
-    TextHub.BackgroundTransparency = 1
-    TextHub.Position = UDim2.new(0.5, 22, 0.5, -8)
-    TextHub.Size = UDim2.new(0, 25, 0, 16)
-    TextHub.Font = Enum.Font.Gotham
-    TextHub.Text = "Hub"
-    TextHub.TextColor3 = Theme.Text
-    TextHub.TextSize = 13
-    TextHub.TextXAlignment = Enum.TextXAlignment.Left
-    TextHub.ZIndex = 1000
-    
     local Indicator = Instance.new("Frame")
     Indicator.Parent = ToggleBar
     Indicator.BackgroundColor3 = Theme.Success
@@ -497,19 +485,7 @@ function Library:CreateWindow(title)
     Title0verflow.TextSize = IsMobile and 13 or 14
     Title0verflow.TextXAlignment = Enum.TextXAlignment.Left
     Title0verflow.ZIndex = 3
-    
-    local TitleHub = Instance.new("TextLabel")
-    TitleHub.Parent = TitleContainer
-    TitleHub.BackgroundTransparency = 1
-    TitleHub.Position = UDim2.new(0, IsMobile and 52 or 58, 0, 0)
-    TitleHub.Size = UDim2.new(0, 0, 1, 0)
-    TitleHub.AutomaticSize = Enum.AutomaticSize.X
-    TitleHub.Font = Enum.Font.Gotham
-    TitleHub.Text = " Hub"
-    TitleHub.TextColor3 = Theme.Text
-    TitleHub.TextSize = IsMobile and 13 or 14
-    TitleHub.TextXAlignment = Enum.TextXAlignment.Left
-    TitleHub.ZIndex = 3
+
     
     -- Window title
     if title then
