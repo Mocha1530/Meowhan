@@ -70,7 +70,7 @@ local MainSection = MainTab:Section("Rejoin Configuration")
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
 -- Job ID input using a button that opens an input prompt
-local jobIdButton = MainSection:Button("Set Job ID (Current: " .. (config.JobId ~= "" and config.JobId or "None") .. ")", function()
+local jobIdButton = MainSection:Button("Set Job ID (Current: " .. (config.JobId ~= "" and config.JobId or currentJobId) .. ")", function()
     local input = game:GetService("CoreGui"):FindFirstChild("JobIdInput") 
     if input then input:Destroy() end
 
