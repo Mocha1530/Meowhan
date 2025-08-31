@@ -1,9 +1,3 @@
--- 0verflow Hub Minimal UI - Complete Fixed Edition with Collapsible Sections
--- Ultra-minimal floating bar with all components
--- Created for pwd0kernel
--- Fixed: 2025-01-08 16:45:03
--- Modified: 2025-08-31 - Added collapsible section functionality
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -391,7 +385,7 @@ function Library:CreateWindow(title)
     Text0verflow.Position = UDim2.new(0.5, -30, 0.5, -8)
     Text0verflow.Size = UDim2.new(0, 50, 0, 16)
     Text0verflow.Font = Enum.Font.GothamBold
-    Text0verflow.Text = "0verflow"
+    Text0verflow.Text = "Meowhan"
     Text0verflow.TextColor3 = Theme.Accent
     Text0verflow.TextSize = 13
     Text0verflow.TextXAlignment = Enum.TextXAlignment.Right
@@ -498,7 +492,7 @@ function Library:CreateWindow(title)
     Title0verflow.Size = UDim2.new(0, 0, 1, 0)
     Title0verflow.AutomaticSize = Enum.AutomaticSize.X
     Title0verflow.Font = Enum.Font.GothamBold
-    Title0verflow.Text = "0verflow"
+    Title0verflow.Text = "Meowhan"
     Title0verflow.TextColor3 = Theme.Accent
     Title0verflow.TextSize = IsMobile and 13 or 14
     Title0verflow.TextXAlignment = Enum.TextXAlignment.Left
@@ -751,52 +745,32 @@ function Library:CreateWindow(title)
         function Tab:Section(title)
             local Section = {}
             Section.toggles = {}
-            Section.expanded = true -- Track if section is expanded
             
             local SectionFrame = Instance.new("Frame")
             SectionFrame.Parent = TabContent
             SectionFrame.BackgroundColor3 = Theme.Surface
             SectionFrame.BorderSizePixel = 0
-            SectionFrame.Size = UDim2.new(1, 0, 0, 32) -- Start with just header height
+            SectionFrame.Size = UDim2.new(1, 0, 0, 0)
+            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
             SectionFrame.ClipsDescendants = true
             
             local SectionCorner = Instance.new("UICorner")
             SectionCorner.CornerRadius = UDim.new(0, 8)
             SectionCorner.Parent = SectionFrame
             
-            -- Make the entire header clickable to toggle expansion
-            local HeaderButton = Instance.new("TextButton")
-            HeaderButton.Parent = SectionFrame
-            HeaderButton.BackgroundTransparency = 1
-            HeaderButton.Size = UDim2.new(1, 0, 0, 32)
-            HeaderButton.Text = ""
-            
             local SectionTitle = Instance.new("TextLabel")
-            SectionTitle.Parent = HeaderButton
+            SectionTitle.Parent = SectionFrame
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 12, 0, 0)
-            SectionTitle.Size = UDim2.new(1, -40, 1, 0)
+            SectionTitle.Position = UDim2.new(0, 12, 0, 12)
+            SectionTitle.Size = UDim2.new(1, -24, 0, 14)
             SectionTitle.Font = Enum.Font.Gotham
             SectionTitle.Text = title
             SectionTitle.TextColor3 = Theme.TextDim
             SectionTitle.TextSize = IsMobile and 11 or 12
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             
-            -- Dropdown arrow indicator
-            local Arrow = Instance.new("TextLabel")
-            Arrow.Parent = HeaderButton
-            Arrow.BackgroundTransparency = 1
-            Arrow.Position = UDim2.new(1, -28, 0.5, -8)
-            Arrow.Size = UDim2.new(0, 16, 0, 16)
-            Arrow.Font = Enum.Font.Gotham
-            Arrow.Text = "▼"
-            Arrow.TextColor3 = Theme.TextDim
-            Arrow.TextSize = 10
-            Arrow.Rotation = 0
-            Arrow.Name = "Arrow"
-            
             local SectionAccent = Instance.new("Frame")
-            SectionAccent.Parent = HeaderButton
+            SectionAccent.Parent = SectionFrame
             SectionAccent.BackgroundColor3 = Theme.Accent
             SectionAccent.BorderSizePixel = 0
             SectionAccent.Position = UDim2.new(0, 4, 0, 14)
@@ -812,7 +786,6 @@ function Library:CreateWindow(title)
             Elements.Position = UDim2.new(0, 12, 0, 32)
             Elements.Size = UDim2.new(1, -24, 0, 0)
             Elements.AutomaticSize = Enum.AutomaticSize.Y
-            Elements.Visible = true
             
             local ElementLayout = Instance.new("UIListLayout")
             ElementLayout.Parent = Elements
@@ -822,36 +795,6 @@ function Library:CreateWindow(title)
             local ElementPadding = Instance.new("UIPadding")
             ElementPadding.Parent = Elements
             ElementPadding.PaddingBottom = UDim.new(0, 12)
-            
-            -- Function to toggle section visibility
-            local function toggleSection()
-                Section.expanded = not Section.expanded
-                
-                if Section.expanded then
-                    -- Expand section
-                    Tween(Arrow, {Rotation = 0}, 0.2)
-                    Elements.Visible = true
-                    Tween(SectionFrame, {
-                        Size = UDim2.new(1, 0, 0, 32 + Elements.AbsoluteContentSize.Y + 12)
-                    }, 0.2)
-                else
-                    -- Collapse section
-                    Tween(Arrow, {Rotation = -90}, 0.2)
-                    Tween(SectionFrame, {Size = UDim2.new(1, 0, 0, 32)}, 0.2)
-                    wait(0.2)
-                    Elements.Visible = false
-                end
-            end
-            
-            -- Update section height when elements change
-            ElementLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                if Section.expanded then
-                    SectionFrame.Size = UDim2.new(1, 0, 0, 32 + Elements.AbsoluteContentSize.Y + 12)
-                end
-            end)
-            
-            -- Toggle on header click
-            HeaderButton.MouseButton1Click:Connect(toggleSection)
             
             -- Toggle
             function Section:Toggle(name, callback, options)
@@ -1315,22 +1258,6 @@ function Library:CreateWindow(title)
                 }
             end
             
-            -- Add a method to programmatically toggle the section
-            function Section:Toggle(expanded)
-                if expanded ~= nil then
-                    if expanded ~= Section.expanded then
-                        toggleSection()
-                    end
-                else
-                    toggleSection()
-                end
-            end
-            
-            -- Add a method to check if section is expanded
-            function Section:IsExpanded()
-                return Section.expanded
-            end
-            
             return Section
         end
         
@@ -1380,7 +1307,7 @@ function Library:CreateWindow(title)
         NotifText.TextSize = IsMobile and 12 or 13
         NotifText.ZIndex = 1001
         
-        local AccentLine = Instance.new("Frame")
+                local AccentLine = Instance.new("Frame")
         AccentLine.Parent = Notif
         AccentLine.BackgroundColor3 = Theme.Accent
         AccentLine.BorderSizePixel = 0
