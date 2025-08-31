@@ -62,14 +62,14 @@ JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
 JobIdBox.Parent = Frame
 
 local DelayBox = Instance.new("TextBox")
-DelayBox.PlaceholderText = "Initial Delay (seconds)"
+DelayBox.PlaceholderText = "Rejoin Delay (seconds)"
 DelayBox.Text = tostring(config.InitialDelay)
 DelayBox.Size = UDim2.new(0.9, 0, 0, 30)
 DelayBox.Position = UDim2.new(0.05, 0, 0.4, 0)
 DelayBox.Parent = Frame
 
 local StartButton = Instance.new("TextButton")
-StartButton.Text = "Start Eviscerating"
+StartButton.Text = "Rejoin"
 StartButton.Size = UDim2.new(0.9, 0, 0, 40)
 StartButton.Position = UDim2.new(0.05, 0, 0.7, 0)
 StartButton.Parent = Frame
