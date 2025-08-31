@@ -111,7 +111,7 @@ local jobIdButton = MainSection:Button("Set Job ID", function()
     UICorner3.Parent = SubmitButton
     
     SubmitButton.MouseButton1Click:Connect(function()
-        config.JobId = JobIdBox.Text
+        config.JobId = currentJobId
         saveConfig(config)
         jobIdButton:Set("Set Job ID")
         InputFrame:Destroy()
@@ -120,7 +120,7 @@ end)
 
 -- Delay slider
 local delayValue = config.InitialDelay or 5
-local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, delayValue, function(value)
+local delaySlider = MainSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
     delayValue = value
     config.InitialDelay = value
     saveConfig(config)
