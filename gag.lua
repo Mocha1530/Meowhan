@@ -246,10 +246,12 @@ local function toggleGlimmerCounter(state)
     saveConfig(config)
     
     if state then
+        -- Ensure we're calling the function, not referencing it
         createGlimmerCounter()
         Window:Notify("Glimmer Counter Enabled", 2)
     else
-        if glimmerGui then
+        -- Check if glimmerGui exists and is a valid instance
+        if glimmerGui and typeof(glimmerGui) ~= "function" then
             glimmerGui:Destroy()
             glimmerGui = nil
         end
