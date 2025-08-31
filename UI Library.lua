@@ -676,7 +676,7 @@ function Library:CreateWindow(title)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 dragging = false
             end
-        end
+        end)
     end
     
     -- Tab Function
@@ -1323,22 +1323,6 @@ function Library:CreateWindow(title)
                 }
             end
             
-            -- Add a method to programmatically toggle the section
-            function Section:Toggle(expanded)
-                if expanded ~= nil then
-                    if expanded ~= Section.expanded then
-                        toggleSection()
-                    end
-                else
-                    toggleSection()
-                end
-            end
-            
-            -- Add a method to check if section is expanded
-            function Section:IsExpanded()
-                return Section.expanded
-            end
-            
             return Section
         end
         
@@ -1388,7 +1372,7 @@ function Library:CreateWindow(title)
         NotifText.TextSize = IsMobile and 12 or 13
         NotifText.ZIndex = 1001
         
-        local AccentLine = Instance.new("Frame")
+                local AccentLine = Instance.new("Frame")
         AccentLine.Parent = Notif
         AccentLine.BackgroundColor3 = Theme.Accent
         AccentLine.BorderSizePixel = 0
