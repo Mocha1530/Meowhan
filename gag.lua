@@ -69,13 +69,6 @@ local MainSection = MainTab:Section("Rejoin Configuration")
 -- Job ID input with current job as placeholder
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Job ID text box
-local jobIdText = ""
-local jobIdButton = MainSection:Button("Set Job ID (Leave blank for current)", function()
-    jobIdText = game:GetService("CoreGui"):FindFirstChild("JobIdInput") and "" or jobIdText
-    -- Implementation for job ID input would go here
-end)
-
 -- Delay slider
 local delayValue = config.InitialDelay or 5
 local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, delayValue, function(value)
