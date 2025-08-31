@@ -1,39 +1,70 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local GameEventsFolder = ReplicatedStorage:WaitForChild("GameEvents")
 
-if not GameEventsFolder then
-    warn("GameEvents folder not found!")
+-- Wait for the GameEvents folder with a timeout
+local GameEventsFolder
+local success, err = pcall(function()
+    GameEventsFolder = ReplicatedStorage:WaitForChild("GameEvents", 10) -- 10 second timeout
+end)
+
+if not success or not GameEventsFolder then
+    warn("GameEvents folder not found or inaccessible:", err)
     return
 end
 
--- Monitor all existing events in the folder
-for _, event in ipairs(GameEventsFolder:GetChildren()) do
-    if event:IsA("RemoteEvent") then
-        -- Hook FireServer
-        local oldFire = event.FireServer
-        event.FireServer = function(...)
-            print(`[FireServer] {event.Name} fired with:`, ...)
-            return oldFire(event, ...)
-        end
-        -- Listen for server messages
-        event.OnClientEvent:Connect(function(...)
-            print(`[OnClientEvent] {event.Name} received:`, ...)
+-- Function to safely hook a RemoteEvent
+local function hookRemoteEvent(event)
+    if not event:IsA("RemoteEvent") then
+        return
+    end
+    
+    -- Hook FireServer with error protection
+    local oldFire = event.FireServer
+    event.FireServer = function(...)
+        local args = {...}
+        local success, result = pcall(function()
+            print(`[FireServer] {event.Name} fired with:`, unpack(args))
         end)
+        
+        if not success then
+            warn(`Error logging FireServer for {event.Name}:`, result)
+        end
+        
+        -- Always call the original function
+        return oldFire(event, unpack(args))
+    end
+    
+    -- Listen for server messages with error protection
+    event.OnClientEvent:Connect(function(...)
+        local args = {...}
+        local success, result = pcall(function()
+            print(`[OnClientEvent] {event.Name} received:`, unpack(args))
+        end)
+        
+        if not success then
+            warn(`Error in OnClientEvent handler for {event.Name}:`, result)
+        end
+    end)
+end
+
+-- Monitor all existing events in the folder with error protection
+for _, event in ipairs(GameEventsFolder:GetChildren()) do
+    local success, result = pcall(hookRemoteEvent, event)
+    if not success then
+        warn(`Failed to hook event {event.Name}:`, result)
     end
 end
 
--- Monitor for new events added dynamically
+-- Monitor for new events added dynamically with error protection
 GameEventsFolder.ChildAdded:Connect(function(child)
-    if child:IsA("RemoteEvent") then
-        local oldFire = child.FireServer
-        child.FireServer = function(...)
-            print(`[FireServer] {child.Name} fired with:`, ...)
-            return oldFire(child, ...)
+    local success, result = pcall(function()
+        if child:IsA("RemoteEvent") then
+            hookRemoteEvent(child)
         end
-        child.OnClientEvent:Connect(function(...)
-            print(`[OnClientEvent] {child.Name} received:`, ...)
-        end)
+    end)
+    
+    if not success then
+        warn(`Failed to handle new child {child.Name}:`, result)
     end
 end)
 
-print("Monitoring all events in GameEvents folder...")
+print("Monitoring all events in GameEvents folder with error protection...")
