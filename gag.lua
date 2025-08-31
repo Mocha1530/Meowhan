@@ -157,7 +157,7 @@ MainSection:Button("Rejoin", function()
     -- Update and save config
     local newConfig = {
         InitialDelay = delayValue,
-        JobId = jobIdText
+        JobId = currentJobId
     }
     saveConfig(newConfig)
     
