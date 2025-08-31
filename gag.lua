@@ -69,13 +69,12 @@ local MainSection = MainTab:Section("Rejoin Configuration")
 -- Current Job ID display
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Create a container frame for the TextBox
+-- Create the TextBox container and elements
 local container = Instance.new("Frame")
 container.BackgroundTransparency = 1
-container.Size = UDim2.new(1, 0, 0, 40)
-container.LayoutOrder = 1 -- Make sure it appears in the right order
+container.Size = UDim2.new(0, 300, 0, 40)
+container.Position = UDim2.new(0.5, -150, 0, 50) -- Centered position
 
--- Create the TextBox
 local JobIdBox = Instance.new("TextBox")
 JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
 JobIdBox.Text = config.JobId or ""
@@ -87,35 +86,22 @@ JobIdBox.Font = Enum.Font.SourceSans
 JobIdBox.TextSize = 14
 JobIdBox.ClearTextOnFocus = false
 
--- Add a corner to match UI library style
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 4)
 UICorner.Parent = JobIdBox
 
--- Add the TextBox to the container
 JobIdBox.Parent = container
 
--- Function to add the custom TextBox to the UI
+-- Simplified function to add TextBox to UI
 local function addTextBoxToUI()
-    -- Find the section container in the UI
-    for _, obj in pairs(MainSection:GetChildren()) do
-        if obj:IsA("Frame") and obj.Name == "SectionContainer" then
-            container.Parent = obj
-            break
-        end
-    end
+    container.Parent = game:GetService("CoreGui")
     
-    -- If we couldn't find the container, parent to the main UI
-    if not container.Parent then
-        container.Parent = MainSection
-    end
+    -- Position it appropriately (adjust as needed)
+    container.Position = UDim2.new(0.5, -150, 0.1, 0)
 end
 
--- Call this after a brief delay to ensure UI is created
-task.spawn(function()
-    task.wait(0.5)
-    addTextBoxToUI()
-end)
+-- Call this function to add the TextBox
+addTextBoxToUI()
 
 -- Save Job ID when text changes
 JobIdBox.FocusLost:Connect(function(enterPressed)
