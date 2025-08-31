@@ -60,6 +60,7 @@ local config = loadConfig()
 local currentJobId = game.JobId
 
 local MainTab = Window:Tab("Main")
+local EventTab = Window:Tab("Event")
 local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
@@ -178,6 +179,93 @@ MainSection:Button("Rejoin", function()
         end)
     end
 end)
+
+-- Event Tab
+local EventSection = EventTab:Section("Fairy Event")
+
+-- Glimmering Counter UI
+local glimmerCounterEnabled = config.ShowGlimmerCounter or false
+local glimmerGui = nil
+local glimmerCount = 0
+
+local function createGlimmerCounter()
+    if glimmerGui then
+        glimmerGui:Destroy()
+    end
+    
+    local player = game.Players.LocalPlayer
+    local rs = game:GetService('ReplicatedStorage')
+    
+    glimmerGui = Instance.new('ScreenGui', player:WaitForChild('PlayerGui'))
+    glimmerGui.Name = 'GlimmerCounter'
+    glimmerGui.ResetOnSpawn = false
+    glimmerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local frame = Instance.new('Frame', glimmerGui)
+    frame.Size = UDim2.new(0, 380, 0, 70)
+    frame.Position = UDim2.new(1, -400, 0, 20)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BackgroundTransparency = 0.15
+    frame.BorderSizePixel = 1
+    frame.BorderColor3 = Color3.fromRGB(150, 50, 200)
+    
+    local header = Instance.new('TextLabel', frame)
+    header.Size = UDim2.new(1, -20, 0, 28)
+    header.Position = UDim2.new(0, 10, 0, 5)
+    header.BackgroundTransparency = 1
+    header.Text = 'Glimmering Fruits'
+    header.TextColor3 = Color3.fromRGB(180, 100, 255)
+    header.TextSize = 20
+    header.Font = Enum.Font.Code
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local counter = Instance.new('TextLabel', frame)
+    counter.Size = UDim2.new(1, -20, 0, 35)
+    counter.Position = UDim2.new(0, 10, 0, 28)
+    counter.BackgroundTransparency = 1
+    counter.Text = 'Count: 0'
+    counter.TextColor3 = Color3.fromRGB(230, 230, 230)
+    counter.TextSize = 16
+    counter.Font = Enum.Font.Code
+    counter.TextXAlignment = Enum.TextXAlignment.Left
+    
+    glimmerCount = 0
+    
+    local notificationEvent = rs:WaitForChild('GameEvents'):WaitForChild('Notification')
+    notificationEvent.OnClientEvent:Connect(function(msg)
+        if typeof(msg) == 'string' and msg == 'A Fruit in your garden, mutated to Glimmering!' then
+            glimmerCount = glimmerCount + 1
+            counter.Text = 'Count: ' .. glimmerCount
+        end
+    end)
+end
+
+local function toggleGlimmerCounter(state)
+    glimmerCounterEnabled = state
+    config.ShowGlimmerCounter = state
+    saveConfig(config)
+    
+    if state then
+        createGlimmerCounter()
+        Window:Notify("Glimmer Counter Enabled", 2)
+    else
+        if glimmerGui then
+            glimmerGui:Destroy()
+            glimmerGui = nil
+        end
+        Window:Notify("Glimmer Counter Disabled", 2)
+    end
+end
+
+-- Add toggle for Glimmering Counter
+EventSection:Toggle("Enable Glimmering Counter", glimmerCounterEnabled, function(state)
+    toggleGlimmerCounter(state)
+end)
+
+-- Initialize glimmer counter if enabled
+if glimmerCounterEnabled then
+    createGlimmerCounter()
+end
 
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
