@@ -78,20 +78,10 @@ end, {
 })
 
 -- Delay slider
-local delayValue = config.InitialDelay or 5
-local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, delayValue, function(value)
-    delayValue = value
+local delaySlider = MainSection:Slider("Rejoin Delay", 0, 60, config.InitialDelay or 5, function(value)
     config.InitialDelay = value
     saveConfig(config)
 end)
-
--- Countdown function
-local function countdown(seconds)
-    for i = seconds, 1, -1 do
-        print("Rejoining in " .. i .. " seconds...")
-        task.wait(1)
-    end
-end
 
 -- Main teleport function
 local function persistentTeleport(jobId, initialDelay)
