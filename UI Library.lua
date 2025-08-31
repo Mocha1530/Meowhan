@@ -785,7 +785,7 @@ function Library:CreateWindow(title)
             Arrow.Font = Enum.Font.Gotham
             Arrow.Text = "▼"
             Arrow.TextColor3 = Theme.TextDim
-            Arrow.TextSize = 10
+            Arrow.TextSize = 13
             Arrow.Rotation = 0
             Arrow.Name = "Arrow"
             
