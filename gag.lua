@@ -1,5 +1,3 @@
--- Config
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local placeId = game.PlaceId
@@ -55,50 +53,110 @@ local function saveConfig(config)
 end
 
 -- Create UI
+local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/pwd0kernel/0verflow/refs/heads/main/ui2.lua'))()
+local Window = UILib:CreateWindow("   Grow A Garden - Meowhan")
 local config = loadConfig()
 local currentJobId = game.JobId
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EvisceratorConfig"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local MainTab = Window:Tab("Main")
+local SettingsTab = Window:Tab("Settings")
+local InfoTab = Window:Tab("Information")
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 200)
-Frame.Position = UDim2.new(0.5, -150, 0.5, -100)
-Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Frame.Parent = ScreenGui
+-- Main Tab
+local MainSection = MainTab:Section("Rejoin Configuration")
 
-local Title = Instance.new("TextLabel")
-Title.Text = "Meowhan"
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Parent = Frame
+-- Job ID input with current job as placeholder
+local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
-local JobIdBox = Instance.new("TextBox")
-JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
-JobIdBox.Text = config.JobId
-JobIdBox.Size = UDim2.new(0.9, 0, 0, 30)
-JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
-JobIdBox.Parent = Frame
+-- Job ID text box simulation using a button and input prompt
+local function createJobIdInput(section)
+    local jobId = config.JobId or ""
+    
+        local input = game:GetService("CoreGui"):FindFirstChild("JobIdInput") 
+        if input then input:Destroy() end
 
-local DelayBox = Instance.new("TextBox")
-DelayBox.PlaceholderText = "Rejoin delay"
-DelayBox.Text = tostring(config.InitialDelay)
-DelayBox.Size = UDim2.new(0.9, 0, 0, 30)
-DelayBox.Position = UDim2.new(0.05, 0, 0.4, 0)
-DelayBox.Parent = Frame
+        local InputFrame = Instance.new("Frame")
+        InputFrame.Name = "JobIdInput"
+        InputFrame.Parent = game:GetService("CoreGui")
+        InputFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        InputFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+        InputFrame.Size = UDim2.new(0, 300, 0, 100)
+        InputFrame.ZIndex = 1000
+        
+        local UICorner = Instance.new("UICorner")
+        UICorner.Parent = InputFrame
+        
+        local JobIdBox = Instance.new("TextBox")
+        JobIdBox.Parent = InputFrame
+        JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
+        JobIdBox.Size = UDim2.new(0.9, 0, 0, 30)
+        JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
+        JobIdBox.Text = jobId
+        JobIdBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        JobIdBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+        JobIdBox.ZIndex = 1001
+        
+        local UICorner2 = Instance.new("UICorner")
+        UICorner2.Parent = JobIdBox
 
-local StartButton = Instance.new("TextButton")
-StartButton.Text = "Rejoin"
-StartButton.Size = UDim2.new(0.9, 0, 0, 40)
-StartButton.Position = UDim2.new(0.05, 0, 0.7, 0)
-StartButton.Parent = Frame
+-- Delay slider
+local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, config.InitialDelay or 5, function(value)
+    config.InitialDelay = value
+    saveConfig(config)
+end)
+
+-- Start button
+MainSection:Button("Start Rejoin Process", function()
+    -- Update and save config
+    local newConfig = {
+        InitialDelay = value or DEFAULT_CONFIG.InitialDelay,
+        JobId = JobIdBox.Text
+    }
+    saveConfig(newConfig)
+    
+    -- Determine job ID to use
+    local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
+    
+    -- Remove UI
+    ScreenGui:Destroy()
+    
+    -- Start teleport process
+    local success, err = pcall(function()
+        persistentTeleport(targetJobId, newConfig.InitialDelay)
+    end)
+    
+    if not success then
+        warn("CRITICAL ERROR:", err)
+        print("Restarting rejoin process...")
+        task.wait(5)
+        pcall(function()
+            persistentTeleport(targetJobId, newConfig.InitialDelay)
+        end)
+    end
+    Window:Notify("Rejoin process started!", 3)
+end)
+
+-- Info Tab
+local AboutSection = InfoTab:Section("About Meowhan")
+
+AboutSection:Label("Meowhan Rejoin System")
+AboutSection:Label("Version: 1.2.0")
+
+local StatsSection = InfoTab:Section("Session Statistics")
+
+StatsSection:Label("Current Job ID: " .. game.JobId)
+StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
+StatsSection:Label("Place: " .. game.PlaceId)
+
+StatsSection:Button("Copy Job ID", function()
+    setclipboard(game.JobId)
+    Window:Notify("Job ID copied to clipboard!", 2)
+end)
 
 -- Countdown function
 local function countdown(seconds)
     for i = seconds, 1, -1 do
-        print("Eviscerating in " .. i .. " seconds...")
+        print("Rejoining in " .. i .. " seconds...")
         task.wait(1)
     end
 end
@@ -169,33 +227,3 @@ local function persistentTeleport(jobId, initialDelay)
         end
     end
 end
-
--- Start button handler
-StartButton.MouseButton1Click:Connect(function()
-    -- Update and save config
-    local newConfig = {
-        InitialDelay = tonumber(DelayBox.Text) or DEFAULT_CONFIG.InitialDelay,
-        JobId = JobIdBox.Text
-    }
-    saveConfig(newConfig)
-    
-    -- Determine job ID to use
-    local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
-    
-    -- Remove UI
-    ScreenGui:Destroy()
-    
-    -- Start teleport process
-    local success, err = pcall(function()
-        persistentTeleport(targetJobId, newConfig.InitialDelay)
-    end)
-    
-    if not success then
-        warn("CRITICAL ERROR:", err)
-        print("Restarting rejoin process...")
-        task.wait(5)
-        pcall(function()
-            persistentTeleport(targetJobId, newConfig.InitialDelay)
-        end)
-    end
-end)
