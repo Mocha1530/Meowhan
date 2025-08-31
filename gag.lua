@@ -190,7 +190,7 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
-AboutSection:Label("Meowhan Rejoin System")
+AboutSection:Label("Meowhan Grow A Garden Exploit")
 AboutSection:Label("Version: 1.2.0")
 
 local StatsSection = InfoTab:Section("Session Statistics")
