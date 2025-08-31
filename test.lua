@@ -1,4 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Create a simple UI to display the monitored events
 local ScreenGui = Instance.new("ScreenGui")
@@ -44,6 +46,112 @@ local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Padding = UDim.new(0, 5)
 UIListLayout.Parent = ScrollingFrame
 
+-- Collapse/Expand button
+local CollapseButton = Instance.new("TextButton")
+CollapseButton.Size = UDim2.new(0, 30, 0, 30)
+CollapseButton.Position = UDim2.new(1, -35, 0, 5)
+CollapseButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+CollapseButton.BorderSizePixel = 0
+CollapseButton.Text = "-"
+CollapseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CollapseButton.Font = Enum.Font.GothamBold
+CollapseButton.TextSize = 18
+CollapseButton.Parent = Frame
+
+local CollapseCorner = Instance.new("UICorner")
+CollapseCorner.CornerRadius = UDim.new(0, 6)
+CollapseCorner.Parent = CollapseButton
+
+-- Clear button
+local ClearButton = Instance.new("TextButton")
+ClearButton.Size = UDim2.new(0, 80, 0, 30)
+ClearButton.Position = UDim2.new(1, -120, 0, 5)
+ClearButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+ClearButton.BorderSizePixel = 0
+ClearButton.Text = "Clear Logs"
+ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ClearButton.Font = Enum.Font.Gotham
+ClearButton.TextSize = 14
+ClearButton.Parent = Frame
+
+local ClearCorner = Instance.new("UICorner")
+ClearCorner.CornerRadius = UDim.new(0, 6)
+ClearCorner.Parent = ClearButton
+
+-- Draggable UI variables :cite[4]
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+-- Function to make UI draggable :cite[4]
+local function update(input)
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+Title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Title.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Collapse/Expand functionality :cite[2]:cite[5]
+local isCollapsed = false
+local originalSize = Frame.Size
+local collapsedSize = UDim2.new(0, 400, 0, 40) -- Only show title bar when collapsed
+
+CollapseButton.MouseButton1Click:Connect(function()
+    isCollapsed = not isCollapsed
+    
+    if isCollapsed then
+        -- Collapse the frame
+        local tween = TweenService:Create(
+            Frame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = collapsedSize}
+        )
+        tween:Play()
+        CollapseButton.Text = "+"
+        ScrollingFrame.Visible = false
+    else
+        -- Expand the frame
+        local tween = TweenService:Create(
+            Frame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = originalSize}
+        )
+        tween:Play()
+        CollapseButton.Text = "-"
+        ScrollingFrame.Visible = true
+    end
+end)
+
 -- Function to add a log entry to the UI
 local function addLogEntry(text, color)
     local LogEntry = Instance.new("TextLabel")
@@ -73,6 +181,15 @@ local function addLogEntry(text, color)
     -- Auto-scroll to bottom
     ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
 end
+
+ClearButton.MouseButton1Click:Connect(function()
+    for _, child in ipairs(ScrollingFrame:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+    addLogEntry("Logs cleared", Color3.fromRGB(200, 200, 200))
+end)
 
 -- Wait for the GameEvents folder
 local GameEventsFolder = ReplicatedStorage:WaitForChild("GameEvents", 10)
@@ -124,29 +241,4 @@ GameEventsFolder.ChildAdded:Connect(function(child)
             hookRemoteEvent(child)
         end
     end)
-end)
-
--- Add a clear button
-local ClearButton = Instance.new("TextButton")
-ClearButton.Size = UDim2.new(0, 80, 0, 30)
-ClearButton.Position = UDim2.new(1, -90, 0, 5)
-ClearButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
-ClearButton.BorderSizePixel = 0
-ClearButton.Text = "Clear Logs"
-ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ClearButton.Font = Enum.Font.Gotham
-ClearButton.TextSize = 14
-ClearButton.Parent = Frame
-
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 6)
-Corner.Parent = ClearButton
-
-ClearButton.MouseButton1Click:Connect(function()
-    for _, child in ipairs(ScrollingFrame:GetChildren()) do
-        if child:IsA("TextLabel") then
-            child:Destroy()
-        end
-    end
-    addLogEntry("Logs cleared", Color3.fromRGB(200, 200, 200))
 end)
