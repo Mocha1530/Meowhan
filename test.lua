@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 -- Create a simple UI to display the monitored events
 local ScreenGui = Instance.new("ScreenGui")
@@ -78,50 +79,67 @@ local ClearCorner = Instance.new("UICorner")
 ClearCorner.CornerRadius = UDim.new(0, 6)
 ClearCorner.Parent = ClearButton
 
--- Draggable UI variables :cite[4]
+-- Draggable UI variables 
 local dragging = false
 local dragInput
 local dragStart
 local startPos
 
--- Function to make UI draggable :cite[4]
-local function update(input)
-    local delta = input.Position - dragStart
-    Frame.Position = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
+-- Function to make UI draggable with proper input handling
+local function onInputChanged(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+    end
 end
 
-Title.InputBegan:Connect(function(input)
+-- Handle input based on device type
+local function onInputBegan(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
+        -- Check if the input is on the title bar
+        local titleBarAbsolutePosition = Title.AbsolutePosition
+        local titleBarAbsoluteSize = Title.AbsoluteSize
         
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+        if input.Position.X >= titleBarAbsolutePosition.X and 
+           input.Position.X <= titleBarAbsolutePosition.X + titleBarAbsoluteSize.X and
+           input.Position.Y >= titleBarAbsolutePosition.Y and 
+           input.Position.Y <= titleBarAbsolutePosition.Y + titleBarAbsoluteSize.Y then
+            
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+            
+            -- Capture the input for mobile to prevent camera movement
+            if input.UserInputType == Enum.UserInputType.Touch then
+                input:Capture()
             end
-        end)
+            
+            -- Connect to input changed event
+            dragInput = input
+            UserInputService.InputChanged:Connect(onInputChanged)
+            
+            -- Disconnect when input ends
+            local connection
+            connection = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    connection:Disconnect()
+                    UserInputService.InputChanged:Disconnect(onInputChanged)
+                end
+            end)
+        end
     end
-end)
+end
 
-Title.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
+-- Connect input events
+UserInputService.InputBegan:Connect(onInputBegan)
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
--- Collapse/Expand functionality :cite[2]:cite[5]
+-- Collapse/Expand functionality 
 local isCollapsed = false
 local originalSize = Frame.Size
 local collapsedSize = UDim2.new(0, 400, 0, 40) -- Only show title bar when collapsed
