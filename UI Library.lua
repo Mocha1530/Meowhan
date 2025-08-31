@@ -12,9 +12,9 @@ local Theme = {
     Surface = Color3.fromRGB(20, 20, 23),
     Card = Color3.fromRGB(25, 25, 28),
     
-    Accent = Color3.fromRGB(120, 80, 255),
-    AccentHover = Color3.fromRGB(140, 100, 255),
-    AccentDim = Color3.fromRGB(80, 50, 180),
+    Accent = Color3.fromRGB(139, 223, 234),
+    AccentHover = Color3.fromRGB(159, 243, 234),
+    AccentDim = Color3.fromRGB(99, 193, 159),
     
     Text = Color3.fromRGB(255, 255, 255),
     TextDim = Color3.fromRGB(160, 160, 165),
