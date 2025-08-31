@@ -69,46 +69,53 @@ local MainSection = MainTab:Section("Rejoin Configuration")
 -- Current Job ID display
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Create the TextBox container and elements
-local container = Instance.new("Frame")
-container.BackgroundTransparency = 1
-container.Size = UDim2.new(0, 300, 0, 40)
-container.Position = UDim2.new(0.5, -150, 0, 50) -- Centered position
+-- Job ID input using a button that opens an input prompt
+local jobIdButton = MainSection:Button("Set Job ID (Current: " .. (config.JobId ~= "" and config.JobId or "None") .. ")", function()
+    local input = game:GetService("CoreGui"):FindFirstChild("JobIdInput") 
+    if input then input:Destroy() end
 
-local JobIdBox = Instance.new("TextBox")
-JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
-JobIdBox.Text = config.JobId or ""
-JobIdBox.Size = UDim2.new(0.9, 0, 0, 30)
-JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
-JobIdBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-JobIdBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-JobIdBox.Font = Enum.Font.SourceSans
-JobIdBox.TextSize = 14
-JobIdBox.ClearTextOnFocus = false
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 4)
-UICorner.Parent = JobIdBox
-
-JobIdBox.Parent = container
-
--- Simplified function to add TextBox to UI
-local function addTextBoxToUI()
-    container.Parent = game:GetService("CoreGui")
+    local InputFrame = Instance.new("Frame")
+    InputFrame.Name = "JobIdInput"
+    InputFrame.Parent = game:GetService("CoreGui")
+    InputFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    InputFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+    InputFrame.Size = UDim2.new(0, 300, 0, 100)
+    InputFrame.ZIndex = 1000
     
-    -- Position it appropriately (adjust as needed)
-    container.Position = UDim2.new(0.5, -150, 0.1, 0)
-end
-
--- Call this function to add the TextBox
-addTextBoxToUI()
-
--- Save Job ID when text changes
-JobIdBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
+    local UICorner = Instance.new("UICorner")
+    UICorner.Parent = InputFrame
+    
+    local JobIdBox = Instance.new("TextBox")
+    JobIdBox.Parent = InputFrame
+    JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
+    JobIdBox.Size = UDim2.new(0.9, 0, 0, 30)
+    JobIdBox.PlaceholderText = "Job ID (leave blank for current)"
+    JobIdBox.Text = config.JobId or ""
+    JobIdBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    JobIdBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    JobIdBox.ZIndex = 1001
+    
+    local UICorner2 = Instance.new("UICorner")
+    UICorner2.Parent = JobIdBox
+    
+    local SubmitButton = Instance.new("TextButton")
+    SubmitButton.Parent = InputFrame
+    SubmitButton.Position = UDim2.new(0.05, 0, 0.6, 0)
+    SubmitButton.Size = UDim2.new(0.9, 0, 0, 30)
+    SubmitButton.Text = "Submit"
+    SubmitButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    SubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SubmitButton.ZIndex = 1001
+    
+    local UICorner3 = Instance.new("UICorner")
+    UICorner3.Parent = SubmitButton
+    
+    SubmitButton.MouseButton1Click:Connect(function()
         config.JobId = JobIdBox.Text
         saveConfig(config)
-    end
+        jobIdButton:Set("Set Job ID (Current: " .. (config.JobId ~= "" and config.JobId or "None") .. ")")
+        InputFrame:Destroy()
+    end)
 end)
 
 -- Delay slider
