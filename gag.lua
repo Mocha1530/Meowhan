@@ -209,7 +209,7 @@ local function persistentTeleport(jobId, initialDelay)
 end
 
 -- Start button
-MainSection:Button("Start Rejoin Process", function()
+MainSection:Button("Rejoin", function()
     -- Update and save config
     local newConfig = {
         InitialDelay = delayValue,
