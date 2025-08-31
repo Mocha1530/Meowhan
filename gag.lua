@@ -4,20 +4,39 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local placeId = game.PlaceId
 
-local configFilename = "Eviscerator_Config.json"
+local CONFIG_FOLDER = "Meowhan/Config/"
+local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
     InitialDelay = 30,
     JobId = ""
 }
 
+-- Create folder structure
+local function ensureFolderStructure()
+    if not pcall(function() 
+        if not isfolder("Meowhan") then
+            makefolder("Meowhan")
+        end
+        if not isfolder("Meowhan/Config") then
+            makefolder("Meowhan/Config")
+        end
+    end) then
+        warn("Could not create folder structure - using root directory")
+        CONFIG_FOLDER = ""
+    end
+end
+
 -- Load configuration
 local function loadConfig()
-    if not pcall(function() readfile(configFilename) end) then
+    ensureFolderStructure()
+    local fullPath = CONFIG_FOLDER .. CONFIG_FILENAME
+    
+    if not pcall(function() readfile(fullPath) end) then
         return DEFAULT_CONFIG
     end
     
     local success, config = pcall(function()
-        return HttpService:JSONDecode(readfile(configFilename))
+        return HttpService:JSONDecode(readfile(fullPath))
     end)
     
     return success and config or DEFAULT_CONFIG
@@ -25,8 +44,10 @@ end
 
 -- Save configuration
 local function saveConfig(config)
+    ensureFolderStructure()
+    local fullPath = CONFIG_FOLDER .. CONFIG_FILENAME
     local success, err = pcall(function()
-        writefile(configFilename, HttpService:JSONEncode(config))
+        writefile(fullPath, HttpService:JSONEncode(config))
     end)
     if not success then
         warn("Failed to save config:", err)
@@ -48,7 +69,7 @@ Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Frame.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
-Title.Text = "Eviscerator Configuration"
+Title.Text = "Meowhan"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -62,7 +83,7 @@ JobIdBox.Position = UDim2.new(0.05, 0, 0.2, 0)
 JobIdBox.Parent = Frame
 
 local DelayBox = Instance.new("TextBox")
-DelayBox.PlaceholderText = "Rejoin Delay (seconds)"
+DelayBox.PlaceholderText = "Rejoin delay"
 DelayBox.Text = tostring(config.InitialDelay)
 DelayBox.Size = UDim2.new(0.9, 0, 0, 30)
 DelayBox.Position = UDim2.new(0.05, 0, 0.4, 0)
