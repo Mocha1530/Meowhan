@@ -69,7 +69,7 @@ local MainSection = MainTab:Section("Rejoin Configuration")
 -- Current Job ID display
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Job ID TextBox for input :cite[1]:cite[10]
+-- Job ID TextBox for input
 local jobIdTextBox = MainSection:Textbox("Job ID (leave blank for current)", function(text)
     config.JobId = text
     saveConfig(config)
