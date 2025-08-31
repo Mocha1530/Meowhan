@@ -66,22 +66,31 @@ local InfoTab = Window:Tab("Information")
 -- Main Tab
 local MainSection = MainTab:Section("Rejoin Configuration")
 
--- Current Job ID display
+-- Job ID input with current job as placeholder
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
--- Job ID TextBox for input
-local jobIdTextBox = MainSection:Textbox("Job ID (leave blank for current)", function(text)
-    config.JobId = text
-    saveConfig(config)
-end, {
-    default = config.JobId or ""
-})
+-- Job ID text box
+local jobIdText = ""
+local jobIdButton = MainSection:Button("Set Job ID (Leave blank for current)", function()
+    jobIdText = game:GetService("CoreGui"):FindFirstChild("JobIdInput") and "" or jobIdText
+    -- Implementation for job ID input would go here
+end)
 
 -- Delay slider
-local delaySlider = MainSection:Slider("Rejoin Delay", 0, 60, config.InitialDelay or 5, function(value)
+local delayValue = config.InitialDelay or 5
+local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, delayValue, function(value)
+    delayValue = value
     config.InitialDelay = value
     saveConfig(config)
 end)
+
+-- Countdown function
+local function countdown(seconds)
+    for i = seconds, 1, -1 do
+        print("Rejoining in " .. i .. " seconds...")
+        task.wait(1)
+    end
+end
 
 -- Main teleport function
 local function persistentTeleport(jobId, initialDelay)
