@@ -61,17 +61,17 @@ local currentJobId = game.JobId
 
 local MainTab = Window:Tab("Main")
 local SettingsTab = Window:Tab("Settings")
-local InfoTab = Window:Tab("Information")
+local InfoTab = Window:Tab("Info")
 
 -- Main Tab
-local MainSection = MainTab:Section("Rejoin Configuration")
+local MainSection = MainTab:Section("Rejoin Config")
 
 -- Job ID input with current job as placeholder
 local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
 -- Delay slider
 local delayValue = config.InitialDelay or 5
-local delaySlider = MainSection:Slider("Rejoin Delay (seconds)", 0, 60, delayValue, function(value)
+local delaySlider = MainSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
     delayValue = value
     config.InitialDelay = value
     saveConfig(config)
@@ -124,16 +124,16 @@ local function persistentTeleport(jobId, initialDelay)
         end
         
         if teleportSucceeded then
-            print("Congrats, you've been eviscerated!")
+            print("Rejoined")
             return
         end
 
         if not success then
-            warn("Evisceration call failed:", err)
+            warn("Rejoin call failed:", err)
         elseif teleportError ~= "" then
-            warn("Evisceration failed:", teleportError)
+            warn("Rejoin failed:", teleportError)
         else
-            warn("Evisceration failed for unknown reason")
+            warn("Rejoin failed for unknown reason")
         end
         
         local jitter = math.random(0, 20) * 0.1
@@ -177,20 +177,19 @@ MainSection:Button("Rejoin", function()
             persistentTeleport(targetJobId, newConfig.InitialDelay)
         end)
     end
-    Window:Notify("Rejoin process started!", 3)
 end)
 
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.0")
+AboutSection:Label("Version: 1.2.5")
 
 local StatsSection = InfoTab:Section("Session Statistics")
 
-StatsSection:Label("Current Job ID: " .. game.JobId)
 StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
-StatsSection:Label("Place: " .. game.PlaceId)
+StatsSection:Label("Current Job ID: " .. game.JobId)
+StatsSection:Label("Current Place ID: " .. game.PlaceId)
 
 StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
