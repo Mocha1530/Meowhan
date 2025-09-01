@@ -7,6 +7,8 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
+local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
+local GameName = GameInfo.Name
 
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -34,15 +36,15 @@ end
 local function loadConfig()
     ensureFolderStructure()
     local fullPath = CONFIG_FOLDER .. CONFIG_FILENAME
-    
+
     if not pcall(function() return readfile(fullPath) end) then
         return DEFAULT_CONFIG
     end
-    
+
     local success, config = pcall(function()
         return HttpService:JSONDecode(readfile(fullPath))
     end)
-    
+
     return success and config or DEFAULT_CONFIG
 end
 
@@ -71,52 +73,20 @@ local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
 -- Main Tab
-local MutationMachineSection = MainTab:Section("Mutation Machine")
-local RejoinSection = MainTab:Section("Rejoin Config")
-
--- Mutation Machine
-local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
-local MutationMachine = PetMutationMachineService_RE:FireServer
-
-  -- Mutation machine functions
-spawn(function()
-    while true do
-        MutationMachine("ClaimMutatedPet")
-        task.wait(10) -- every 10 seconds
-    end
-end)
-
-local function toggleAutoClaimPet(state)
-    autoClaimPetEnabled = state
-    config.AutoClaimMutatedPet = state
-    saveConfig(config)
-    
-    if state then
-        Window:Notify("Auto Claim Pet Enabled", 2)
-    else
-        Window:Notify("Auto Claim Pet Disabled", 2)
-    end
-end
-
-  -- Auto claim toggle
-local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
-    toggleAutoClaimPet(state)
-end, {
-    default = autoClaimPetEnabled
-})
+local MainSection = MainTab:Section("Rejoin Config")
 
 -- Job ID input with current job as placeholder
-local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
+local jobIdInput = MainSection:Label("Current Job ID: " .. currentJobId)
 
-  -- Delay slider
+-- Delay slider
 local delayValue = config.InitialDelay or 5
-local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
+local delaySlider = MainSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
     delayValue = value
     config.InitialDelay = value
     saveConfig(config)
 end)
 
-  -- Countdown function
+-- Countdown function
 local function countdown(seconds)
     for i = seconds, 1, -1 do
         print("Rejoining in " .. i .. " seconds...")
@@ -124,15 +94,15 @@ local function countdown(seconds)
     end
 end
 
-  -- Main teleport function
+-- Main teleport function
 local function persistentTeleport(jobId, initialDelay)
     local ATTEMPT_COUNTER = 0
     local FIXED_RETRY_DELAY = 2
-    
+
     if ATTEMPT_COUNTER == 0 then
         countdown(initialDelay)
     end
-    
+
     while true do
         ATTEMPT_COUNTER += 1
         print("\nAttempt #" .. ATTEMPT_COUNTER .. " to rejoin server")
@@ -148,7 +118,7 @@ local function persistentTeleport(jobId, initialDelay)
                 failureConnection:Disconnect()
             end
         end)
-        
+
         local success, err = pcall(function()
             TeleportService:TeleportToPlaceInstance(placeId, jobId, Players.LocalPlayer)
         end)
@@ -161,7 +131,7 @@ local function persistentTeleport(jobId, initialDelay)
         if failureConnection.Connected then
             failureConnection:Disconnect()
         end
-        
+
         if teleportSucceeded then
             print("Rejoined")
             return
@@ -174,12 +144,12 @@ local function persistentTeleport(jobId, initialDelay)
         else
             warn("Rejoin failed for unknown reason")
         end
-        
+
         local jitter = math.random(0, 20) * 0.1
         local total_delay = FIXED_RETRY_DELAY + jitter
-        
+
         print("Next attempt in " .. string.format("%.1f", total_delay) .. " seconds")
-        
+
         local wait_interval = 1 
         local waited = 0
         while waited < total_delay do
@@ -191,23 +161,23 @@ local function persistentTeleport(jobId, initialDelay)
     end
 end
 
-  -- Start button
-RejoinSection:Button("Auto Rejoin", function()
+-- Start button
+MainSection:Button("Auto Rejoin", function()
     -- Update and save config
     local newConfig = {
         InitialDelay = delayValue,
         JobId = currentJobId
     }
     saveConfig(newConfig)
-    
+
     -- Determine job ID to use
     local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
-    
+
     -- Start teleport process
     local success, err = pcall(function()
         persistentTeleport(targetJobId, newConfig.InitialDelay)
     end)
-    
+
     if not success then
         warn("CRITICAL ERROR:", err)
         print("Restarting rejoin process...")
@@ -231,17 +201,17 @@ local function createGlimmerCounter()
     if glimmerGui and typeof(glimmerGui) == "Instance" then
         glimmerGui:Destroy()
     end
-    
+
     local player = game.Players.LocalPlayer
     local rs = game:GetService('ReplicatedStorage')
-    
+
     -- Create the GUI
     glimmerGui = Instance.new('ScreenGui')
     glimmerGui.Name = 'GlimmerCounter'
     glimmerGui.ResetOnSpawn = false
     glimmerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     glimmerGui.Parent = player:WaitForChild('PlayerGui')
-    
+
     local frame = Instance.new('Frame')
     frame.Size = UDim2.new(0, 380, 0, 70)
     frame.Position = UDim2.new(1, -400, 0, 20)
@@ -250,7 +220,7 @@ local function createGlimmerCounter()
     frame.BorderSizePixel = 1
     frame.BorderColor3 = Color3.fromRGB(150, 50, 200)
     frame.Parent = glimmerGui
-    
+
     local header = Instance.new('TextLabel')
     header.Size = UDim2.new(1, -20, 0, 28)
     header.Position = UDim2.new(0, 10, 0, 5)
@@ -261,7 +231,7 @@ local function createGlimmerCounter()
     header.Font = Enum.Font.Code
     header.TextXAlignment = Enum.TextXAlignment.Left
     header.Parent = frame
-    
+
     local counter = Instance.new('TextLabel')
     counter.Size = UDim2.new(1, -20, 0, 35)
     counter.Position = UDim2.new(0, 10, 0, 28)
@@ -272,9 +242,9 @@ local function createGlimmerCounter()
     counter.Font = Enum.Font.Code
     counter.TextXAlignment = Enum.TextXAlignment.Left
     counter.Parent = frame
-    
+
     glimmerCount = 0
-    
+
     local notificationEvent = rs:WaitForChild('GameEvents'):WaitForChild('Notification')
     notificationEvent.OnClientEvent:Connect(function(msg)
         if typeof(msg) == 'string' and msg == 'A Fruit in your garden, mutated to Glimmering!' then
@@ -282,7 +252,7 @@ local function createGlimmerCounter()
             counter.Text = 'Count: ' .. glimmerCount
         end
     end)
-    
+
     return glimmerGui
 end
 
@@ -290,7 +260,7 @@ local function toggleGlimmerCounter(state)
     glimmerCounterEnabled = state
     config.ShowGlimmerCounter = state
     saveConfig(config)
-    
+
     if state then
         createGlimmerCounter()
         Window:Notify("Glimmer Counter Enabled", 2)
@@ -303,33 +273,198 @@ local function toggleGlimmerCounter(state)
     end
 end
 
-  -- FIXED: Use the correct toggle method from the UI library
-  -- Create a toggle using the Section:Toggle method instead of EventSection:Toggle
+-- FIXED: Use the correct toggle method from the UI library
+-- Create a toggle using the Section:Toggle method instead of EventSection:Toggle
 local glimmerToggle = EventSection:Toggle("Enable Glimmering Counter", function(state)
     toggleGlimmerCounter(state)
 end, {
     default = glimmerCounterEnabled
 })
 
-  -- Initialize glimmer counter if enabled
+-- Initialize glimmer counter if enabled
 if glimmerCounterEnabled then
     createGlimmerCounter()
 end
 
--- Shop Tab
-local SeedShopSection = ShopTab:Section("Seed Shop")
+-- Variables for Auto-Buy functionality
+local seedStock = {}
+local autoBuyAllEnabled = false
+local autoBuySelectedEnabled = false
+local selectedSeed = ""
+
+  -- Function to get seed stock from the game's GUI
+local function getSeedStock(ignoreNoStock)
+    local seedShop = PlayerGui.Seed_Shop
+    local items = seedShop:FindFirstChild("Blueberry", true).Parent
+
+    local newList = {}
+
+    for _, item in next, items:GetChildren() do
+        local mainFrame = item:FindFirstChild("Main_Frame")
+        if not mainFrame then continue end
+
+        local stockText = mainFrame.Stock_Text.Text
+        local stockCount = tonumber(stockText:match("%d+"))
+
+        if ignoreNoStock then
+            if stockCount <= 0 then continue end
+            newList[item.Name] = stockCount
+            continue
+        end
+
+        seedStock[item.Name] = stockCount
+    end
+
+    return ignoreNoStock and newList or seedStock
+end
+
+  -- Function to buy a specific seed
+local function buySeed(seedName)
+    GameEvents.BuySeedStock:FireServer(seedName)
+end
+
+  -- Create dropdown for seed selection
+local seedOptions = {}
+local seedDropdown = SeedShopSection:Dropdown("Select Seed", seedOptions, "", function(selected)
+    selectedSeed = selected
+end)
+
+  -- Function to update the seed dropdown options
+local function updateSeedDropdown()
+    getSeedStock(false) -- Get all seeds, including out-of-stock
+    
+    -- Update the dropdown options
+    local options = {}
+    for seedName, stock in pairs(seedStock) do
+        table.insert(options, seedName .. " (" .. stock .. ")")
+    end
+    
+    seedDropdown:Refresh(options)
+end
+
+  -- Toggle for auto-buy all stocked seeds
+SeedShopSection:Toggle("Auto Buy All Stocked Seeds", function(state)
+    autoBuyAllEnabled = state
+    if state then
+        autoBuySelectedEnabled = false
+        Window:Notify("Auto Buy All enabled", 2)
+    else
+        Window:Notify("Auto Buy All disabled", 2)
+    end
+end)
+
+  -- Toggle for auto-buy selected seed
+SeedShopSection:Toggle("Auto Buy Selected Seed", function(state)
+    autoBuySelectedEnabled = state
+    if state then
+        autoBuyAllEnabled = false
+        if selectedSeed == "" then
+            Window:Notify("Please select a seed first!", 2)
+            autoBuySelectedEnabled = false
+            return
+        end
+        Window:Notify("Auto Buy enabled for " .. selectedSeed, 2)
+    else
+        Window:Notify("Auto Buy disabled", 2)
+    end
+end)
+
+  -- Auto-buy loop for all stocked seeds
+spawn(function()
+    while true do
+        if autoBuyAllEnabled then
+            -- Get all stocked seeds and buy them
+            local stockedSeeds = getSeedStock(true)
+            
+            for seedName, stock in pairs(stockedSeeds) do
+                for i = 1, stock do
+                    buySeed(seedName)
+                    task.wait(0.1) -- Small delay to prevent rate limiting
+                end
+            end
+            
+            -- Wait a bit before checking again
+            task.wait(5) -- Check every 5 seconds
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+  -- Auto-buy loop for selected seed
+spawn(function()
+    while true do
+        if autoBuySelectedEnabled and selectedSeed ~= "" then
+            -- Check if we have stock for the selected seed
+            getSeedStock(false)
+            local stock = seedStock[selectedSeed]
+            
+            if stock and stock > 0 then
+                buySeed(selectedSeed)
+            end
+            
+            -- Wait a bit before checking again
+            task.wait(1)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+  -- Status label to show current stock
+local stockStatus = SeedShopSection:Label("Stock Status: Not checked")
+
+  -- Function to update stock status (FIXED VERSION)
+local function updateStockStatus()
+    local success, stockedSeeds = pcall(function()
+        return getSeedStock(true)
+    end)
+    
+    if not success then
+        stockStatus:SetText("Stock Status: Error checking stock")
+        return
+    end
+    
+    local totalStock = 0
+    local seedCount = 0
+    
+    -- Count seeds properly
+    for seedName, stock in pairs(stockedSeeds) do
+        totalStock = totalStock + stock
+        seedCount = seedCount + 1
+    end
+    
+    -- Ensure we're always passing a string
+    local statusText = "Stock Status: "
+    
+    if seedCount > 0 then
+        statusText = statusText .. tostring(totalStock) .. " seeds across " .. tostring(seedCount) .. " types"
+    else
+        statusText = statusText .. "No seeds in stock"
+    end
+    
+    stockStatus:SetText(statusText)
+end
+
+  -- Auto-update stock status periodically
+spawn(function()
+    while true do
+        updateStockStatus()
+        task.wait(10) -- Update every 10 seconds
+    end
+end)
+
+  -- Initial update of seed list and stock status
+updateSeedDropdown()
+updateStockStatus()
 
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
-local StatsSection = InfoTab:Section("Session Statistics")
 
--- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
 AboutSection:Label("Version: 1.2.5")
 
--- Stats
-local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
-local GameName = GameInfo.Name
+local StatsSection = InfoTab:Section("Session Statistics")
 
 StatsSection:Label("Current Game: " .. GameName)
 StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
