@@ -83,7 +83,7 @@ local MutationMachine = PetMutationMachineService_RE
   -- Mutation machine functions
 spawn(function()
     while true do
-        MutationMachine:FireServer("ClaimMutatedPet")
+        GameEvents.MutationMachine:FireServer("ClaimMutatedPet")
         task.wait(10) -- every 10 seconds
     end
 end)
