@@ -83,36 +83,15 @@ local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
 -- Mutation Machine (Vuln)
-  -- Submit Held
-local function submitHeldPet()
-    local success, err = pcall(function()
-        MutationMachine:FireServer("SubmitHeldPet")
-    end)
-    if not success then
-        warn("SubmitHeldPet failed: " .. err)
-    end
-end
-
-  -- Start Machine 
-local function startMachine()
-    local success, err = pcall(function()
-        MutationMachine:FireServer("StartMachine")
-    end)
-    if not success then
-        warn("StartMachine failed: " .. err)
-    end
-end
-
-  -- Auto Start
-spawn(function()
-    while true do
-        if autoStartMachineEnabled then
-            MutationMachine:FireServer("StartMachine")
-            task.wait(10) -- every 10 seconds
-        end
+MutationMachineVulnSection:Button("Submit Held Pet", function()
+    MutationMachine:FireServer("SubmitHeldPet")
 end)
 
-local function toggleAutoStartMachine(state)
+MutationMachineVulnSection:Button("Start Machine", function()
+    MutationMachine:FireServer("StartMachine")
+end)
+
+MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
     autoStartMachineEnabled = state
     config.AutoStartPetMutation = state
     saveConfig(config)
@@ -122,24 +101,20 @@ local function toggleAutoStartMachine(state)
     else
         Window:Notify("Auto Start Machine Disabled", 2)
     end
-end
-
-  -- Submit Held
-MutationMachineVulnSection:Button("Submit Held Pet", function()
-    submitHeldPet()
-end)
-
-  -- Start Machine
-MutationMachineVulnSection:Button("Start Machine", function()
-    startMachine()
-end)
-
-  -- Auto Start
-local autoStartMachine = MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
-    toggleAutoStartMachine(state)
 end, {
     default = autoStartMachineEnabled
 })
+
+spawn(function()
+    while true do
+        if autoStartMachineEnabled then
+            MutationMachine:FireServer("StartMachine")
+            task.wait(10)
+        else
+            task.wait(1)
+        end
+    end
+end)
 
   -- Mutation machine functions
 spawn(function()
