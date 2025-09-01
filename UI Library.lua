@@ -745,7 +745,7 @@ function Library:CreateWindow(title)
         function Tab:Section(title)
             local Section = {}
             Section.toggles = {}
-            Section.expanded = true -- Track if section is expanded
+            Section.expanded = false -- Track if section is expanded
             
             local SectionFrame = Instance.new("Frame")
             SectionFrame.Parent = TabContent
@@ -786,7 +786,7 @@ function Library:CreateWindow(title)
             Arrow.Text = "▼"
             Arrow.TextColor3 = Theme.TextDim
             Arrow.TextSize = 13
-            Arrow.Rotation = 0
+            Arrow.Rotation = -90
             Arrow.Name = "Arrow"
             
             local SectionAccent = Instance.new("Frame")
@@ -806,7 +806,7 @@ function Library:CreateWindow(title)
             Elements.Position = UDim2.new(0, 12, 0, 32)
             Elements.Size = UDim2.new(1, -24, 0, 0)
             Elements.AutomaticSize = Enum.AutomaticSize.Y
-            Elements.Visible = true
+            Elements.Visible = false
             
             local ElementLayout = Instance.new("UIListLayout")
             ElementLayout.Parent = Elements
