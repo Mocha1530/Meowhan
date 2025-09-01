@@ -1,7 +1,10 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
 local placeId = game.PlaceId
+local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
 
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -61,6 +64,7 @@ local currentJobId = game.JobId
 
 local MainTab = Window:Tab("Main")
 local EventTab = Window:Tab("Event")
+local ShopTab = Window:Tab("Shop")
 local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
@@ -154,7 +158,7 @@ local function persistentTeleport(jobId, initialDelay)
 end
 
 -- Start button
-MainSection:Button("Rejoin", function()
+MainSection:Button("Auto Rejoin", function()
     -- Update and save config
     local newConfig = {
         InitialDelay = delayValue,
@@ -286,6 +290,7 @@ AboutSection:Label("Version: 1.2.5")
 
 local StatsSection = InfoTab:Section("Session Statistics")
 
+StatsSection:Label("Current Game: " .. {GameInfo.Name})
 StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
 StatsSection:Label("Current Job ID: " .. game.JobId)
 StatsSection:Label("Current Place ID: " .. game.PlaceId)
