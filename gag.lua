@@ -85,11 +85,22 @@ local MutationMachine = GameEvents.PetMutationMachineService_RE
 -- Mutation Machine (Vuln)
   -- Submit Held
 local function submitHeldPet()
-    MutationMachine:FireServer("SubmitHeldPet")
+    local success, err = pcall(function()
+        MutationMachine:FireServer("SubmitHeldPet")
+    end)
+    if not success then
+        warn("SubmitHeldPet failed: " .. err)
+    end
 end
+
   -- Start Machine 
 local function startMachine()
-    MutationMachine:FireServer("StartMachine")
+    local success, err = pcall(function()
+        MutationMachine:FireServer("StartMachine")
+    end)
+    if not success then
+        warn("StartMachine failed: " .. err)
+    end
 end
 
   -- Auto Start
