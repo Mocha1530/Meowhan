@@ -78,12 +78,12 @@ local RejoinSection = MainTab:Section("Rejoin Config")
 
 -- Mutation Machine
 local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
-local MutationMachine = PetMutationMachineService_RE:FireServer
+local MutationMachine = PetMutationMachineService_RE
 
   -- Mutation machine functions
 spawn(function()
     while true do
-        MutationMachine("ClaimMutatedPet")
+        MutationMachine:FireServer("ClaimMutatedPet")
         task.wait(10) -- every 10 seconds
     end
 end)
