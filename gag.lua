@@ -96,7 +96,7 @@ end
 spawn(function()
     while true do
         if autoStartMachineEnabled then
-            startMachine()
+            MutationMachine:FireServer("StartMachine")
             task.wait(10) -- every 10 seconds
         end
 end)
