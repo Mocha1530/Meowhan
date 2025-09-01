@@ -286,6 +286,9 @@ if glimmerCounterEnabled then
     createGlimmerCounter()
 end
 
+-- Shop Tab
+local SeedShopSection = ShopTab:Section("Seed Shop")
+
 -- Variables for Auto-Buy functionality
 local seedStock = {}
 local autoBuyAllEnabled = false
