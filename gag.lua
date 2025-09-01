@@ -74,11 +74,61 @@ local InfoTab = Window:Tab("Info")
 
 -- Main Tab
 local MutationMachineSection = MainTab:Section("Mutation Machine")
+local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 local RejoinSection = MainTab:Section("Rejoin Config")
 
--- Mutation Machine
+-- Mutation Machine Vars
+local autoStartMachineEnabled = config.AutoStartPetMutation or false
 local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
 local MutationMachine = GameEvents.PetMutationMachineService_RE
+
+-- Mutation Machine (Vuln)
+  -- Submit Held
+local function submitHeldPet()
+    MutationMachine:FireServer("SubmitHeldPet")
+end
+  -- Start Machine 
+local function startMachine()
+    MutationMachine:FireServer("StartMachine")
+end
+
+  -- Auto Start
+spawn(function()
+    while true do
+        if autoStartMachineEnabled then
+            startMachine()
+            task.wait(10) -- every 10 seconds
+        end
+end)
+
+local function toggleAutoStartMachine(state)
+    autoStartMachineEnabled = state
+    config.AutoStartPetMutation = state
+    saveConfig(config)
+    
+    if state then
+        Window:Notify("Auto Start Machine Enabled", 2)
+    else
+        Window:Notify("Auto Start Machine Disabled", 2)
+    end
+end
+
+  -- Submit Held
+MutationMachineVulnSection:Button("Submit Held Pet", function()
+    submitHeldPet()
+end)
+
+  -- Start Machine
+MutationMachineVulnSection:Button("Start Machine", function()
+    startMachine()
+end)
+
+  -- Auto Start
+local autoStartMachine = MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
+    toggleAutoStartMachine(state)
+end, {
+    default = autoStartMachineEnabled
+})
 
   -- Mutation machine functions
 spawn(function()
