@@ -5,6 +5,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 
 local placeId = game.PlaceId
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
+local GameName = GameInfo.Name
 
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -290,7 +291,7 @@ AboutSection:Label("Version: 1.2.5")
 
 local StatsSection = InfoTab:Section("Session Statistics")
 
-StatsSection:Label("Current Game: " .. {GameInfo.Name})
+StatsSection:Label("Current Game: " .. GameName)
 StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
 StatsSection:Label("Current Job ID: " .. game.JobId)
 StatsSection:Label("Current Place ID: " .. game.PlaceId)
