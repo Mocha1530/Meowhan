@@ -155,9 +155,12 @@ local function findFarmFolder()
         if child.Name == "Farm" and child:IsA("Folder") then
             local importantFolder = child:FindFirstChild("Important")
             if importantFolder then
-                local ownerValue = importantFolder:FindFirstChild("Owner")
-                if ownerValue and ownerValue:IsA("StringValue") and ownerValue.Value == localPlayer.Name then
-                    return child  -- Found the correct Farm folder
+                local dataFolder = importantFolder:FindFirstChild("Data")
+                if dataFolder then
+                    local ownerValue = dataFolder:FindFirstChild("Owner")
+                    if ownerValue and ownerValue:IsA("StringValue") and ownerValue.Value == localPlayer.Name then
+                        return child  -- Found the correct Farm folder
+                    end
                 end
             end
         end
