@@ -122,9 +122,9 @@ MutationMachineVulnSection:Button("Start Machine", function()
     local timerStatus = getMutationMachineTimer()
     if timerStatus == nil or timerStatus == "" then
         MutationMachine:FireServer("StartMachine")
-        Window:Notify("Machine started", 2)
+        Window:Notify("Machine Started", 2)
     else
-        Window:Notify("Cannot start machine - timer active: " .. timerStatus, 2)
+        Window:Notify("Machine Already Started", 2)
     end
 end)
 
