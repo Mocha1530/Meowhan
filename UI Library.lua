@@ -587,7 +587,7 @@ function Library:CreateWindow(title)
         Window.Minimized = true
         Tween(Container, {
             Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0.5, 0, 1, -25)
+            Position = UDim2.new(0.5, 0, 0, -20)
         }, 0.3)
         
         wait(0.3)
@@ -673,7 +673,7 @@ function Library:CreateWindow(title)
     Content.Size = UDim2.new(1, 0, 1, -77)
     
     -- Dragging
-    if IsMobile then
+    if not IsMobile then
         local dragging, dragStart, startPos
         
         Header.InputBegan:Connect(function(input)
