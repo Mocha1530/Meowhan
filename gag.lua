@@ -632,7 +632,7 @@ eventButton.Parent = frame
 -- Create UIAspectRatioConstraint
 local aspectRatio = Instance.new("UIAspectRatioConstraint")
 aspectRatio.AspectRatio = 3.558823585510254
-aspectRatio.AspectType = Enum.AspectType.Fit
+aspectRatio.AspectType = Enum.AspectType.FitWithinMaxSize
 aspectRatio.DominantAxis = Enum.DominantAxis.Width
 aspectRatio.Parent = eventButton
 
