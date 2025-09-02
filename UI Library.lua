@@ -1235,8 +1235,12 @@ function Library:CreateWindow(title)
                     end)
                     
                     OptionBtn.MouseButton1Click:Connect(function()
-                        selected = option
-                        SelectedLabel.Text = option
+                        if selected == option then
+                            selected = nil
+                        else
+                            selected = option
+                            SelectedLabel.Text = option
+                        end
                         
                         -- Update colors
                         for _, child in ipairs(ListScroll:GetChildren()) do
