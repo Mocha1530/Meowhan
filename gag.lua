@@ -267,7 +267,7 @@ eventButton.MouseButton1Click:Connect(function()
     end
 end)
 
-gearButton.MouseButtonCick:Connect(function()
+gearButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Tutorial_Point_3
     
     if teleportPoint then
@@ -275,7 +275,7 @@ gearButton.MouseButtonCick:Connect(function()
     end
 end)
 
-petButton.MouseButtonCick:Connect(function()
+petButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Tutorial_Point_4
     
     if teleportPoint then
