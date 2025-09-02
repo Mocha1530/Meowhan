@@ -427,7 +427,7 @@ local function showMutationTimerDisplay()
         model2 = model2:FindFirstChild("PetMutationMachine")
         if model2 then
             model2 = model2:FindFirstChild("Model")
-            if model then
+            if model2 then
                 -- Find the Part with the BillboardGui
                 for _, child in ipairs(model2:GetChildren()) do
                     if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
@@ -536,6 +536,7 @@ if showMutationTimer then
     task.wait(3)
     showMutationTimerDisplay()
 end
+
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
