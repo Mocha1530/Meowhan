@@ -480,6 +480,11 @@ local function toggleAutoClaimPet(state)
     end
 end
 
+  -- Select det dropdown
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
+    Window:Notify("Selected: ", selected)
+end)
+
   -- Auto claim toggle
 local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
     toggleAutoClaimPet(state)
