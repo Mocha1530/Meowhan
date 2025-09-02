@@ -692,6 +692,6 @@ eventButton.MouseButton1Click:Connect(function()
     local teleportPoint = findTeleportPoint()
     
     if teleportPoint then
-        humanoidRootPart.CFrame = teleportPoint.CFrame
+        HumanoidRootPart.CFrame = teleportPoint.CFrame
     end
 end)
