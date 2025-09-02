@@ -483,7 +483,7 @@ end
   -- Select det dropdown
 MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
     if selected then
-        Window:Notify("Selected: ", selected)
+        Window:Notify("Selected: " .. selected, 2)
     end
 end)
 
