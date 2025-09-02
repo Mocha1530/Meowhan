@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
@@ -82,13 +83,49 @@ local autoStartMachineEnabled = config.AutoStartPetMutation or false
 local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
+-- Mutation Machine Timer
+local function getMutationMachineTimer()
+    local model = Workspace:FindFirstChild("NPCS")
+    
+    if model then
+        model = model:FindFirstChild("PetMutationMachine")
+        if model then
+            model = model:FindFirstChild("Model")
+            if model then
+                for _, child in ipairs(model:GetChildren()) do
+                    if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
+                        local billboardPart = child.BillboardPart
+                        if billboardPart then
+                            local billboardGui = billboardPart:FindFirstChild("BillboardGui")
+                            if billboardGui then
+                                local timerTextLabel = billboardGui:FindFirstChild("TimerTextLabel")
+                                if timerTextLabel then
+                                    return timerTextLabel.Text
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return nil
+end
+
 -- Mutation Machine (Vuln)
 MutationMachineVulnSection:Button("Submit Held Pet", function()
     MutationMachine:FireServer("SubmitHeldPet")
 end)
 
 MutationMachineVulnSection:Button("Start Machine", function()
-    MutationMachine:FireServer("StartMachine")
+    local timerStatus = getMutationMachineTimer()
+    if timerStatus == nil or timerStatus == "" then
+        MutationMachine:FireServer("StartMachine")
+        Window:Notify("Machine started", 2)
+    else
+        Window:Notify("Cannot start machine - timer active: " .. timerStatus, 2)
+    end
 end)
 
 MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
@@ -108,7 +145,10 @@ end, {
 spawn(function()
     while true do
         if autoStartMachineEnabled then
-            MutationMachine:FireServer("StartMachine")
+            local timerStatus = getMutationMachineTimer()
+            if timerStatus == nil or timerStatus == "" then
+                MutationMachine:FireServer("StartMachine")
+            end
             task.wait(10)
         else
             task.wait(1)
@@ -116,11 +156,20 @@ spawn(function()
     end
 end)
 
-  -- Mutation machine functions
+-- Mutation machine functions
 spawn(function()
     while true do
-        MutationMachine:FireServer("ClaimMutatedPet")
-        task.wait(10) -- every 10 seconds
+        if autoClaimPetEnabled then
+            local timerStatus = getMutationMachineTimer()
+            if timerStatus == "READY" then
+                MutationMachine:FireServer("ClaimMutatedPet")
+                task.wait(2)
+            else
+                task.wait(1)
+            end
+        else
+            task.wait(1)
+        end
     end
 end)
 
