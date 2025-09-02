@@ -413,11 +413,11 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 local UISection = SettingsTab:Section("UI")
 
 -- Settings Vars
-local showMutationTimer = config.ShowMutationTimer or true
+local mutationTimerEnabled = config.ShowMutationTimer or true
 
 -- Function to enhance the existing mutation timer display
 local function showMutationTimerDisplay()
-    if not showMutationTimer then
+    if not mutationTimerEnabled then
         return
     end
     
@@ -485,15 +485,6 @@ local function showMutationTimerDisplay()
                                     end
                                 ]]
                                 
-                                -- Also enhance the text label for better visibility
-                                local timerTextLabel = billboardGui:FindFirstChild("TimerTextLabel")
-                                if timerTextLabel then
-                                    timerTextLabel.TextScaled = true
-                                    timerTextLabel.TextStrokeTransparency = 0.5  -- Adds outline for better visibility
-                                    timerTextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-                                    timerTextLabel.Font = Enum.Font.SourceSansBold
-                                end
-                                
                                 return true  -- Success
                             end
                         end
@@ -508,7 +499,7 @@ end
 
 -- Function to toggle the timer enhancement
 local function toggleMutationTimer(state)
-    showMutationTimer = state
+    mutationTimerEnabled = state
     config.ShowMutationTimer = state
     saveConfig(config)
     
@@ -528,11 +519,11 @@ end
 UISection:Toggle("Show Mutation Timer", function(state)
     toggleMutationTimer(state)
 end, {
-    default = showMutationTimer
+    default = mutationTimerEnabled
 })
 
 -- Initialize the timer enhancement if enabled
-if showMutationTimer then
+if mutationTimerEnabled then
     task.wait(3)
     showMutationTimerDisplay()
 end
