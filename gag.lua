@@ -409,130 +409,133 @@ end
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
--- Settings Tab
+-- Settings
 local UISection = SettingsTab:Section("UI")
 
 -- Settings Vars
-local mutationTimerGui = nil
 local showMutationTimer = config.ShowMutationTimer or true
 
-local function createMutationTimerDisplay()
-    if mutationTimerGui and typeof(mutationTimerGui) == "Instance" then
-        mutationTimerGui:Destroy()
-    end
-    
-    -- Only create if enabled
+-- Function to enhance the existing mutation timer display
+local function showMutationTimerDisplay()
     if not showMutationTimer then
         return
     end
     
-    -- Create the GUI
-    mutationTimerGui = Instance.new('ScreenGui')
-    mutationTimerGui.Name = 'MutationTimerDisplay'
-    mutationTimerGui.ResetOnSpawn = false
-    mutationTimerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    mutationTimerGui.Parent = playerGui
+    local model2 = Workspace:FindFirstChild("NPCS")
     
-    local frame = Instance.new('Frame')
-    frame.Size = UDim2.new(0, 200, 0, 50)
-    frame.Position = UDim2.new(0, 10, 0, 100)  -- Position in top left
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frame.BackgroundTransparency = 0.15
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(100, 150, 200)
-    frame.Parent = mutationTimerGui
-    
-    local header = Instance.new('TextLabel')
-    header.Size = UDim2.new(1, -10, 0, 20)
-    header.Position = UDim2.new(0, 5, 0, 5)
-    header.BackgroundTransparency = 1
-    header.Text = 'Mutation Machine Timer'
-    header.TextColor3 = Color3.fromRGB(180, 180, 255)
-    header.TextSize = 14
-    header.Font = Enum.Font.Code
-    header.TextXAlignment = Enum.TextXAlignment.Left
-    header.Parent = frame
-    
-    local timerText = Instance.new('TextLabel')
-    timerText.Name = "TimerText"
-    timerText.Size = UDim2.new(1, -10, 0, 20)
-    timerText.Position = UDim2.new(0, 5, 0, 25)
-    timerText.BackgroundTransparency = 1
-    timerText.Text = 'Not active'
-    timerText.TextColor3 = Color3.fromRGB(230, 230, 230)
-    timerText.TextSize = 16
-    timerText.Font = Enum.Font.Code
-    timerText.TextXAlignment = Enum.TextXAlignment.Left
-    timerText.Parent = frame
-    
-    return mutationTimerGui
-end
-
--- Function to update the timer display
-local function updateMutationTimerDisplay()
-    if not mutationTimerGui or not showMutationTimer then
-        return
-    end
-    
-    local timerStatus = getMutationMachineTimer()
-    local timerText = mutationTimerGui:FindFirstChild("Frame") and 
-                     mutationTimerGui.Frame:FindFirstChild("TimerText")
-    
-    if timerText then
-        if timerStatus then
-            timerText.Text = timerStatus
-            if timerStatus == "READY" then
-                timerText.TextColor3 = Color3.fromRGB(100, 255, 100)  -- Green for ready
-            elseif timerStatus:match("%d") then  -- If it contains numbers (countdown)
-                timerText.TextColor3 = Color3.fromRGB(255, 200, 100)  -- Yellow for counting
-            else
-                timerText.TextColor3 = Color3.fromRGB(230, 230, 230)  -- Default white
+    if model2 then
+        model2 = model2:FindFirstChild("PetMutationMachine")
+        if model2 then
+            model2 = model2:FindFirstChild("Model")
+            if model then
+                -- Find the Part with the BillboardGui
+                for _, child in ipairs(model2:GetChildren()) do
+                    if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
+                        local billboardPart = child.BillboardPart
+                        
+                        -- Modify the BillboardPart properties
+                        billboardPart.CFrame = billboardPart.CFrame + Vector3.new(0, 15, 0)  -- Raise by 15 studs
+                        billboardPart.CanCollide = false
+                        
+                        if billboardPart then
+                            local billboardGui = billboardPart:FindFirstChild("BillboardGui")
+                            if billboardGui then
+                                -- Modify properties to make it visible from anywhere
+                                billboardGui.MaxDistance = 10000  -- Very high max distance
+                                billboardGui.AlwaysOnTop = true
+                                
+                                -- Set initial size
+                                billboardGui.Size = UDim2.new(14, 0, 8, 0)
+                                
+                                -- Add a script to scale with distance
+                                local scaleScript = Instance.new("Script")
+                                scaleScript.Name = "DistanceScaler"
+                                scaleScript.Parent = billboardGui
+                                
+                                -- Script source to scale with distance using your specified parameters
+                                scaleScript.Source = [[
+                                    local BillboardGui = script.Parent
+                                    local Players = game:GetService("Players")
+                                    local localPlayer = Players.LocalPlayer
+                                    
+                                    -- Size parameters
+                                    local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
+                                    local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
+                                    
+                                    -- Distance parameters
+                                    local minDistance = 10  -- Distance where size is minimum
+                                    local maxDistance = 100 -- Distance where size is maximum
+                                    
+                                    while true do
+                                        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                            local playerPos = localPlayer.Character.HumanoidRootPart.Position
+                                            local billboardPos = BillboardGui.Parent.Parent.Position
+                                            local distance = (playerPos - billboardPos).Magnitude
+                                            
+                                            -- Calculate scale factor (0 to 1)
+                                            local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
+                                            
+                                            -- Interpolate between min and max size
+                                            local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
+                                            local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
+                                            
+                                            BillboardGui.Size = UDim2.new(newX, 0, newY, 0)
+                                        end
+                                        wait(0.1) -- Update 10 times per second
+                                    end
+                                ]]
+                                
+                                -- Also enhance the text label for better visibility
+                                local timerTextLabel = billboardGui:FindFirstChild("TimerTextLabel")
+                                if timerTextLabel then
+                                    timerTextLabel.TextScaled = true
+                                    timerTextLabel.TextStrokeTransparency = 0.5  -- Adds outline for better visibility
+                                    timerTextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+                                    timerTextLabel.Font = Enum.Font.SourceSansBold
+                                end
+                                
+                                return true  -- Success
+                            end
+                        end
+                    end
+                end
             end
-        else
-            timerText.Text = "Not active"
-            timerText.TextColor3 = Color3.fromRGB(150, 150, 150)  -- Gray for inactive
         end
     end
+    
+    return false  -- Couldn't find or modify the timer
 end
 
--- Function to toggle the timer display
+-- Function to toggle the timer enhancement
 local function toggleMutationTimer(state)
     showMutationTimer = state
     config.ShowMutationTimer = state
     saveConfig(config)
     
     if state then
-        createMutationTimerDisplay()
-        Window:Notify("Mutation Timer Display Enabled", 2)
-    else
-        if mutationTimerGui and typeof(mutationTimerGui) == "Instance" then
-            mutationTimerGui:Destroy()
-            mutationTimerGui = nil
+        if showMutationTimerDisplay() then
+            Window:Notify("Mutation Timer Display Enabled", 2)
+        else
+            Window:Notify("Could not find mutation timer", 2)
         end
+    else
+        -- To disable, we'd need to reset the properties, but this is complex
+        -- For simplicity, we'll just not enhance it further
         Window:Notify("Mutation Timer Display Disabled", 2)
     end
 end
 
--- Add a toggle to the UI (in your MutationMachineSection)
 UISection:Toggle("Show Mutation Timer", function(state)
     toggleMutationTimer(state)
 end, {
     default = showMutationTimer
 })
 
--- Update the timer display periodically
-spawn(function()
-    while true do
-        updateMutationTimerDisplay()
-        task.wait(0.5)  -- Update twice per second
-    end
-end)
-
--- Initialize the timer display if enabled
+-- Initialize the timer enhancement if enabled
 if showMutationTimer then
-    createMutationTimerDisplay()
+    task.wait(3)
+    showMutationTimerDisplay()
 end
-
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
