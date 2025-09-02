@@ -610,3 +610,64 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
+
+local teleport = PlayerGui:FindFirstChild("Teleport_UI")
+local frame = teleport:FindFirstChild("Frame")
+
+local eventButton = Instance.new("ImageButton")
+eventButton.Name = "Event"
+eventButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+eventButton.BackgroundTransparency = 1
+eventButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+eventButton.BorderSizePixel = 0
+eventButton.LayoutOrder = 0
+eventButton.Position = UDim2.new(0.311, 0, 0, 0)
+eventButton.Size = UDim2.new(0.41, 0, 0.985, 0)
+eventButton.ZIndex = 1
+eventButton.ScaleType = Enum.ScaleType.Fit
+eventButton.Image = "rbxassetid://110208924430993"
+eventButton.HoverImage = "rbxassetid://135080523802244"
+eventButton.Parent = frame
+
+-- Create UIAspectRatioConstraint
+local aspectRatio = Instance.new("UIAspectRatioConstraint")
+aspectRatio.AspectRatio = 3.558823585510254
+aspectRatio.AspectType = Enum.AspectType.FitWithMaxSize
+aspectRatio.DominantAxis = Enum.DominantAxis.Width
+aspectRatio.Parent = eventButton
+
+-- Create TextLabel
+local txt = Instance.new("TextLabel")
+txt.Name = "Txt"
+txt.AnchorPoint = Vector2.new(0.5, 0.5)
+txt.BackgroundColor3 = Color3.fromRGB(76, 52, 35)
+txt.BackgroundTransparency = 1
+txt.BorderColor3 = Color3.fromRGB(0, 0, 0)
+txt.BorderSizePixel = 0
+txt.Position = UDim2.new(0.5, 0, 0.557, 0)
+txt.Size = UDim2.new(0.9, 0, 0.684, 0)
+txt.ZIndex = 1
+txt.Font = Enum.Font.ComicNeueAngular
+txt.FontFace = Font.new(
+    "rbxasset://fonts/families/ComicNeueAngular.json",
+    Enum.FontWeight.Bold,
+    Enum.FontStyle.Normal
+)
+txt.Text = "EVENT"
+txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+txt.TextScaled = true
+txt.TextSize = 14
+txt.TextWrapped = true
+txt.Parent = eventButton
+
+-- Create UISizeConstraint
+local sizeConstraint = Instance.new("UISizeConstraint")
+sizeConstraint.MaxSize = Vector2.new(math.huge, math.huge)
+sizeConstraint.MinSize = Vector2.new(100, 20)
+sizeConstraint.Parent = txt
+
+-- Create UIStroke
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(40, 20, 11)
+uiStroke.Thickness = 2
+uiStroke.Parent = txt
