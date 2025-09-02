@@ -357,7 +357,7 @@ function Library:CreateWindow(title)
     ToggleBar.BackgroundColor3 = Theme.Background
     ToggleBar.BackgroundTransparency = 0.1
     ToggleBar.BorderSizePixel = 0
-    ToggleBar.Position = UDim2.new(0.4, 0, 0, -40)
+    ToggleBar.Position = UDim2.new(0.442449987, 0, 0, -40)
     ToggleBar.Size = UDim2.new(0, 100, 0, 32)
     ToggleBar.Visible = false
     ToggleBar.ZIndex = 999
@@ -607,16 +607,16 @@ function Library:CreateWindow(title)
         }, 0.3)
 ]]
         
-        ToggleBar.Position = UDim2.new(0.4, 0, 0, -90)
+        ToggleBar.Position = UDim2.new(0.442449987, 0, 0, -90)
         Tween(ToggleBar, {
-            Position = UDim2.new(0.4, 0, 0, -40)
+            Position = UDim2.new(0.442449987, 0, 0, -40)
         }, 0.3, Enum.EasingStyle.Back)
     end
     
     local function Restore()
         Window.Minimized = false
         Tween(ToggleBar, {
-            Position = UDim2.new(0.4, 0, 0, -90)
+            Position = UDim2.new(0.442449987, 0, 0, -90)
         }, 0.3)
         
         wait(0.3)
@@ -673,7 +673,7 @@ function Library:CreateWindow(title)
     Content.Size = UDim2.new(1, 0, 1, -77)
     
     -- Dragging
-    if not IsMobile then
+    if IsMobile then
         local dragging, dragStart, startPos
         
         Header.InputBegan:Connect(function(input)
