@@ -176,7 +176,7 @@ local function getScriptContent()
         return "Error: Could not find farm folder for player " .. localPlayer.Name
     end
 
-    local objectsPhysical = farmFolder:FindFirstChild("Objects_Physical")
+    local objectsPhysical = farmFolder.Important:FindFirstChild("Objects_Physical")
     if not objectsPhysical then
         return "Error: Objects_Physical folder not found"
     end
