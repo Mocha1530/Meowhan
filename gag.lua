@@ -647,7 +647,6 @@ txt.BorderSizePixel = 0
 txt.Position = UDim2.new(0.5, 0, 0.557, 0)
 txt.Size = UDim2.new(0.9, 0, 0.684, 0)
 txt.ZIndex = 1
-txt.Font = Enum.Font.ComicNeueAngular
 txt.FontFace = Font.new(
     "rbxasset://fonts/families/ComicNeueAngular.json",
     Enum.FontWeight.Bold,
