@@ -482,7 +482,9 @@ end
 
   -- Select det dropdown
 MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
-    Window:Notify("Selected: ", selected)
+    if selected then
+        Window:Notify("Selected: ", selected)
+    end
 end)
 
   -- Auto claim toggle
