@@ -357,11 +357,21 @@ function Library:CreateWindow(title)
     ToggleBar.BackgroundColor3 = Theme.Background
     ToggleBar.BackgroundTransparency = 0.1
     ToggleBar.BorderSizePixel = 0
-    ToggleBar.Position = UDim2.new(0.5, -60, 1, -50)
-    ToggleBar.Size = UDim2.new(0, 120, 0, 32)
+    ToggleBar.Position = UDim2.new(0.4, 0, 0, -40)
+    ToggleBar.Size = UDim2.new(0, 100, 0, 32)
     ToggleBar.Visible = false
     ToggleBar.ZIndex = 999
     ToggleBar.ClipsDescendants = true
+
+--[[ Default
+    ToggleBar.Position = UDim2.new(0.5, -60, 1, -50)
+    ToggleBar.Size = UDim2.new(0, 120, 0, 32)
+
+    Text0verflow.Position = UDim2.new(0.5, -30, 0.5, -8)
+    Text0verflow.Size = UDim2.new(0, 50, 0, 16)
+
+    TextHub.Visible = true
+]]
     
     local BarCorner = Instance.new("UICorner")
     BarCorner.CornerRadius = UDim.new(0, 16)
@@ -382,7 +392,7 @@ function Library:CreateWindow(title)
     local Text0verflow = Instance.new("TextLabel")
     Text0verflow.Parent = TextContainer
     Text0verflow.BackgroundTransparency = 1
-    Text0verflow.Position = UDim2.new(0.5, -30, 0.5, -8)
+    Text0verflow.Position = UDim2.new(0.5, -20, 0.5, -8)
     Text0verflow.Size = UDim2.new(0, 50, 0, 16)
     Text0verflow.Font = Enum.Font.GothamBold
     Text0verflow.Text = "Meowhan"
@@ -401,6 +411,7 @@ function Library:CreateWindow(title)
     TextHub.TextColor3 = Theme.Text
     TextHub.TextSize = 13
     TextHub.TextXAlignment = Enum.TextXAlignment.Left
+    TextHub.Visible = false
     TextHub.ZIndex = 1000
     
     local Indicator = Instance.new("Frame")
@@ -582,10 +593,17 @@ function Library:CreateWindow(title)
         wait(0.3)
         Container.Visible = false
         ToggleBar.Visible = true
-        
-        ToggleBar.Position = UDim2.new(0.5, -60, 1, 0)
+
+--[[ Default
+        ToggleBar.Position = UDim2.new(0.4, 0, 0, -90)
         Tween(ToggleBar, {
-            Position = UDim2.new(0.5, -60, 1, -50)
+            Position = UDim2.new(0.4, 0, 0, -40)
+        }, 0.3, Enum.EasingStyle.Back)
+]]
+        
+        ToggleBar.Position = UDim2.new(0.4, 0, 0, -90)
+        Tween(ToggleBar, {
+            Position = UDim2.new(0.4, 0, 0, -40)
         }, 0.3, Enum.EasingStyle.Back)
     end
     
