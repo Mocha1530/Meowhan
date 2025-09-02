@@ -434,7 +434,7 @@ local function showMutationTimerDisplay()
                         local billboardPart = child.BillboardPart
                         
                         -- Modify the BillboardPart properties
-                        billboardPart.CFrame = billboardPart.CFrame + Vector3.new(0, 15, 0)  -- Raise by 15 studs
+                        billboardPart.CFrame = billboardPart.CFrame + Vector3.new(0, 9, 0)  -- Raise by 15 studs
                         billboardPart.CanCollide = false
                         
                         if billboardPart then
