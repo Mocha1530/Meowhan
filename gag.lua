@@ -413,13 +413,13 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 -- Settings
 local UISection = SettingsTab:Section("UI")
 
--- Settings Vars
+  -- Settings Vars
 local mutationTimerEnabled = config.ShowMutationTimer or true
 local originalBillboardPosition = nil
 local billboardGui = nil
 local scalingLoop = nil
 
--- Function to find and store the BillboardGui reference
+  -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
     local model2 = Workspace:FindFirstChild("NPCS")
     
@@ -466,7 +466,7 @@ local function startScalingLoop()
     end
     
     scalingLoop = RunService.RenderStepped:Connect(function()
-        if not enhanceMutationTimer or not billboardGui or not billboardGui.Parent then
+        if not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
             if scalingLoop then
                 scalingLoop:Disconnect()
                 scalingLoop = nil
@@ -486,7 +486,7 @@ local function startScalingLoop()
             local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
             
             -- Distance parameters
-            local minDistance = 50  -- Distance where size is minimum
+            local minDistance = 60  -- Distance where size is minimum
             local maxDistance = 200 -- Distance where size is maximum
             
             -- Calculate scale factor (0 to 1)
@@ -501,7 +501,7 @@ local function startScalingLoop()
     end)
 end
 
--- Function to restore the original position and properties
+  -- Function to restore the original position and properties
 local function restoreOriginalProperties()
     if originalBillboardPosition then
         local model3 = Workspace:FindFirstChild("NPCS")
@@ -520,7 +520,7 @@ local function restoreOriginalProperties()
                             -- Restore the BillboardGui properties
                             local gui = billboardPart:FindFirstChild("BillboardGui")
                             if gui then
-                                gui.MaxDistance = 0  -- Default value
+                                gui.MaxDistance = 60  -- Default value
                             end
                         end
                     end
@@ -563,7 +563,7 @@ local function showMutationTimerDisplay()
 end
 
 
--- Function to toggle the timer enhancement
+  -- Function to toggle the timer enhancement
 local function toggleMutationTimer(state)
     mutationTimerEnabled = state
     config.ShowMutationTimer = state
@@ -591,6 +591,7 @@ if mutationTimerEnabled then
     task.wait(3)
     showMutationTimerDisplay()
 end
+
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
