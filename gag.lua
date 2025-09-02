@@ -15,7 +15,11 @@ local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
     InitialDelay = 30,
-    JobId = ""
+    JobId = "",
+    AutoStartPetMutation = false,
+    AutoClaimMutatedPet = false,
+    ShowGlimmerCounter = false,
+    ShowMutationTimer = true
 }
 
 -- Create folder structure
@@ -404,6 +408,130 @@ end
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+
+-- Settings Tab
+local UISection = SettingsTab:Section("UI")
+
+-- Settings Vars
+local mutationTimerGui = nil
+local showMutationTimer = config.ShowMutationTimer or true
+
+local function createMutationTimerDisplay()
+    if mutationTimerGui and typeof(mutationTimerGui) == "Instance" then
+        mutationTimerGui:Destroy()
+    end
+    
+    -- Only create if enabled
+    if not showMutationTimer then
+        return
+    end
+    
+    -- Create the GUI
+    mutationTimerGui = Instance.new('ScreenGui')
+    mutationTimerGui.Name = 'MutationTimerDisplay'
+    mutationTimerGui.ResetOnSpawn = false
+    mutationTimerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    mutationTimerGui.Parent = playerGui
+    
+    local frame = Instance.new('Frame')
+    frame.Size = UDim2.new(0, 200, 0, 50)
+    frame.Position = UDim2.new(0, 10, 0, 100)  -- Position in top left
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BackgroundTransparency = 0.15
+    frame.BorderSizePixel = 1
+    frame.BorderColor3 = Color3.fromRGB(100, 150, 200)
+    frame.Parent = mutationTimerGui
+    
+    local header = Instance.new('TextLabel')
+    header.Size = UDim2.new(1, -10, 0, 20)
+    header.Position = UDim2.new(0, 5, 0, 5)
+    header.BackgroundTransparency = 1
+    header.Text = 'Mutation Machine Timer'
+    header.TextColor3 = Color3.fromRGB(180, 180, 255)
+    header.TextSize = 14
+    header.Font = Enum.Font.Code
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.Parent = frame
+    
+    local timerText = Instance.new('TextLabel')
+    timerText.Name = "TimerText"
+    timerText.Size = UDim2.new(1, -10, 0, 20)
+    timerText.Position = UDim2.new(0, 5, 0, 25)
+    timerText.BackgroundTransparency = 1
+    timerText.Text = 'Not active'
+    timerText.TextColor3 = Color3.fromRGB(230, 230, 230)
+    timerText.TextSize = 16
+    timerText.Font = Enum.Font.Code
+    timerText.TextXAlignment = Enum.TextXAlignment.Left
+    timerText.Parent = frame
+    
+    return mutationTimerGui
+end
+
+-- Function to update the timer display
+local function updateMutationTimerDisplay()
+    if not mutationTimerGui or not showMutationTimer then
+        return
+    end
+    
+    local timerStatus = getMutationMachineTimer()
+    local timerText = mutationTimerGui:FindFirstChild("Frame") and 
+                     mutationTimerGui.Frame:FindFirstChild("TimerText")
+    
+    if timerText then
+        if timerStatus then
+            timerText.Text = timerStatus
+            if timerStatus == "READY" then
+                timerText.TextColor3 = Color3.fromRGB(100, 255, 100)  -- Green for ready
+            elseif timerStatus:match("%d") then  -- If it contains numbers (countdown)
+                timerText.TextColor3 = Color3.fromRGB(255, 200, 100)  -- Yellow for counting
+            else
+                timerText.TextColor3 = Color3.fromRGB(230, 230, 230)  -- Default white
+            end
+        else
+            timerText.Text = "Not active"
+            timerText.TextColor3 = Color3.fromRGB(150, 150, 150)  -- Gray for inactive
+        end
+    end
+end
+
+-- Function to toggle the timer display
+local function toggleMutationTimer(state)
+    showMutationTimer = state
+    config.ShowMutationTimer = state
+    saveConfig(config)
+    
+    if state then
+        createMutationTimerDisplay()
+        Window:Notify("Mutation Timer Display Enabled", 2)
+    else
+        if mutationTimerGui and typeof(mutationTimerGui) == "Instance" then
+            mutationTimerGui:Destroy()
+            mutationTimerGui = nil
+        end
+        Window:Notify("Mutation Timer Display Disabled", 2)
+    end
+end
+
+-- Add a toggle to the UI (in your MutationMachineSection)
+UISection:Toggle("Show Mutation Timer", function(state)
+    toggleMutationTimer(state)
+end, {
+    default = showMutationTimer
+})
+
+-- Update the timer display periodically
+spawn(function()
+    while true do
+        updateMutationTimerDisplay()
+        task.wait(0.5)  -- Update twice per second
+    end
+end)
+
+-- Initialize the timer display if enabled
+if showMutationTimer then
+    createMutationTimerDisplay()
+end
 
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
