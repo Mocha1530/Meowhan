@@ -82,59 +82,11 @@ local InfoTab = Window:Tab("Info")
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
 
--- Event teleport button UI
-local eventButton = Instance.new("ImageButton")
-eventButton.Name = "Event"
-eventButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-eventButton.BackgroundTransparency = 1
-eventButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-eventButton.BorderSizePixel = 0
-eventButton.LayoutOrder = 0
-eventButton.Position = UDim2.new(0.311, 0, 0, 0)
-eventButton.Size = UDim2.new(0.41, 0, 0.985, 0)
-eventButton.ZIndex = 1
-eventButton.ScaleType = Enum.ScaleType.Fit
-eventButton.Image = "rbxassetid://110208924430993"
-eventButton.HoverImage = "rbxassetid://135080523802244"
-eventButton.Parent = frame
-
-local aspectRatio = Instance.new("UIAspectRatioConstraint")
-aspectRatio.AspectRatio = 3.558823585510254
-aspectRatio.AspectType = Enum.AspectType.FitWithinMaxSize
-aspectRatio.DominantAxis = Enum.DominantAxis.Width
-aspectRatio.Parent = eventButton
-
-local txt = Instance.new("TextLabel")
-txt.Name = "Txt"
-txt.AnchorPoint = Vector2.new(0.5, 0.5)
-txt.BackgroundColor3 = Color3.fromRGB(76, 52, 35)
-txt.BackgroundTransparency = 1
-txt.BorderColor3 = Color3.fromRGB(0, 0, 0)
-txt.BorderSizePixel = 0
-txt.Position = UDim2.new(0.5, 0, 0.557, 0)
-txt.Size = UDim2.new(0.9, 0, 0.684, 0)
-txt.ZIndex = 1
-txt.FontFace = Font.new(
-    "rbxasset://fonts/families/ComicNeueAngular.json",  
-    Enum.FontWeight.Bold,
-    Enum.FontStyle.Normal
-)
-txt.Text = "EVENT"
-txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-txt.TextScaled = true
-txt.TextSize = 14
-txt.TextWrapped = true
-txt.Parent = eventButton
-
-local sizeConstraint = Instance.new("UISizeConstraint")
-sizeConstraint.MaxSize = Vector2.new(math.huge, math.huge)
-sizeConstraint.MinSize = Vector2.new(100, 20)
-sizeConstraint.Parent = txt
-
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(40, 20, 11)
-uiStroke.Thickness = 2
-uiStroke.Parent = txt
+-- Seeds teleport button UI
+local seedButton = frame:FindFirstChild("Seeds")
+if seedButton then
+    seedButton.LayoutOrder = -3
+end
 
 -- Gear teleport button UI
 local gearButton = Instance.new("ImageButton")
@@ -143,7 +95,7 @@ gearButton.BackgroundColor3 = Color3.fromRGB(97, 226, 51)
 gearButton.BackgroundTransparency = 0
 gearButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 gearButton.BorderSizePixel = 0
-gearButton.LayoutOrder = -1
+gearButton.LayoutOrder = -2
 gearButton.Position = UDim2.new(0.688038409, 0, 0.114772804, 0)
 gearButton.Size = UDim2.new(0.259808183, 0, 0.790713012, 0)
 gearButton.ZIndex = 1
@@ -195,6 +147,120 @@ gearUIStroke1.Color = Color3.fromRGB(80, 184, 42)
 gearUIStroke1.Thickness = 2
 gearUIStroke1.Parent = geartxt
 
+-- Event teleport button UI
+local eventButton = Instance.new("ImageButton")
+eventButton.Name = "Event"
+eventButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+eventButton.BackgroundTransparency = 1
+eventButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+eventButton.BorderSizePixel = 0
+eventButton.LayoutOrder = -1
+eventButton.Position = UDim2.new(0.311, 0, 0, 0)
+eventButton.Size = UDim2.new(0.41, 0, 0.985, 0)
+eventButton.ZIndex = 1
+eventButton.ScaleType = Enum.ScaleType.Fit
+eventButton.Image = "rbxassetid://110208924430993"
+eventButton.HoverImage = "rbxassetid://135080523802244"
+eventButton.Parent = frame
+
+local aspectRatio = Instance.new("UIAspectRatioConstraint")
+aspectRatio.AspectRatio = 3.558823585510254
+aspectRatio.AspectType = Enum.AspectType.FitWithinMaxSize
+aspectRatio.DominantAxis = Enum.DominantAxis.Width
+aspectRatio.Parent = eventButton
+
+local txt = Instance.new("TextLabel")
+txt.Name = "Txt"
+txt.AnchorPoint = Vector2.new(0.5, 0.5)
+txt.BackgroundColor3 = Color3.fromRGB(76, 52, 35)
+txt.BackgroundTransparency = 1
+txt.BorderColor3 = Color3.fromRGB(0, 0, 0)
+txt.BorderSizePixel = 0
+txt.Position = UDim2.new(0.5, 0, 0.557, 0)
+txt.Size = UDim2.new(0.9, 0, 0.684, 0)
+txt.ZIndex = 1
+txt.FontFace = Font.new(
+    "rbxasset://fonts/families/ComicNeueAngular.json",  
+    Enum.FontWeight.Bold,
+    Enum.FontStyle.Normal
+)
+txt.Text = "EVENT"
+txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+txt.TextScaled = true
+txt.TextSize = 14
+txt.TextWrapped = true
+txt.Parent = eventButton
+
+local sizeConstraint = Instance.new("UISizeConstraint")
+sizeConstraint.MaxSize = Vector2.new(math.huge, math.huge)
+sizeConstraint.MinSize = Vector2.new(100, 20)
+sizeConstraint.Parent = txt
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(40, 20, 11)
+uiStroke.Thickness = 2
+uiStroke.Parent = txt
+
+-- Rebirth teleport button UI
+local rebirthButton = Instance.new("ImageButton")
+rebirthButton.Name = "Rebirth"
+rebirthButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+rebirthButton.BackgroundTransparency = 1
+rebirthButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+rebirthButton.BorderSizePixel = 0
+rebirthButton.LayoutOrder = 0
+rebirthButton.Position = UDim2.new(0.311, 0, 0, 0)
+rebirthButton.Size = UDim2.new(0.41, 0, 0.985, 0)
+rebirthButton.ZIndex = 1
+rebirthButton.ScaleType = Enum.ScaleType.Fit
+rebirthButton.Image = "rbxassetid://110208924430993"
+rebirthButton.HoverImage = "rbxassetid://135080523802244"
+rebirthButton.Parent = frame
+
+local rebirthAspectRatio = Instance.new("UIAspectRatioConstraint")
+rebirthAspectRatio.AspectRatio = 3.558823585510254
+rebirthAspectRatio.AspectType = Enum.AspectType.FitWithinMaxSize
+rebirthAspectRatio.DominantAxis = Enum.DominantAxis.Width
+rebirthAspectRatio.Parent = rebirthButton
+
+local rebirthTxt = Instance.new("TextLabel")
+rebirthTxt.Name = "Txt"
+rebirthTxt.AnchorPoint = Vector2.new(0.5, 0.5)
+rebirthTxt.BackgroundColor3 = Color3.fromRGB(76, 52, 35)
+rebirthTxt.BackgroundTransparency = 1
+rebirthTxt.BorderColor3 = Color3.fromRGB(0, 0, 0)
+rebirthTxt.BorderSizePixel = 0
+rebirthTxt.Position = UDim2.new(0.5, 0, 0.557, 0)
+rebirthTxt.Size = UDim2.new(0.9, 0, 0.684, 0)
+rebirthTxt.ZIndex = 1
+rebirthTxt.FontFace = Font.new(
+    "rbxasset://fonts/families/ComicNeueAngular.json",  
+    Enum.FontWeight.Bold,
+    Enum.FontStyle.Normal
+)
+rebirthTxt.Text = "REBIRTH"
+rebirthTxt.TextColor3 = Color3.fromRGB(255, 255, 255)
+rebirthTxt.TextScaled = true
+rebirthTxt.TextSize = 14
+rebirthTxt.TextWrapped = true
+rebirthTxt.Parent = rebirthButton
+
+local rebirthSizeConstraint = Instance.new("UISizeConstraint")
+rebirthSizeConstraint.MaxSize = Vector2.new(math.huge, math.huge)
+rebirthSizeConstraint.MinSize = Vector2.new(100, 20)
+rebirthSizeConstraint.Parent = rebirthTxt
+
+local rebirthUIStroke = Instance.new("UIStroke")
+rebirthUIStroke.Color = Color3.fromRGB(40, 20, 11)
+rebirthUIStroke.Thickness = 2
+rebirthUIStroke.Parent = rebirthTxt
+
+-- Garden teleport button UI
+local gardenButton = frame:FindFirstChild("Garden")
+if gardenButton then
+    gardenButton.LayoutOrder = 1
+end
+
 -- Pet teleport button UI
 local petButton = Instance.new("ImageButton")
 petButton.Name = "Pets"
@@ -202,7 +268,7 @@ petButton.BackgroundColor3 = Color3.fromRGB(226, 163, 37)
 petButton.BackgroundTransparency = 0
 petButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 petButton.BorderSizePixel = 0
-petButton.LayoutOrder = 1
+petButton.LayoutOrder = 2
 petButton.Position = UDim2.new(0.688038409, 0, 0.114772804, 0)
 petButton.Size = UDim2.new(0.259808183, 0, 0.790713012, 0)
 petButton.ZIndex = 1
@@ -254,10 +320,24 @@ petUIStroke1.Color = Color3.fromRGB(166, 120, 27)
 petUIStroke1.Thickness = 2
 petUIStroke1.Parent = pettxt
 
+-- Sell teleport button UI
+local sellButton = frame:FindFirstChild("Sell")
+if sellButton then
+    sellButton.LayoutOrder = 3
+end
+
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Tp_Points = Workspace:FindFirstChild("Tutorial_Points")
+
+gearButton.MouseButton1Click:Connect(function()
+    local teleportPoint = Tp_Points.Tutorial_Point_3
+    
+    if teleportPoint then
+        HumanoidRootPart.CFrame = teleportPoint.CFrame
+    end
+end)
 
 eventButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Event_Point
@@ -267,12 +347,17 @@ eventButton.MouseButton1Click:Connect(function()
     end
 end)
 
-gearButton.MouseButton1Click:Connect(function()
-    local teleportPoint = Tp_Points.Tutorial_Point_3
+rebirthButton.MouseButton1Click:Connect(function()
+    local targetCFrame = CFrame.new(
+        126.44146, 
+        2.99999976, 
+        167.216751, 
+        -0.720815241, -9.22248873e-08, -0.693127275, 
+        -4.49386484e-08, 1, -8.6322423e-08, 
+        0.693127275, -3.10743182e-08, -0.720815241
+    )
     
-    if teleportPoint then
-        HumanoidRootPart.CFrame = teleportPoint.CFrame
-    end
+    HumanoidRootPart.CFrame = targetCFrame
 end)
 
 petButton.MouseButton1Click:Connect(function()
