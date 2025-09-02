@@ -521,6 +521,7 @@ local function restoreOriginalProperties()
                             local gui = billboardPart:FindFirstChild("BillboardGui")
                             if gui then
                                 gui.MaxDistance = 60  -- Default value
+                                gui.Size = UDim2.new(7, 0, 4, 0)
                             end
                         end
                     end
