@@ -670,3 +670,28 @@ local uiStroke = Instance.new("UIStroke")
 uiStroke.Color = Color3.fromRGB(40, 20, 11)
 uiStroke.Thickness = 2
 uiStroke.Parent = txt
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local function findTeleportPoint()
+    local Interaction = Workspace:WaitForChild("Interaction")
+    local UpdateItems = Interaction:WaitForChild("UpdateItems")
+    
+    for _, item in ipairs(UpdateItems:GetDescendants()) do
+        if item.Name == "Event_Point_Teleport" then
+            return item
+        end
+    end
+    
+    return nil
+end
+
+eventButton.MouseButton1Click:Connect(function()
+    local teleportPoint = findTeleportPoint()
+    
+    if teleportPoint then
+        humanoidRootPart.CFrame = teleportPoint.CFrame
+    end
+end)
