@@ -595,10 +595,16 @@ function Library:CreateWindow(title)
         ToggleBar.Visible = true
 
 --[[ Default
-        ToggleBar.Position = UDim2.new(0.4, 0, 0, -90)
+        ToggleBar.Position = UDim2.new(0.5, -60, 1, 0)
         Tween(ToggleBar, {
-            Position = UDim2.new(0.4, 0, 0, -40)
+            Position = UDim2.new(0.5, -60, 1, -50)
         }, 0.3, Enum.EasingStyle.Back)
+
+    local function Restore()
+        Window.Minimized = false
+        Tween(ToggleBar, {
+            Position = UDim2.new(0.5, -60, 1, 0)
+        }, 0.3)
 ]]
         
         ToggleBar.Position = UDim2.new(0.4, 0, 0, -90)
@@ -610,7 +616,7 @@ function Library:CreateWindow(title)
     local function Restore()
         Window.Minimized = false
         Tween(ToggleBar, {
-            Position = UDim2.new(0.5, -60, 1, 0)
+            Position = UDim2.new(0.4, 0, 0, -90)
         }, 0.3)
         
         wait(0.3)
