@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
@@ -414,13 +415,12 @@ local UISection = SettingsTab:Section("UI")
 
 -- Settings Vars
 local mutationTimerEnabled = config.ShowMutationTimer or true
+local originalBillboardPosition = nil
+local billboardGui = nil
+local scalingLoop = nil
 
--- Function to enhance the existing mutation timer display
-local function showMutationTimerDisplay()
-    if not mutationTimerEnabled then
-        return
-    end
-    
+-- Function to find and store the BillboardGui reference
+local function findBillboardGui()
     local model2 = Workspace:FindFirstChild("NPCS")
     
     if model2 then
@@ -428,64 +428,99 @@ local function showMutationTimerDisplay()
         if model2 then
             model2 = model2:FindFirstChild("Model")
             if model2 then
-                -- Find the Part with the BillboardGui
                 for _, child in ipairs(model2:GetChildren()) do
                     if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
                         local billboardPart = child.BillboardPart
                         
-                        -- Modify the BillboardPart properties
-                        billboardPart.CFrame = billboardPart.CFrame + Vector3.new(0, 9, 0)  -- Raise by 15 studs
+                        if not originalBillboardPosition then
+                            originalBillboardPosition = billboardPart.Position
+                        end
+                        
+                        local currentPosition = billboardPart.Position
+                        billboardPart.Position = Vector3.new(
+                            currentPosition.X,
+                            15,               
+                            currentPosition.Z
+                        )
+                        
                         billboardPart.CanCollide = false
                         
-                        if billboardPart then
-                            local billboardGui = billboardPart:FindFirstChild("BillboardGui")
-                            if billboardGui then
-                                -- Modify properties to make it visible from anywhere
-                                billboardGui.MaxDistance = 10000  -- Very high max distance
-                                billboardGui.AlwaysOnTop = true
-                                
-                                -- Set initial size
-                                billboardGui.Size = UDim2.new(14, 0, 8, 0)
-                                
-                                -- Add a script to scale with distance
-                                local scaleScript = Instance.new("Script")
-                                scaleScript.Name = "DistanceScaler"
-                                scaleScript.Parent = billboardGui
-                                
-                                -- Script source to scale with distance using your specified parameters
-                                scaleScript.Source = [[
-                                    local BillboardGui = script.Parent
-                                    local Players = game:GetService("Players")
-                                    local localPlayer = Players.LocalPlayer
-                                    
-                                    -- Size parameters
-                                    local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
-                                    local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
-                                    
-                                    -- Distance parameters
-                                    local minDistance = 10  -- Distance where size is minimum
-                                    local maxDistance = 100 -- Distance where size is maximum
-                                    
-                                    while true do
-                                        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                                            local playerPos = localPlayer.Character.HumanoidRootPart.Position
-                                            local billboardPos = BillboardGui.Parent.Parent.Position
-                                            local distance = (playerPos - billboardPos).Magnitude
-                                            
-                                            -- Calculate scale factor (0 to 1)
-                                            local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
-                                            
-                                            -- Interpolate between min and max size
-                                            local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
-                                            local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
-                                            
-                                            BillboardGui.Size = UDim2.new(newX, 0, newY, 0)
-                                        end
-                                        wait(0.1) -- Update 10 times per second
-                                    end
-                                ]]
-                                
-                                return true  -- Success
+                        billboardGui = billboardPart:FindFirstChild("BillboardGui")
+                        if billboardGui then
+                            billboardGui.MaxDistance = 10000
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
+local function startScalingLoop()
+    if scalingLoop then
+        scalingLoop:Disconnect()
+        scalingLoop = nil
+    end
+    
+    scalingLoop = RunService.RenderStepped:Connect(function()
+        if not enhanceMutationTimer or not billboardGui or not billboardGui.Parent then
+            if scalingLoop then
+                scalingLoop:Disconnect()
+                scalingLoop = nil
+            end
+            return
+        end
+        
+        local localPlayer = Players.LocalPlayer
+        
+        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local playerPos = localPlayer.Character.HumanoidRootPart.Position
+            local billboardPos = billboardGui.Parent.Parent.Position
+            local distance = (playerPos - billboardPos).Magnitude
+            
+            -- Size parameters
+            local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
+            local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
+            
+            -- Distance parameters
+            local minDistance = 50  -- Distance where size is minimum
+            local maxDistance = 200 -- Distance where size is maximum
+            
+            -- Calculate scale factor (0 to 1)
+            local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
+            
+            -- Interpolate between min and max size
+            local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
+            local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
+            
+            billboardGui.Size = UDim2.new(newX, 0, newY, 0)
+        end
+    end)
+end
+
+-- Function to restore the original position and properties
+local function restoreOriginalProperties()
+    if originalBillboardPosition then
+        local model3 = Workspace:FindFirstChild("NPCS")
+        
+        if model3 then
+            model3 = model3:FindFirstChild("PetMutationMachine")
+            if model3 then
+                model3 = model3:FindFirstChild("Model")
+                if model3 then
+                    for _, child in ipairs(model3:GetChildren()) do
+                        if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
+                            local billboardPart = child.BillboardPart
+                            billboardPart.Position = originalBillboardPosition
+                            billboardPart.CanCollide = true  -- Restore collision
+                            
+                            -- Restore the BillboardGui properties
+                            local gui = billboardPart:FindFirstChild("BillboardGui")
+                            if gui then
+                                gui.MaxDistance = 0  -- Default value
                             end
                         end
                     end
@@ -494,8 +529,39 @@ local function showMutationTimerDisplay()
         end
     end
     
-    return false  -- Couldn't find or modify the timer
+    if scalingLoop then
+        scalingLoop:Disconnect()
+        scalingLoop = nil
+    end
+    
+    billboardGui = nil
 end
+
+local function showMutationTimerDisplay()
+    if not mutationTimerEnabled then
+        restoreOriginalProperties()
+        return false
+    end
+
+    local success = findBillboardGui()
+    
+    if success and billboardGui then
+        startScalingLoop()
+        return true
+    else
+        task.spawn(function()
+            task.wait(2) -- Wait a bit for the game to load
+            if mutationTimerEnabled then
+                local success = findBillboardGui()
+                if success and billboardGui then
+                    startScalingLoop()
+                end
+            end
+        end)
+        return false
+    end
+end
+
 
 -- Function to toggle the timer enhancement
 local function toggleMutationTimer(state)
@@ -510,8 +576,7 @@ local function toggleMutationTimer(state)
             Window:Notify("Could not find mutation timer", 2)
         end
     else
-        -- To disable, we'd need to reset the properties, but this is complex
-        -- For simplicity, we'll just not enhance it further
+        restoreOriginalProperties()
         Window:Notify("Mutation Timer Display Disabled", 2)
     end
 end
@@ -522,12 +587,10 @@ end, {
     default = mutationTimerEnabled
 })
 
--- Initialize the timer enhancement if enabled
 if mutationTimerEnabled then
     task.wait(3)
     showMutationTimerDisplay()
 end
-
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 
