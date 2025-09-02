@@ -1,292 +1,208 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
 
--- Create a simple UI to display the monitored events
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EventMonitor"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+-- Function to create the GUI window
+local function createScriptViewerWindow(scriptContent)
+    -- Create the main GUI
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScriptViewer"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 400, 0, 300)
-Frame.Position = UDim2.new(0.5, -200, 0, 10)
-Frame.AnchorPoint = Vector2.new(0.5, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-Frame.BorderSizePixel = 0
-Frame.Parent = ScreenGui
+    -- Create the main frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0.6, 0, 0.7, 0)
+    mainFrame.Position = UDim2.new(0.2, 0, 0.15, 0)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = screenGui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = Frame
+    -- Add corner rounding
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 8)
+    uiCorner.Parent = mainFrame
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-Title.BorderSizePixel = 0
-Title.Text = "RemoteEvent Monitor"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.Parent = Frame
+    -- Create the title bar
+    local titleBar = Instance.new("Frame")
+    titleBar.Name = "TitleBar"
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.Position = UDim2.new(0, 0, 0, 0)
+    titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    titleBar.BorderSizePixel = 0
+    titleBar.Parent = mainFrame
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 8)
-TitleCorner.Parent = Title
+    -- Add title text
+    local titleText = Instance.new("TextLabel")
+    titleText.Name = "TitleText"
+    titleText.Size = UDim2.new(0.8, 0, 1, 0)
+    titleText.Position = UDim2.new(0.1, 0, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "Script Content Viewer"
+    titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.Font = Enum.Font.GothamBold
+    titleText.TextSize = 14
+    titleText.Parent = titleBar
 
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, -10, 1, -50)
-ScrollingFrame.Position = UDim2.new(0, 5, 0, 45)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.BorderSizePixel = 0
-ScrollingFrame.ScrollBarThickness = 6
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.Parent = Frame
+    -- Create close button
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -30, 0, 0)
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    closeButton.BorderSizePixel = 0
+    closeButton.Text = "X"
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 14
+    closeButton.Parent = titleBar
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 5)
-UIListLayout.Parent = ScrollingFrame
+    -- Add corner rounding to close button
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 8)
+    closeCorner.Parent = closeButton
 
--- Collapse/Expand button
-local CollapseButton = Instance.new("TextButton")
-CollapseButton.Size = UDim2.new(0, 30, 0, 30)
-CollapseButton.Position = UDim2.new(1, -35, 0, 5)
-CollapseButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
-CollapseButton.BorderSizePixel = 0
-CollapseButton.Text = "-"
-CollapseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CollapseButton.Font = Enum.Font.GothamBold
-CollapseButton.TextSize = 18
-CollapseButton.Parent = Frame
+    -- Create script content frame
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Name = "ContentFrame"
+    contentFrame.Size = UDim2.new(1, -20, 1, -50)
+    contentFrame.Position = UDim2.new(0, 10, 0, 40)
+    contentFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    contentFrame.BorderSizePixel = 0
+    contentFrame.ScrollBarThickness = 8
+    contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    contentFrame.Parent = mainFrame
 
-local CollapseCorner = Instance.new("UICorner")
-CollapseCorner.CornerRadius = UDim.new(0, 6)
-CollapseCorner.Parent = CollapseButton
+    -- Add corner rounding to content frame
+    local contentCorner = Instance.new("UICorner")
+    contentCorner.CornerRadius = UDim.new(0, 8)
+    contentCorner.Parent = contentFrame
 
--- Clear button
-local ClearButton = Instance.new("TextButton")
-ClearButton.Size = UDim2.new(0, 80, 0, 30)
-ClearButton.Position = UDim2.new(1, -120, 0, 5)
-ClearButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
-ClearButton.BorderSizePixel = 0
-ClearButton.Text = "Clear Logs"
-ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ClearButton.Font = Enum.Font.Gotham
-ClearButton.TextSize = 14
-ClearButton.Parent = Frame
+    -- Create script content text label
+    local contentText = Instance.new("TextLabel")
+    contentText.Name = "ContentText"
+    contentText.Size = UDim2.new(1, -10, 0, 0)
+    contentText.AutomaticSize = Enum.AutomaticSize.Y
+    contentText.Position = UDim2.new(0, 10, 0, 10)
+    contentText.BackgroundTransparency = 1
+    contentText.Text = scriptContent or "No script content found"
+    contentText.TextColor3 = Color3.fromRGB(220, 220, 220)
+    contentText.TextXAlignment = Enum.TextXAlignment.Left
+    contentText.TextYAlignment = Enum.TextYAlignment.Top
+    contentText.Font = Enum.Font.Code
+    contentText.TextSize = 12
+    contentText.TextWrapped = false
+    contentText.TextXAlignment = Enum.TextXAlignment.Left
+    contentText.TextYAlignment = Enum.TextYAlignment.Top
+    contentText.Parent = contentFrame
 
-local ClearCorner = Instance.new("UICorner")
-ClearCorner.CornerRadius = UDim.new(0, 6)
-ClearCorner.Parent = ClearButton
+    -- Make window draggable
+    local dragInput
+    local dragStart
+    local startPos
 
--- Draggable UI variables 
-local dragging = false
-local dragInput
-local dragStart
-local startPos
-local dragOffset = Vector2.new(0, 0) -- Added to fix offset issue :cite[4]
-
--- Function to make UI draggable with proper input handling :cite[4]
-local function onInputChanged(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        -- Ensure Frame still exists
-        if not Frame or not Frame.Parent then
-            dragging = false
-            return
-        end
-        
-        -- Calculate delta with proper offset handling :cite[4]
+    local function update(input)
         local delta = input.Position - dragStart
-        Frame.Position = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
-end
 
--- Handle input based on device type with proper offset calculation :cite[4]
-local function onInputBegan(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        -- Check if Title still exists and is valid
-        if not Title or not Title.Parent then
-            return
-        end
-        
-        -- Safely get AbsolutePosition with error handling
-        local titleBarAbsolutePosition, titleBarAbsoluteSize
-        local success = pcall(function()
-            titleBarAbsolutePosition = Title.AbsolutePosition
-            titleBarAbsoluteSize = Title.AbsoluteSize
-        end)
-        
-        if not success then
-            return
-        end
-        
-        -- Check if input is within title bar bounds
-        if input.Position.X >= titleBarAbsolutePosition.X and 
-           input.Position.X <= titleBarAbsolutePosition.X + titleBarAbsoluteSize.X and
-           input.Position.Y >= titleBarAbsolutePosition.Y and 
-           input.Position.Y <= titleBarAbsolutePosition.Y + titleBarAbsoluteSize.Y then
-            
-            dragging = true
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragStart = input.Position
-            startPos = Frame.Position
+            startPos = mainFrame.Position
             
-            -- Calculate the offset between mouse and UI position :cite[4]
-            dragOffset = input.Position - Vector2.new(titleBarAbsolutePosition.X, titleBarAbsolutePosition.Y)
-            
-            -- Only capture touch input (safe now) :cite[1]
-            if input.UserInputType == Enum.UserInputType.Touch then
-                pcall(function() 
-                    -- Use proper input capture for mobile :cite[1]
-                    if input.UserInputState == Enum.UserInputState.Begin then
-                        -- Alternative approach for mobile drag
-                    end
-                end)
-            end
-            
-            -- Store the connection for cleanup
-            local connection
-            connection = input.Changed:Connect(function()
+            input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                    if connection then
-                        connection:Disconnect()
-                    end
+                    dragStart = nil
                 end
             end)
         end
-    end
-end
-
--- Connect input events
-UserInputService.InputBegan:Connect(onInputBegan)
-UserInputService.InputChanged:Connect(onInputChanged)
-
--- Collapse/Expand functionality 
-local isCollapsed = false
-local originalSize = Frame.Size
-local collapsedSize = UDim2.new(0, 400, 0, 40) -- Only show title bar when collapsed
-
-CollapseButton.MouseButton1Click:Connect(function()
-    isCollapsed = not isCollapsed
-    
-    if isCollapsed then
-        -- Collapse the frame
-        local tween = TweenService:Create(
-            Frame,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = collapsedSize}
-        )
-        tween:Play()
-        CollapseButton.Text = "+"
-        ScrollingFrame.Visible = false
-    else
-        -- Expand the frame
-        local tween = TweenService:Create(
-            Frame,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = originalSize}
-        )
-        tween:Play()
-        CollapseButton.Text = "-"
-        ScrollingFrame.Visible = true
-    end
-end)
-
--- Function to add a log entry to the UI
-local function addLogEntry(text, color)
-    local LogEntry = Instance.new("TextLabel")
-    LogEntry.Size = UDim2.new(1, 0, 0, 40)
-    LogEntry.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    LogEntry.BorderSizePixel = 0
-    LogEntry.Text = "[" .. os.date("%H:%M:%S") .. "] " .. text
-    LogEntry.TextColor3 = color
-    LogEntry.Font = Enum.Font.Gotham
-    LogEntry.TextSize = 14
-    LogEntry.TextWrapped = true
-    LogEntry.TextXAlignment = Enum.TextXAlignment.Left
-    LogEntry.Parent = ScrollingFrame
-    
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingLeft = UDim.new(0, 10)
-    Padding.PaddingRight = UDim.new(0, 10)
-    Padding.Parent = LogEntry
-    
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 6)
-    Corner.Parent = LogEntry
-    
-    -- Update canvas size
-    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
-    
-    -- Auto-scroll to bottom
-    ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
-end
-
-ClearButton.MouseButton1Click:Connect(function()
-    for _, child in ipairs(ScrollingFrame:GetChildren()) do
-        if child:IsA("TextLabel") then
-            child:Destroy()
-        end
-    end
-    addLogEntry("Logs cleared", Color3.fromRGB(200, 200, 200))
-end)
-
--- Wait for the GameEvents folder
-local GameEventsFolder
-local success, err = pcall(function()
-    GameEventsFolder = ReplicatedStorage:WaitForChild("GameEvents", 10)
-end)
-
-if not success or not GameEventsFolder then
-    addLogEntry("GameEvents folder not found or inaccessible: " .. tostring(err), Color3.fromRGB(255, 100, 100))
-    return
-end
-
-addLogEntry("Monitoring started for GameEvents folder", Color3.fromRGB(100, 200, 100))
-
--- Function to safely hook a RemoteEvent
-local function hookRemoteEvent(event)
-    if not event or not event:IsA("RemoteEvent") then
-        return
-    end
-    
-    -- Hook FireServer
-    local oldFire = event.FireServer
-    event.FireServer = function(...)
-        local args = {...}
-        pcall(function()
-            addLogEntry("[Fire] " .. event.Name .. " fired", Color3.fromRGB(100, 180, 255))
-        end)
-        
-        -- Always call the original function
-        return oldFire(event, unpack(args))
-    end
-    
-    -- Listen for server messages
-    event.OnClientEvent:Connect(function(...)
-        pcall(function()
-            addLogEntry("[Receive] " .. event.Name .. " received", Color3.fromRGB(100, 255, 180))
-        end)
     end)
-    
-    addLogEntry("Now monitoring: " .. event.Name, Color3.fromRGB(200, 200, 200))
-end
 
--- Monitor all existing events in the folder
-for _, event in ipairs(GameEventsFolder:GetChildren()) do
-    pcall(hookRemoteEvent, event)
-end
-
--- Monitor for new events added dynamically
-GameEventsFolder.ChildAdded:Connect(function(child)
-    pcall(function()
-        if child:IsA("RemoteEvent") then
-            hookRemoteEvent(child)
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
         end
     end)
-end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragStart then
+            update(input)
+        end
+    end)
+
+    -- Close button functionality
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
+
+    return screenGui
+end
+
+-- Function to find the correct Farm folder based on the Owner StringValue
+local function findFarmFolder()
+    local firstFarmFolder = workspace:FindFirstChild("Farm")
+    if not firstFarmFolder then
+        warn("First 'Farm' folder not found in Workspace")
+        return nil
+    end
+
+    -- Iterate through all children of the first Farm folder
+    for _, child in ipairs(firstFarmFolder:GetChildren()) do
+        if child.Name == "Farm" and child:IsA("Folder") then
+            local importantFolder = child:FindFirstChild("Important")
+            if importantFolder then
+                local ownerValue = importantFolder:FindFirstChild("Owner")
+                if ownerValue and ownerValue:IsA("StringValue") and ownerValue.Value == localPlayer.Name then
+                    return child  -- Found the correct Farm folder
+                end
+            end
+        end
+    end
+    warn("No matching Farm folder found for player: ", localPlayer.Name)
+    return nil
+end
+
+-- Function to retrieve the script content
+local function getScriptContent()
+    local farmFolder = findFarmFolder()
+    if not farmFolder then
+        return "Error: Could not find farm folder for player " .. localPlayer.Name
+    end
+
+    local objectsPhysical = farmFolder:FindFirstChild("Objects_Physical")
+    if not objectsPhysical then
+        return "Error: Objects_Physical folder not found"
+    end
+
+    -- Find the first PetEgg model
+    local petEgg = objectsPhysical:FindFirstChild("PetEgg")
+    if not petEgg then
+        return "Error: PetEgg model not found"
+    end
+
+    -- Navigate to the Script inside Zen Egg/ProximityPrompt
+    local zenEgg = petEgg:FindFirstChild("Zen Egg")
+    if not zenEgg then
+        return "Error: Zen Egg not found in PetEgg"
+    end
+
+    local proximityPrompt = zenEgg:FindFirstChild("ProximityPrompt")
+    if not proximityPrompt then
+        return "Error: ProximityPrompt not found in Zen Egg"
+    end
+
+    local targetScript = proximityPrompt:FindFirstChild("Script")
+    if not targetScript or not targetScript:IsA("Script") then
+        return "Error: Script not found in ProximityPrompt"
+    end
+
+    return targetScript.Source
+end
+
+-- Create and display the window with the script content
+local scriptContent = getScriptContent()
+createScriptViewerWindow(scriptContent)
