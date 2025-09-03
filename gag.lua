@@ -96,7 +96,7 @@ local InfoTab = Window:Tab("Info")
 -- Initialize
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
-local buttonNames = {"Gear", "Gears", "Event", "Rebirth", "Pets", "Pet"}
+local buttonNames = {"Gears", "Event", "Rebirth", "Pet"}
 
 local function removeExistingButtons(parent, names)
     if not parent then
@@ -509,9 +509,9 @@ local function toggleAutoClaimPet(state)
 end
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"None"}, function(selected)
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"Test1"}, function(selected)
     if selected then
-        Window:Notify("Selected: " .. selected, 2)
+        Window:Notify("Selected: " .. table.concat(selected, ", "), 2)
     end
 end, true)
 
