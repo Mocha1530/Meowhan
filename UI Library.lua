@@ -32,7 +32,7 @@ local IsMobile = UserInputService.TouchEnabled and not UserInputService.Keyboard
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "0verflowMinimal"
+ScreenGui.Name = "MeowhanUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder = 999999
@@ -67,6 +67,48 @@ local ToggleManager = {
     groups = {},
     keybinds = {}
 }
+
+-- Cleanup processes
+Library.RunningProcesses = {
+    loops = {},
+    connections = {},
+    tweens = {}
+}
+
+function Library:TrackProcess(processType, process, identifier)
+    if not self.RunningProcesses[processType] then
+        self.RunningProcesses[processType] = {}
+    end
+    self.RunningProcesses[processType][identifier or #sel   f.RunningProcesses[processType] + 1] = process
+    return process
+end
+
+-- Cleanup functions
+function Library:Cleanup()
+    -- Stop all loops
+    for _, loop in pairs(self.RunningProcesses.loops) do
+        if type(loop) == "boolean" then
+            loop = false
+        end
+    end
+    
+    -- Disconnect all connections
+    for _, connection in pairs(self.RunningProcesses.connections) do
+        if connection and typeof(connection) == "RBXScriptConnection" then
+            connection:Disconnect()
+        end
+    end
+    
+    -- Cancel all tweens
+    for _, tween in pairs(self.RunningProcesses.tweens) do
+        if tween and tween.PlaybackState == Enum.PlaybackState.Playing then
+            tween:Cancel()
+        end
+    end
+    
+    -- Clear all tables
+    self.RunningProcesses = {loops = {}, connections = {}, tweens = {}}
+end
 
 -- Enhanced Toggle Class
 local Toggle = {}
@@ -558,6 +600,7 @@ function Library:CreateWindow(title)
     end)
     
     CloseBtn.MouseButton1Click:Connect(function()
+        Library:Cleanup()
         Tween(Container, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
         Tween(ToggleBar, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3)
         wait(0.3)
@@ -1432,7 +1475,21 @@ function Library:CreateWindow(title)
     return Window
 end
 
+ScreenGui.Destroying:Connect(function()
+    for key, _ in pairs(Running) do
+        Running[key] = false
+    end
+    
+    if scalingLoop then
+        scalingLoop:Disconnect()
+    end
+    
+    restoreOriginalProperties()
+end)
+
 -- Export toggle manager for advanced users
 Library.ToggleManager = ToggleManager
+Library.Running = Running
+Library.Cleanup = cleanup 
 
 return Library
