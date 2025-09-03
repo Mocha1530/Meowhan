@@ -81,6 +81,22 @@ local InfoTab = Window:Tab("Info")
 -- Initialize
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
+local buttonNames = {"Gear", "Event", "Rebirth", "Pets"}
+
+local function removeExistingButtons(parent, names)
+    if not parent then
+        warn("Parent is nil. Cannot remove buttons.")
+        return
+    end
+
+    for _, child in ipairs(parent:GetChildren()) do
+        if table.find(names, child.Name) and (child:IsA("ImageButton") or child:IsA("TextButton")) then
+            child:Destroy()
+        end
+    end
+end
+
+removeExistingButtons(frame, buttonNames)
 
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
