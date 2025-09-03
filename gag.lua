@@ -8,6 +8,7 @@ local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
@@ -21,6 +22,8 @@ local DEFAULT_CONFIG = {
     AutoClaimMutatedPet = false,
     ShowGlimmerCounter = false,
     ShowMutationTimer = true,
+    WalkSpeed = 20,
+    JumpPower = 50,
     InfiniteJump = false
 }
 
@@ -353,7 +356,6 @@ if sellButton then
     sellButton.LayoutOrder = 3
 end
 
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Tp_Points = Workspace:FindFirstChild("Tutorial_Points")
 
@@ -527,12 +529,18 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 
 -- Settings Tab
 local UISection = SettingsTab:Section("UI")
+local LocalPlayerSection = SettingsTab:Section("Player")
+local RejoinSection = SettingsTab:Section("Rejoin Config")
 
 -- Settings Vars
 local mutationTimerEnabled = config.ShowMutationTimer or true
 local originalBillboardPosition = nil
 local billboardGui = nil
 local scalingLoop = nil
+local Humanoid = Character:WaitForChild("Humanoid")
+local walkSpeedValue = config.WalkSpeed or 20
+local jumpPowerValue = config.JumpPower or 50
+local infiniteJumpEnabled = config.InfiniteJump or false
 
 -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
@@ -710,13 +718,41 @@ if mutationTimerEnabled then
     showMutationTimerDisplay()
 end
 
--- Settings Tab
-local LocalPlayerSection = SettingsTab:Section("Player")
-local RejoinSection = SettingsTab:Section("Rejoin Config")
+-- Set walkspeed slider
+local function setWalkSpeed(speed)
+    Humanoid.WalkSpeed = speed
+end
+
+LocalPlayerSection:Slider("Walkspeed", 20, 1000, walkSpeedValue, function(value)
+    walkSpeedValue = value
+    config.WalkSpeed = value
+    saveConfig(config)
+
+    if value then
+        setWalkSpeed(value)
+    end
+end)
+
+setWalkSpeed(walkSpeedValue)
+
+-- Set jumppower slider
+local function setJumpPower(power)
+    Humanoid.JumpPower = power
+end
+
+LocalPlayerSection:Slider("Jump Power", 50, 1000, jumpPowerValue, function(value)
+    jumpPowerValue = value
+    config.JumpPower = value
+    saveConfig(config)
+    
+    if value then
+        setJumpPower(value)
+    end
+end)
+
+setJumpPower(jumpPowerValue)
 
 -- Inf jump toggle
-local infiniteJumpEnabled = config.InfiniteJump or false
-
 UserInputService.JumpRequest:connect(function()
     if infiniteJumpEnabled and Running.infiniteJump then	
     LocalPlayer.Character:FindFirstChildOfClass'Humanoid':ChangeState("Jumping")
