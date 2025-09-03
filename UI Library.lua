@@ -1163,8 +1163,9 @@ function Library:CreateWindow(title)
             end
             
             -- Dropdown (FIXED)
-            function Section:Dropdown(name, options, default, callback)
-                local selected = default or options[1] or ""
+            function Section:Dropdown(name, options, default, callback, multiSelect)
+                multiSelect = multiSelect or false
+                local selected = multiSelect and (default or {}) or (default or options[1] or "")
                 local opened = false
                 
                 local DropdownFrame = Instance.new("Frame")
@@ -1201,7 +1202,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = selected
+                SelectedLabel.Text = multiSelect and (#selected > 0 and table.concat(selected, ", ") or "Select options...") or selected
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1253,6 +1254,30 @@ function Library:CreateWindow(title)
                 ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 ListLayout.Padding = UDim.new(0, 2)
                 
+                -- Function to update the display of selected options
+                local function updateSelectedDisplay()
+                    if multiSelect then
+                        SelectedLabel.Text = #selected > 0 and table.concat(selected, ", ") or "Select options..."
+                    else
+                        SelectedLabel.Text = selected or "Select..."
+                    end
+                end
+                
+                -- Function to update option button appearance
+                local function updateOptionAppearance(optionBtn, option)
+                    if multiSelect then
+                        local isSelected = table.find(selected, option)
+                        optionBtn.TextColor3 = isSelected and Theme.Accent or Theme.TextDim
+                        
+                        -- Show/hide checkbox
+                        if optionBtn:FindFirstChild("Checkbox") then
+                            optionBtn.Checkbox.Visible = isSelected
+                        end
+                    else
+                        optionBtn.TextColor3 = (option == selected) and Theme.Accent or Theme.TextDim
+                    end
+                end
+                
                 -- Create option buttons
                 for _, option in ipairs(options) do
                     local OptionBtn = Instance.new("TextButton")
@@ -1262,12 +1287,50 @@ function Library:CreateWindow(title)
                     OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                     OptionBtn.Font = Enum.Font.Gotham
                     OptionBtn.Text = option
-                    OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                    OptionBtn.TextColor3 = Theme.TextDim
                     OptionBtn.TextSize = IsMobile and 11 or 12
                     
+                    -- Add checkbox for multi-select
+                    if multiSelect then
+                        local Checkbox = Instance.new("Frame")
+                        Checkbox.Name = "Checkbox"
+                        Checkbox.Parent = OptionBtn
+                        Checkbox.Size = UDim2.new(0, 14, 0, 14)
+                        Checkbox.Position = UDim2.new(0, 5, 0.5, -7)
+                        Checkbox.BackgroundColor3 = Theme.Card
+                        Checkbox.BorderSizePixel = 0
+                        Checkbox.Visible = table.find(selected, option)
+                        
+                        local CheckCorner = Instance.new("UICorner")
+                        CheckCorner.CornerRadius = UDim.new(0, 2)
+                        CheckCorner.Parent = Checkbox
+                        
+                        local Checkmark = Instance.new("TextLabel")
+                        Checkmark.Parent = Checkbox
+                        Checkmark.Size = UDim2.new(1, 0, 1, 0)
+                        Checkmark.BackgroundTransparency = 1
+                        Checkmark.Text = "✓"
+                        Checkmark.TextColor3 = Theme.Accent
+                        Checkmark.TextSize = 12
+                        Checkmark.Font = Enum.Font.Gotham
+                        
+                        -- Adjust text position to account for checkbox
+                        OptionBtn.TextXAlignment = Enum.TextXAlignment.Left
+                        OptionBtn.Padding = UIPadding.new(UDim.new(0, 25), UDim.new(0, 0), UDim.new(0, 0), UDim.new(0, 0))
+                    end
+                    
+                    -- Initialize appearance
+                    updateOptionAppearance(OptionBtn, option)
+                    
                     OptionBtn.MouseEnter:Connect(function()
-                        if option ~= selected then
-                            Tween(OptionBtn, {BackgroundTransparency = 0.8})
+                        if multiSelect then
+                            if not table.find(selected, option) then
+                                Tween(OptionBtn, {BackgroundTransparency = 0.8})
+                            end
+                        else
+                            if option ~= selected then
+                                Tween(OptionBtn, {BackgroundTransparency = 0.8})
+                            end
                         end
                     end)
                     
@@ -1276,29 +1339,38 @@ function Library:CreateWindow(title)
                     end)
                     
                     OptionBtn.MouseButton1Click:Connect(function()
-                        if selected == option then
-                            selected = nil
-                            SelectedLabel.Text = default
+                        if multiSelect then
+                            -- Multi-select logic
+                            local index = table.find(selected, option)
+                            if index then
+                                table.remove(selected, index)
+                            else
+                                table.insert(selected, option)
+                            end
                         else
-                            selected = option
-                            SelectedLabel.Text = option
-                        end
-                        
-                        -- Update colors
-                        for _, child in ipairs(ListScroll:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                            -- Single-select logic
+                            if selected == option then
+                                selected = nil
+                            else
+                                selected = option
                             end
                         end
                         
-                        -- Close dropdown
-                        opened = false
-                        Tween(Arrow, {Rotation = 0}, 0.2)
-                        Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                        wait(0.2)
-                        ListContainer.Visible = false
-                        DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                        -- Update UI
+                        updateSelectedDisplay()
+                        updateOptionAppearance(OptionBtn, option)
                         
+                        -- Close dropdown for single-select
+                        if not multiSelect then
+                            opened = false
+                            Tween(Arrow, {Rotation = 0}, 0.2)
+                            Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                            wait(0.2)
+                            ListContainer.Visible = false
+                            DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                        end
+                        
+                        -- Fire callback
                         if callback then callback(selected) end
                     end)
                 end
@@ -1332,17 +1404,38 @@ function Library:CreateWindow(title)
                 end
                 
                 return {
-                    Set = function(option)
-                        if table.find(options, option) then
-                            selected = option
-                            SelectedLabel.Text = option
-                            for _, child in ipairs(ListScroll:GetChildren()) do
-                                if child:IsA("TextButton") then
-                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                    Set = function(value)
+                        if multiSelect then
+                            if type(value) == "table" then
+                                selected = {}
+                                for _, option in ipairs(value) do
+                                    if table.find(options, option) then
+                                        table.insert(selected, option)
+                                    end
+                                end
+                                
+                                -- Update all option appearances
+                                for _, child in ipairs(ListScroll:GetChildren()) do
+                                    if child:IsA("TextButton") then
+                                        updateOptionAppearance(child, child.Text)
+                                    end
                                 end
                             end
-                            if callback then callback(selected) end
+                        else
+                            if table.find(options, value) then
+                                selected = value
+                                
+                                -- Update all option appearances
+                                for _, child in ipairs(ListScroll:GetChildren()) do
+                                    if child:IsA("TextButton") then
+                                        updateOptionAppearance(child, child.Text)
+                                    end
+                                end
+                            end
                         end
+                        
+                        updateSelectedDisplay()
+                        if callback then callback(selected) end
                     end,
                     Get = function()
                         return selected
@@ -1357,6 +1450,15 @@ function Library:CreateWindow(title)
                             end
                         end
                         
+                        -- Reset selection
+                        if multiSelect then
+                            selected = {}
+                        else
+                            selected = options[1] or ""
+                        end
+                        
+                        updateSelectedDisplay()
+                        
                         -- Add new options
                         for _, option in ipairs(options) do
                             local OptionBtn = Instance.new("TextButton")
@@ -1366,26 +1468,74 @@ function Library:CreateWindow(title)
                             OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                             OptionBtn.Font = Enum.Font.Gotham
                             OptionBtn.Text = option
-                            OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                            OptionBtn.TextColor3 = Theme.TextDim
                             OptionBtn.TextSize = IsMobile and 11 or 12
                             
-                            OptionBtn.MouseButton1Click:Connect(function()
-                                selected = option
-                                SelectedLabel.Text = option
+                            -- Add checkbox for multi-select
+                            if multiSelect then
+                                local Checkbox = Instance.new("Frame")
+                                Checkbox.Name = "Checkbox"
+                                Checkbox.Parent = OptionBtn
+                                Checkbox.Size = UDim2.new(0, 14, 0, 14)
+                                Checkbox.Position = UDim2.new(0, 5, 0.5, -7)
+                                Checkbox.BackgroundColor3 = Theme.Card
+                                Checkbox.BorderSizePixel = 0
+                                Checkbox.Visible = table.find(selected, option)
                                 
-                                for _, child in ipairs(ListScroll:GetChildren()) do
-                                    if child:IsA("TextButton") then
-                                        child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                local CheckCorner = Instance.new("UICorner")
+                                CheckCorner.CornerRadius = UDim.new(0, 2)
+                                CheckCorner.Parent = Checkbox
+                                
+                                local Checkmark = Instance.new("TextLabel")
+                                Checkmark.Parent = Checkbox
+                                Checkmark.Size = UDim2.new(1, 0, 1, 0)
+                                Checkmark.BackgroundTransparency = 1
+                                Checkmark.Text = "✓"
+                                Checkmark.TextColor3 = Theme.Accent
+                                Checkmark.TextSize = 12
+                                Checkmark.Font = Enum.Font.Gotham
+                                
+                                -- Adjust text position to account for checkbox
+                                OptionBtn.TextXAlignment = Enum.TextXAlignment.Left
+                                OptionBtn.Padding = UIPadding.new(UDim.new(0, 25), UDim.new(0, 0), UDim.new(0, 0), UDim.new(0, 0))
+                            end
+                            
+                            -- Initialize appearance
+                            updateOptionAppearance(OptionBtn, option)
+                            
+                            OptionBtn.MouseButton1Click:Connect(function()
+                                if multiSelect then
+                                    -- Multi-select logic
+                                    local index = table.find(selected, option)
+                                    if index then
+                                        table.remove(selected, index)
+                                    else
+                                        table.insert(selected, option)
+                                    end
+                                else
+                                    -- Single-select logic
+                                    if selected == option then
+                                        selected = nil
+                                    else
+                                        selected = option
                                     end
                                 end
                                 
-                                opened = false
-                                Tween(Arrow, {Rotation = 0}, 0.2)
-                                Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                                wait(0.2)
-                                ListContainer.Visible = false
-                                DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                                -- Update UI
+                                updateSelectedDisplay()
+                                updateOptionAppearance(OptionBtn, option)
                                 
+                                -- Close dropdown for single-select
+                                if not multiSelect then
+                                    opened = false
+                                    Tween(Arrow, {Rotation = 0}, 0.2)
+                                    Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                                    wait(0.2)
+                                    ListContainer.Visible = false
+                                    DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                                end
+                                
+                                -- Fire callback
                                 if callback then callback(selected) end
                             end)
                         end
