@@ -104,6 +104,7 @@ local function connectDestroyEvent()
             task.wait(0.5)
         end
     end
+    warn("Attempts: " .. attempts)
 
     if uiScreenGui then
         uiScreenGui.Destroying:Connect(function()
