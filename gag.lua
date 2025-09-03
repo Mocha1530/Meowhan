@@ -373,7 +373,7 @@ end)
 rebirthButton.MouseButton1Click:Connect(function()
     local targetCFrame = CFrame.new(
         126.44146, 
-        2.99999976, 
+        5.99999976, 
         167.216751, 
         -0.720815241, -9.22248873e-08, -0.693127275, 
         -4.49386484e-08, 1, -8.6322423e-08, 
