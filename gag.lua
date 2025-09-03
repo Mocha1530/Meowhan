@@ -94,7 +94,29 @@ local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
 -- Initialize
+local function connectDestroyEvent()
+    local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
+    
+    if uiScreenGui then
+        uiScreenGui.Destroying:Connect(function()
+            for key, _ in pairs(Running) do
+                Running[key] = false
+            end
+            
+            if scalingLoop then
+                scalingLoop:Disconnect()
+            end
+            
+            if restoreOriginalProperties then
+                restoreOriginalProperties()
+            end
+        end)
+    else
+        warn("ScreenGui not found in CoreGui or PlayerGui")
+    end
+end
 
+connectDestroyEvent()
 
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
@@ -381,7 +403,7 @@ end)
 rebirthButton.MouseButton1Click:Connect(function()
     local targetCFrame = CFrame.new(
         126.44146, 
-        5.99999976, 
+        3.99999976, 
         167.216751, 
         -0.720815241, -9.22248873e-08, -0.693127275, 
         -4.49386484e-08, 1, -8.6322423e-08, 
