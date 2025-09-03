@@ -3,6 +3,7 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -93,6 +94,30 @@ local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
 -- Initialize
+local function connectDestroyEvent()
+    local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
+    
+    if uiScreenGui then
+        uiScreenGui.Destroying:Connect(function()
+            for key, _ in pairs(Running) do
+                Running[key] = false
+            end
+            
+            if scalingLoop then
+                scalingLoop:Disconnect()
+            end
+            
+            if restoreOriginalProperties then
+                restoreOriginalProperties()
+            end
+        end)
+    else
+        warn("ScreenGui not found in CoreGui or PlayerGui")
+    end
+end
+
+task.delay(1, connectDestroyEvent)
+
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
 local buttonNames = {"Gear", "Event", "Rebirth", "Pets"}
