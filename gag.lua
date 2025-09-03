@@ -930,15 +930,3 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
-
-ScreenGui.Destroying:Connect(function()
-    for key, _ in pairs(Running) do
-        Running[key] = false
-    end
-    
-    if scalingLoop then
-        scalingLoop:Disconnect()
-    end
-    
-    restoreOriginalProperties()
-end)
