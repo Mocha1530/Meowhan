@@ -1475,21 +1475,7 @@ function Library:CreateWindow(title)
     return Window
 end
 
-ScreenGui.Destroying:Connect(function()
-    for key, _ in pairs(Running) do
-        Running[key] = false
-    end
-    
-    if scalingLoop then
-        scalingLoop:Disconnect()
-    end
-    
-    restoreOriginalProperties()
-end)
-
 -- Export toggle manager for advanced users
 Library.ToggleManager = ToggleManager
-Library.Running = Running
-Library.Cleanup = cleanup 
 
 return Library
