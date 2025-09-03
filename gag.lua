@@ -772,11 +772,13 @@ end)
 setJumpPower(jumpPowerValue)
 
 -- Inf jump toggle
-UserInputService.JumpRequest:connect(function()
+infiniteJumpLoop = UserInputService.JumpRequest:connect(function()
     if infiniteJumpEnabled and Running.infiniteJump then	
     LocalPlayer.Character:FindFirstChildOfClass'Humanoid':ChangeState("Jumping")
     end
 end)
+
+UILib:TrackProcess("connections", infiniteJumpLoop, "infiniteJumpLoop")
 
 LocalPlayerSection:Toggle("Infinite Jump", function(state)
     infiniteJumpEnabled = state
