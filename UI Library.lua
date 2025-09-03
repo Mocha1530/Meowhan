@@ -77,7 +77,7 @@ function Library:TrackProcess(processType, process, identifier)
     if not self.RunningProcesses[processType] then
         self.RunningProcesses[processType] = {}
     end
-    self.RunningProcesses[processType][identifier or #sel   f.RunningProcesses[processType] + 1] = process
+    self.RunningProcesses[processType][identifier or #self.RunningProcesses[processType] + 1] = process
     return process
 end
 
