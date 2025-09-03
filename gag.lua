@@ -96,7 +96,7 @@ local InfoTab = Window:Tab("Info")
 -- Initialize
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
-local buttonNames = {"Gears", "Event", "Rebirth", "Pet"}
+local buttonNames = {"Gear", "Event", "Rebirth", "Pets"}
 
 local function removeExistingButtons(parent, names)
     if not parent then
@@ -121,7 +121,7 @@ end
 
 -- Gear teleport button UI
 local gearButton = Instance.new("ImageButton")
-gearButton.Name = "Gears"
+gearButton.Name = "Gear"
 gearButton.BackgroundColor3 = Color3.fromRGB(97, 226, 51)
 gearButton.BackgroundTransparency = 0
 gearButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -294,7 +294,7 @@ end
 
 -- Pet teleport button UI
 local petButton = Instance.new("ImageButton")
-petButton.Name = "Pet"
+petButton.Name = "Pets"
 petButton.BackgroundColor3 = Color3.fromRGB(226, 163, 37)
 petButton.BackgroundTransparency = 0
 petButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
