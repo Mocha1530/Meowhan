@@ -102,14 +102,6 @@ local function connectDestroyEvent()
             for key, _ in pairs(Running) do
                 Running[key] = false
             end
-            
-            if scalingLoop then
-                scalingLoop:Disconnect()
-            end
-            
-            if restoreOriginalProperties then
-                restoreOriginalProperties()
-            end
         end)
     else
         warn("ScreenGui not found in CoreGui or PlayerGui")
@@ -614,7 +606,12 @@ local function startScalingLoop()
     end
 
     scalingLoop = RunService.RenderStepped:Connect(function()
-        if not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
+        if not Running.showMutationTimer or not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
+            if originalBillboardPosition then
+                restoreOriginalProperties()
+            end
+
+                
             if scalingLoop then
                 scalingLoop:Disconnect()
                 scalingLoop = nil
@@ -647,8 +644,6 @@ local function startScalingLoop()
             billboardGui.Size = UDim2.new(newX, 0, newY, 0)
         end
     end)
-    
-    UILib:TrackProcess("connections", scalingLoop, "scalingLoop")
 end
 
 -- Function to restore the original position and properties
