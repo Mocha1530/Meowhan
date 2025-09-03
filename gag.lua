@@ -94,22 +94,6 @@ local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
 -- Initialize
-local function connectDestroyEvent()
-    local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
-    
-    if uiScreenGui then
-        uiScreenGui.Destroying:Connect(function()
-            for key, _ in pairs(Running) do
-                Running[key] = false
-            end
-        end)
-    else
-        warn("ScreenGui not found in CoreGui or PlayerGui")
-    end
-end
-
-connectDestroyEvent()
-
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
 local buttonNames = {"Gear", "Event", "Rebirth", "Pets"}
@@ -607,11 +591,6 @@ local function startScalingLoop()
 
     scalingLoop = RunService.RenderStepped:Connect(function()
         if not Running.showMutationTimer or not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
-            if originalBillboardPosition then
-                restoreOriginalProperties()
-            end
-
-                
             if scalingLoop then
                 scalingLoop:Disconnect()
                 scalingLoop = nil
@@ -707,6 +686,24 @@ local function showMutationTimerDisplay()
         return false
     end
 end
+
+local function connectDestroyEvent()
+    local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
+    
+    if uiScreenGui then
+        uiScreenGui.Destroying:Connect(function()
+            for key, _ in pairs(Running) do
+                Running[key] = false
+            end
+            if restoreOriginalProperties then
+                restoreOriginalProperties()
+        end)
+    else
+        warn("ScreenGui not found in CoreGui or PlayerGui")
+    end
+end
+
+connectDestroyEvent()
 
 UISection:Toggle("Show Mutation Timer", function(state)
     mutationTimerEnabled = state
