@@ -95,8 +95,16 @@ local InfoTab = Window:Tab("Info")
 
 -- Initialize
 local function connectDestroyEvent()
-    local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
-    
+    local uiScreenGui
+    local attempts = 0
+    while not uiScreenGui and attempts < 10 do
+        uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:FindFirstChild("MeowhanUI")
+        if not uiScreenGui then
+            attempts += 1
+            task.wait(0.5)
+        end
+    end
+
     if uiScreenGui then
         uiScreenGui.Destroying:Connect(function()
             for key, _ in pairs(Running) do
@@ -111,12 +119,33 @@ local function connectDestroyEvent()
                 restoreOriginalProperties()
             end
         end)
+        
+        local ancestryConnection
+        ancestryConnection = uiScreenGui.AncestryChanged:Connect(function()
+            if not uiScreenGui:IsDescendantOf(game) then
+                for key, _ in pairs(Running) do
+                    Running[key] = false
+                end
+                
+                if scalingLoop then
+                    scalingLoop:Disconnect()
+                end
+                
+                if restoreOriginalProperties then
+                    restoreOriginalProperties()
+                end
+                
+                ancestryConnection:Disconnect()
+            end
+        end)
+        
+        UILib:TrackProcess("connections", ancestryConnection, "ancestryConnection")
     else
-        warn("ScreenGui not found in CoreGui or PlayerGui")
+        warn("ScreenGui not found in CoreGui or PlayerGui after multiple attempts")
     end
 end
 
-task.delay(1, connectDestroyEvent)
+task.spawn(connectDestroyEvent)
 
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
@@ -426,8 +455,8 @@ local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
 -- Mutation Machine Vars
-local autoStartMachineEnabled = config.AutoStartPetMutation or false
-local autoClaimPetEnabled = config.AutoClaimMutatedPet or false
+local autoStartMachineEnabled = config.AutoStartPetMutation
+local autoClaimPetEnabled = config.AutoClaimMutatedPet
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
 -- Mutation Machine Timer
@@ -532,7 +561,7 @@ local function toggleAutoClaimPet(state)
     end
 end
 
-  -- Select det dropdown
+  -- Select pet dropdown
 MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
     if selected then
         Window:Notify("Selected: " .. selected, 2)
@@ -558,14 +587,14 @@ local LocalPlayerSection = SettingsTab:Section("Player")
 local RejoinSection = SettingsTab:Section("Rejoin Config")
 
 -- Settings Vars
-local mutationTimerEnabled = config.ShowMutationTimer or true
+local mutationTimerEnabled = config.ShowMutationTimer
 local originalBillboardPosition = nil
 local billboardGui = nil
 local scalingLoop = nil
 local Humanoid = Character:WaitForChild("Humanoid")
-local walkSpeedValue = config.WalkSpeed or 20
-local jumpPowerValue = config.JumpPower or 50
-local infiniteJumpEnabled = config.InfiniteJump or false
+local walkSpeedValue = config.WalkSpeed
+local jumpPowerValue = config.JumpPower
+local infiniteJumpEnabled = config.InfiniteJump
 
 -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
