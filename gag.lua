@@ -76,7 +76,6 @@ end
 -- Create UI
 local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI%20Library.lua'))()
 local Window = UILib:CreateWindow("   Grow A Garden - Meowhan")
-local Running = UILib.Running
 local config = loadConfig()
 local currentJobId = game.JobId
 
@@ -842,4 +841,16 @@ StatsSection:Label("Current Place ID: " .. game.PlaceId)
 StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
+end)
+
+ScreenGui.Destroying:Connect(function()
+    for key, _ in pairs(Running) do
+        Running[key] = false
+    end
+    
+    if scalingLoop then
+        scalingLoop:Disconnect()
+    end
+    
+    restoreOriginalProperties()
 end)
