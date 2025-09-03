@@ -9,8 +9,6 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
-local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
-local GameName = GameInfo.Name
 
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -21,6 +19,15 @@ local DEFAULT_CONFIG = {
     AutoClaimMutatedPet = false,
     ShowGlimmerCounter = false,
     ShowMutationTimer = true
+}
+
+local Running = {
+    autoStartMachine = true,
+    autoClaimPet = true,
+    showMutationTimer = true,
+    autoBuyAll = true,
+    autoBuySelected = true,
+    stockUpdate = true
 }
 
 -- Create folder structure
@@ -42,15 +49,15 @@ end
 local function loadConfig()
     ensureFolderStructure()
     local fullPath = CONFIG_FOLDER .. CONFIG_FILENAME
-
+    
     if not pcall(function() return readfile(fullPath) end) then
         return DEFAULT_CONFIG
     end
-
+    
     local success, config = pcall(function()
         return HttpService:JSONDecode(readfile(fullPath))
     end)
-
+    
     return success and config or DEFAULT_CONFIG
 end
 
@@ -69,6 +76,7 @@ end
 -- Create UI
 local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI%20Library.lua'))()
 local Window = UILib:CreateWindow("   Grow A Garden - Meowhan")
+local Running = UILib.Running
 local config = loadConfig()
 local currentJobId = game.JobId
 
@@ -454,7 +462,7 @@ end, {
 })
 
 spawn(function()
-    while true do
+    while Running.autoStartMachine do
         if autoStartMachineEnabled then
             local timerStatus = getMutationMachineTimer()
             if timerStatus == nil or timerStatus == "" then
@@ -469,7 +477,7 @@ end)
 
 -- Mutation machine functions
 spawn(function()
-    while true do
+    while Running.autoClaimPet do
         if autoClaimPetEnabled then
             local timerStatus = getMutationMachineTimer()
             if timerStatus == "READY" then
@@ -509,10 +517,11 @@ local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(st
 end, {
     default = autoClaimPetEnabled
 })
+
 -- Job ID input with current job as placeholder
 local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
 
--- Delay slider
+  -- Delay slider
 local delayValue = config.InitialDelay or 5
 local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
     delayValue = value
@@ -520,7 +529,7 @@ local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, func
     saveConfig(config)
 end)
 
--- Countdown function
+  -- Countdown function
 local function countdown(seconds)
     for i = seconds, 1, -1 do
         print("Rejoining in " .. i .. " seconds...")
@@ -528,15 +537,15 @@ local function countdown(seconds)
     end
 end
 
--- Main teleport function
+  -- Main teleport function
 local function persistentTeleport(jobId, initialDelay)
     local ATTEMPT_COUNTER = 0
     local FIXED_RETRY_DELAY = 2
-
+    
     if ATTEMPT_COUNTER == 0 then
         countdown(initialDelay)
     end
-
+    
     while true do
         ATTEMPT_COUNTER += 1
         print("\nAttempt #" .. ATTEMPT_COUNTER .. " to rejoin server")
@@ -552,7 +561,7 @@ local function persistentTeleport(jobId, initialDelay)
                 failureConnection:Disconnect()
             end
         end)
-
+        
         local success, err = pcall(function()
             TeleportService:TeleportToPlaceInstance(placeId, jobId, Players.LocalPlayer)
         end)
@@ -565,7 +574,7 @@ local function persistentTeleport(jobId, initialDelay)
         if failureConnection.Connected then
             failureConnection:Disconnect()
         end
-
+        
         if teleportSucceeded then
             print("Rejoined")
             return
@@ -578,12 +587,12 @@ local function persistentTeleport(jobId, initialDelay)
         else
             warn("Rejoin failed for unknown reason")
         end
-
+        
         local jitter = math.random(0, 20) * 0.1
         local total_delay = FIXED_RETRY_DELAY + jitter
-
+        
         print("Next attempt in " .. string.format("%.1f", total_delay) .. " seconds")
-
+        
         local wait_interval = 1 
         local waited = 0
         while waited < total_delay do
@@ -595,7 +604,7 @@ local function persistentTeleport(jobId, initialDelay)
     end
 end
 
--- Start button
+  -- Start button
 RejoinSection:Button("Auto Rejoin", function()
     -- Update and save config
     local newConfig = {
@@ -603,15 +612,15 @@ RejoinSection:Button("Auto Rejoin", function()
         JobId = currentJobId
     }
     saveConfig(newConfig)
-
+    
     -- Determine job ID to use
     local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
-
+    
     -- Start teleport process
     local success, err = pcall(function()
         persistentTeleport(targetJobId, newConfig.InitialDelay)
     end)
-
+    
     if not success then
         warn("CRITICAL ERROR:", err)
         print("Restarting rejoin process...")
@@ -625,114 +634,19 @@ end)
 -- Event Tab
 local EventSection = EventTab:Section("Fairy Event")
 
--- Glimmering Counter UI
-local glimmerCounterEnabled = config.ShowGlimmerCounter or false
-local glimmerGui = nil
-local glimmerCount = 0
-
-local function createGlimmerCounter()
-    -- Destroy existing GUI if it exists
-    if glimmerGui and typeof(glimmerGui) == "Instance" then
-        glimmerGui:Destroy()
-    end
-
-    local player = game.Players.LocalPlayer
-    local rs = game:GetService('ReplicatedStorage')
-
-    -- Create the GUI
-    glimmerGui = Instance.new('ScreenGui')
-    glimmerGui.Name = 'GlimmerCounter'
-    glimmerGui.ResetOnSpawn = false
-    glimmerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    glimmerGui.Parent = player:WaitForChild('PlayerGui')
-
-    local frame = Instance.new('Frame')
-    frame.Size = UDim2.new(0, 380, 0, 70)
-    frame.Position = UDim2.new(1, -400, 0, 20)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frame.BackgroundTransparency = 0.15
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(150, 50, 200)
-    frame.Parent = glimmerGui
-
-    local header = Instance.new('TextLabel')
-    header.Size = UDim2.new(1, -20, 0, 28)
-    header.Position = UDim2.new(0, 10, 0, 5)
-    header.BackgroundTransparency = 1
-    header.Text = 'Glimmering Fruits'
-    header.TextColor3 = Color3.fromRGB(180, 100, 255)
-    header.TextSize = 20
-    header.Font = Enum.Font.Code
-    header.TextXAlignment = Enum.TextXAlignment.Left
-    header.Parent = frame
-
-    local counter = Instance.new('TextLabel')
-    counter.Size = UDim2.new(1, -20, 0, 35)
-    counter.Position = UDim2.new(0, 10, 0, 28)
-    counter.BackgroundTransparency = 1
-    counter.Text = 'Count: 0'
-    counter.TextColor3 = Color3.fromRGB(230, 230, 230)
-    counter.TextSize = 16
-    counter.Font = Enum.Font.Code
-    counter.TextXAlignment = Enum.TextXAlignment.Left
-    counter.Parent = frame
-
-    glimmerCount = 0
-
-    local notificationEvent = rs:WaitForChild('GameEvents'):WaitForChild('Notification')
-    notificationEvent.OnClientEvent:Connect(function(msg)
-        if typeof(msg) == 'string' and msg == 'A Fruit in your garden, mutated to Glimmering!' then
-            glimmerCount = glimmerCount + 1
-            counter.Text = 'Count: ' .. glimmerCount
-        end
-    end)
-
-    return glimmerGui
-end
-
-local function toggleGlimmerCounter(state)
-    glimmerCounterEnabled = state
-    config.ShowGlimmerCounter = state
-    saveConfig(config)
-
-    if state then
-        createGlimmerCounter()
-        Window:Notify("Glimmer Counter Enabled", 2)
-    else
-        if glimmerGui and typeof(glimmerGui) == "Instance" then
-            glimmerGui:Destroy()
-            glimmerGui = nil
-        end
-        Window:Notify("Glimmer Counter Disabled", 2)
-    end
-end
-
--- FIXED: Use the correct toggle method from the UI library
--- Create a toggle using the Section:Toggle method instead of EventSection:Toggle
-local glimmerToggle = EventSection:Toggle("Enable Glimmering Counter", function(state)
-    toggleGlimmerCounter(state)
-end, {
-    default = glimmerCounterEnabled
-})
-
--- Initialize glimmer counter if enabled
-if glimmerCounterEnabled then
-    createGlimmerCounter()
-end
-
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
--- Settings
+-- Settings Tab
 local UISection = SettingsTab:Section("UI")
 
-  -- Settings Vars
+-- Settings Vars
 local mutationTimerEnabled = config.ShowMutationTimer or true
 local originalBillboardPosition = nil
 local billboardGui = nil
 local scalingLoop = nil
 
-  -- Function to find and store the BillboardGui reference
+-- Function to find and store the BillboardGui reference
 local function findBillboardGui()
     local model2 = Workspace:FindFirstChild("NPCS")
     
@@ -777,8 +691,9 @@ local function startScalingLoop()
         scalingLoop:Disconnect()
         scalingLoop = nil
     end
-    
+
     scalingLoop = RunService.RenderStepped:Connect(function()
+        local mutationTimerEnabled = config.ShowMutationTimer or true
         if not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
             if scalingLoop then
                 scalingLoop:Disconnect()
@@ -812,9 +727,11 @@ local function startScalingLoop()
             billboardGui.Size = UDim2.new(newX, 0, newY, 0)
         end
     end)
+    
+    Library:TrackProcess("connections", scalingLoop, "scalingLoop")
 end
 
-  -- Function to restore the original position and properties
+-- Function to restore the original position and properties
 local function restoreOriginalProperties()
     if originalBillboardPosition then
         local model3 = Workspace:FindFirstChild("NPCS")
@@ -833,12 +750,12 @@ local function restoreOriginalProperties()
                             -- Restore the BillboardGui properties
                             local gui = billboardPart:FindFirstChild("BillboardGui")
                             if gui then
-                                gui.MaxDistance = 60  -- Default value
+                                gui.MaxDistance = 60
                                 gui.Size = UDim2.new(7, 0, 4, 0)
                             end
                         end
                     end
-                end
+                end 
             end
         end
     end
@@ -864,7 +781,7 @@ local function showMutationTimerDisplay()
         return true
     else
         task.spawn(function()
-            task.wait(2) -- Wait a bit for the game to load
+            task.wait(2)
             if mutationTimerEnabled then
                 local success = findBillboardGui()
                 if success and billboardGui then
@@ -877,7 +794,6 @@ local function showMutationTimerDisplay()
 end
 
 
-  -- Function to toggle the timer enhancement
 local function toggleMutationTimer(state)
     mutationTimerEnabled = state
     config.ShowMutationTimer = state
@@ -908,11 +824,15 @@ end
 
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
+local StatsSection = InfoTab:Section("Session Statistics")
 
+-- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
 AboutSection:Label("Version: 1.2.5")
 
-local StatsSection = InfoTab:Section("Session Statistics")
+-- Stats
+local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
+local GameName = GameInfo.Name
 
 StatsSection:Label("Current Game: " .. GameName)
 StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
