@@ -794,7 +794,9 @@ LocalPlayerSection:Toggle("Infinite Jump", function(state)
     else
         Window:Notify("Infinite Jump Disabled", 2)
     end
-end)
+end, {
+        default = infiniteJumpEnabled
+})
 
 -- Job ID input with current job as placeholder
 local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
