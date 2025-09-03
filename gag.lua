@@ -697,6 +697,7 @@ local function connectDestroyEvent()
             end
             if restoreOriginalProperties then
                 restoreOriginalProperties()
+            end
         end)
     else
         warn("ScreenGui not found in CoreGui or PlayerGui")
