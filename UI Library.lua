@@ -1237,6 +1237,7 @@ function Library:CreateWindow(title)
                     OptionBtn.MouseButton1Click:Connect(function()
                         if selected == option then
                             selected = nil
+                            SelectedLabel.Text = default
                         else
                             selected = option
                             SelectedLabel.Text = option
