@@ -96,7 +96,7 @@ local InfoTab = Window:Tab("Info")
 -- Initialize
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
-local buttonNames = {"Gear", "Event", "Rebirth", "Pets"}
+local buttonNames = {"Gear", "Gears", "Event", "Rebirth", "Pets", "Pet"}
 
 local function removeExistingButtons(parent, names)
     if not parent then
@@ -121,7 +121,7 @@ end
 
 -- Gear teleport button UI
 local gearButton = Instance.new("ImageButton")
-gearButton.Name = "Gear"
+gearButton.Name = "Gears"
 gearButton.BackgroundColor3 = Color3.fromRGB(97, 226, 51)
 gearButton.BackgroundTransparency = 0
 gearButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -294,7 +294,7 @@ end
 
 -- Pet teleport button UI
 local petButton = Instance.new("ImageButton")
-petButton.Name = "Pets"
+petButton.Name = "Pet"
 petButton.BackgroundColor3 = Color3.fromRGB(226, 163, 37)
 petButton.BackgroundTransparency = 0
 petButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -509,11 +509,11 @@ local function toggleAutoClaimPet(state)
 end
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"None"}, function(selected)
     if selected then
         Window:Notify("Selected: " .. selected, 2)
     end
-end)
+end, true)
 
   -- Auto claim toggle
 local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
@@ -920,4 +920,3 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
-
