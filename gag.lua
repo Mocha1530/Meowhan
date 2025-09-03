@@ -113,10 +113,12 @@ local function connectDestroyEvent()
             
             if scalingLoop then
                 scalingLoop:Disconnect()
+                Window:Notify("scalingloop", 2)
             end
             
             if restoreOriginalProperties then
                 restoreOriginalProperties()
+                Window:Notify("restore", 2)
             end
         end)
         
@@ -129,10 +131,12 @@ local function connectDestroyEvent()
                 
                 if scalingLoop then
                     scalingLoop:Disconnect()
+                    Window:Notify("scalingloop", 2)
                 end
                 
                 if restoreOriginalProperties then
                     restoreOriginalProperties()
+                    Window:Notify("restore", 2)
                 end
                 
                 ancestryConnection:Disconnect()
@@ -145,7 +149,7 @@ local function connectDestroyEvent()
     end
 end
 
-task.spawn(connectDestroyEvent)
+connectDestroyEvent()
 
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
