@@ -897,7 +897,7 @@ local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
 local GameName = GameInfo.Name
 
 StatsSection:Label("Current Game: " .. GameName)
-StatsSection:Label("Player: " .. game.LocalPlayer.Name)
+StatsSection:Label("Player: " .. LocalPlayer.Name)
 StatsSection:Label("Current Job ID: " .. game.JobId)
 StatsSection:Label("Current Place ID: " .. game.PlaceId)
 
