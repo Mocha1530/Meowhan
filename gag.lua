@@ -614,7 +614,6 @@ local function startScalingLoop()
     end
 
     scalingLoop = RunService.RenderStepped:Connect(function()
-        local mutationTimerEnabled = config.ShowMutationTimer or true
         if not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
             if scalingLoop then
                 scalingLoop:Disconnect()
@@ -714,12 +713,11 @@ local function showMutationTimerDisplay()
     end
 end
 
-
-local function toggleMutationTimer(state)
+UISection:Toggle("Show Mutation Timer", function(state)
     mutationTimerEnabled = state
     config.ShowMutationTimer = state
     saveConfig(config)
-    
+
     if state then
         if showMutationTimerDisplay() then
             Window:Notify("Mutation Timer Display Enabled", 2)
@@ -730,10 +728,6 @@ local function toggleMutationTimer(state)
         restoreOriginalProperties()
         Window:Notify("Mutation Timer Display Disabled", 2)
     end
-end
-
-UISection:Toggle("Show Mutation Timer", function(state)
-    toggleMutationTimer(state)
 end, {
     default = mutationTimerEnabled
 })
@@ -795,7 +789,7 @@ LocalPlayerSection:Toggle("Infinite Jump", function(state)
         Window:Notify("Infinite Jump Disabled", 2)
     end
 end, {
-        default = infiniteJumpEnabled
+    default = infiniteJumpEnabled
 })
 
 -- Job ID input with current job as placeholder
