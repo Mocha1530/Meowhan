@@ -113,12 +113,12 @@ local function connectDestroyEvent()
             
             if scalingLoop then
                 scalingLoop:Disconnect()
-                Window:Notify("scalingloop", 2)
+                warn("scalingloop destroy")
             end
             
             if restoreOriginalProperties then
                 restoreOriginalProperties()
-                Window:Notify("restore", 2)
+                warn("restore destroy")
             end
         end)
         
@@ -131,12 +131,12 @@ local function connectDestroyEvent()
                 
                 if scalingLoop then
                     scalingLoop:Disconnect()
-                    Window:Notify("scalingloop", 2)
+                    warn("scalingloop ancestry")
                 end
                 
                 if restoreOriginalProperties then
                     restoreOriginalProperties()
-                    Window:Notify("restore", 2)
+                    warn("restore ancestry")
                 end
                 
                 ancestryConnection:Disconnect()
