@@ -69,7 +69,7 @@ local ToggleManager = {
 }
 
 -- Cleanup processes
-Library.RunningProcesses = {
+local Library.RunningProcesses = {
     loops = {},
     connections = {},
     tweens = {}
