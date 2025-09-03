@@ -60,19 +60,17 @@ end
 -- Main Library
 local Library = {}
 Library.Windows = {}
+Library.RunningProcesses = {
+    loops = {},
+    connections = {},
+    tweens = {}
+}
 
 -- Global toggle management system
 local ToggleManager = {
     toggles = {},
     groups = {},
     keybinds = {}
-}
-
--- Cleanup processes
-local Library.RunningProcesses = {
-    loops = {},
-    connections = {},
-    tweens = {}
 }
 
 function Library:TrackProcess(processType, process, identifier)
