@@ -624,7 +624,7 @@ local function startScalingLoop()
         end
     end)
     
-    Library:TrackProcess("connections", scalingLoop, "scalingLoop")
+    UILib:TrackProcess("connections", scalingLoop, "scalingLoop")
 end
 
 -- Function to restore the original position and properties
