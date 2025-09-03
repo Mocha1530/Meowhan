@@ -726,7 +726,6 @@ end, {
 })
 
 if mutationTimerEnabled then
-    task.wait(3)
     showMutationTimerDisplay()
 end
 
@@ -921,3 +920,4 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
+
