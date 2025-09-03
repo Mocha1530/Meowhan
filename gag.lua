@@ -3,9 +3,11 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
+local LocalPlayer = Players.LocalPlayer
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
@@ -18,7 +20,8 @@ local DEFAULT_CONFIG = {
     AutoStartPetMutation = false,
     AutoClaimMutatedPet = false,
     ShowGlimmerCounter = false,
-    ShowMutationTimer = true
+    ShowMutationTimer = true,
+    InfiniteJump = false
 }
 
 local Running = {
@@ -27,7 +30,8 @@ local Running = {
     showMutationTimer = true,
     autoBuyAll = true,
     autoBuySelected = true,
-    stockUpdate = true
+    stockUpdate = true,
+    infiniteJump = true
 }
 
 -- Create folder structure
@@ -349,7 +353,6 @@ if sellButton then
     sellButton.LayoutOrder = 3
 end
 
-local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Tp_Points = Workspace:FindFirstChild("Tutorial_Points")
@@ -394,7 +397,6 @@ end)
 -- Main Tab
 local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
-local RejoinSection = MainTab:Section("Rejoin Config")
 
 -- Mutation Machine Vars
 local autoStartMachineEnabled = config.AutoStartPetMutation or false
@@ -516,119 +518,6 @@ local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(st
 end, {
     default = autoClaimPetEnabled
 })
-
--- Job ID input with current job as placeholder
-local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
-
-  -- Delay slider
-local delayValue = config.InitialDelay or 5
-local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
-    delayValue = value
-    config.InitialDelay = value
-    saveConfig(config)
-end)
-
-  -- Countdown function
-local function countdown(seconds)
-    for i = seconds, 1, -1 do
-        print("Rejoining in " .. i .. " seconds...")
-        task.wait(1)
-    end
-end
-
-  -- Main teleport function
-local function persistentTeleport(jobId, initialDelay)
-    local ATTEMPT_COUNTER = 0
-    local FIXED_RETRY_DELAY = 2
-    
-    if ATTEMPT_COUNTER == 0 then
-        countdown(initialDelay)
-    end
-    
-    while true do
-        ATTEMPT_COUNTER += 1
-        print("\nAttempt #" .. ATTEMPT_COUNTER .. " to rejoin server")
-
-        local teleportSucceeded = false
-        local teleportError = ""
-
-        local failureConnection
-        failureConnection = TeleportService.TeleportInitFailed:Connect(function(player, result, errorMsg)
-            if player == Players.LocalPlayer then
-                teleportSucceeded = false
-                teleportError = errorMsg
-                failureConnection:Disconnect()
-            end
-        end)
-        
-        local success, err = pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, jobId, Players.LocalPlayer)
-        end)
-
-        local startTime = os.clock()
-        while os.clock() - startTime < 5 and not teleportSucceeded do
-            task.wait(0.1)
-        end
-
-        if failureConnection.Connected then
-            failureConnection:Disconnect()
-        end
-        
-        if teleportSucceeded then
-            print("Rejoined")
-            return
-        end
-
-        if not success then
-            warn("Rejoin call failed:", err)
-        elseif teleportError ~= "" then
-            warn("Rejoin failed:", teleportError)
-        else
-            warn("Rejoin failed for unknown reason")
-        end
-        
-        local jitter = math.random(0, 20) * 0.1
-        local total_delay = FIXED_RETRY_DELAY + jitter
-        
-        print("Next attempt in " .. string.format("%.1f", total_delay) .. " seconds")
-        
-        local wait_interval = 1 
-        local waited = 0
-        while waited < total_delay do
-            local remaining = total_delay - waited
-            print("Retrying in " .. string.format("%.1f", remaining) .. "s")
-            task.wait(wait_interval)
-            waited += wait_interval
-        end
-    end
-end
-
-  -- Start button
-RejoinSection:Button("Auto Rejoin", function()
-    -- Update and save config
-    local newConfig = {
-        InitialDelay = delayValue,
-        JobId = currentJobId
-    }
-    saveConfig(newConfig)
-    
-    -- Determine job ID to use
-    local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
-    
-    -- Start teleport process
-    local success, err = pcall(function()
-        persistentTeleport(targetJobId, newConfig.InitialDelay)
-    end)
-    
-    if not success then
-        warn("CRITICAL ERROR:", err)
-        print("Restarting rejoin process...")
-        task.wait(5)
-        pcall(function()
-            persistentTeleport(targetJobId, newConfig.InitialDelay)
-        end)
-    end
-end)
 
 -- Event Tab
 local EventSection = EventTab:Section("Fairy Event")
@@ -821,6 +710,144 @@ if mutationTimerEnabled then
     showMutationTimerDisplay()
 end
 
+-- Settings Tab
+local LocalPlayerSection = SettingsTab:Section("Player")
+local RejoinSection = SettingsTab:Section("Rejoin Config")
+
+-- Inf jump toggle
+local infiniteJumpEnabled = config.InfiniteJump or false
+
+UserInputService.JumpRequest:connect(function()
+    if infiniteJumpEnabled and Running.infiniteJump then	
+    LocalPlayer.Character:FindFirstChildOfClass'Humanoid':ChangeState("Jumping")
+    end
+end)
+
+LocalPlayerSection:Toggle("Infinite Jump", function(state)
+    infiniteJumpEnabled = state
+    config.InfiniteJump = state
+    saveConfig(config)
+    
+    if state then
+        Window:Notify("Infinite Jump Enabled", 2)
+    else
+        Window:Notify("Infinite Jump Disabled", 2)
+    end
+end)
+
+-- Job ID input with current job as placeholder
+local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
+
+  -- Delay slider
+local delayValue = config.InitialDelay or 5
+local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
+    delayValue = value
+    config.InitialDelay = value
+    saveConfig(config)
+end)
+
+  -- Countdown function
+local function countdown(seconds)
+    for i = seconds, 1, -1 do
+        print("Rejoining in " .. i .. " seconds...")
+        task.wait(1)
+    end
+end
+
+  -- Main teleport function
+local function persistentTeleport(jobId, initialDelay)
+    local ATTEMPT_COUNTER = 0
+    local FIXED_RETRY_DELAY = 2
+    
+    if ATTEMPT_COUNTER == 0 then
+        countdown(initialDelay)
+    end
+    
+    while true do
+        ATTEMPT_COUNTER += 1
+        print("\nAttempt #" .. ATTEMPT_COUNTER .. " to rejoin server")
+
+        local teleportSucceeded = false
+        local teleportError = ""
+
+        local failureConnection
+        failureConnection = TeleportService.TeleportInitFailed:Connect(function(player, result, errorMsg)
+            if player == Players.LocalPlayer then
+                teleportSucceeded = false
+                teleportError = errorMsg
+                failureConnection:Disconnect()
+            end
+        end)
+        
+        local success, err = pcall(function()
+            TeleportService:TeleportToPlaceInstance(placeId, jobId, Players.LocalPlayer)
+        end)
+
+        local startTime = os.clock()
+        while os.clock() - startTime < 5 and not teleportSucceeded do
+            task.wait(0.1)
+        end
+
+        if failureConnection.Connected then
+            failureConnection:Disconnect()
+        end
+        
+        if teleportSucceeded then
+            print("Rejoined")
+            return
+        end
+
+        if not success then
+            warn("Rejoin call failed:", err)
+        elseif teleportError ~= "" then
+            warn("Rejoin failed:", teleportError)
+        else
+            warn("Rejoin failed for unknown reason")
+        end
+        
+        local jitter = math.random(0, 20) * 0.1
+        local total_delay = FIXED_RETRY_DELAY + jitter
+        
+        print("Next attempt in " .. string.format("%.1f", total_delay) .. " seconds")
+        
+        local wait_interval = 1 
+        local waited = 0
+        while waited < total_delay do
+            local remaining = total_delay - waited
+            print("Retrying in " .. string.format("%.1f", remaining) .. "s")
+            task.wait(wait_interval)
+            waited += wait_interval
+        end
+    end
+end
+
+  -- Start button
+RejoinSection:Button("Auto Rejoin", function()
+    -- Update and save config
+    local newConfig = {
+        InitialDelay = delayValue,
+        JobId = currentJobId
+    }
+    saveConfig(newConfig)
+    
+    -- Determine job ID to use
+    local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
+    
+    -- Start teleport process
+    local success, err = pcall(function()
+        persistentTeleport(targetJobId, newConfig.InitialDelay)
+    end)
+    
+    if not success then
+        warn("CRITICAL ERROR:", err)
+        print("Restarting rejoin process...")
+        task.wait(5)
+        pcall(function()
+            persistentTeleport(targetJobId, newConfig.InitialDelay)
+        end)
+    end
+end)
+
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
@@ -834,7 +861,7 @@ local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
 local GameName = GameInfo.Name
 
 StatsSection:Label("Current Game: " .. GameName)
-StatsSection:Label("Player: " .. game.Players.LocalPlayer.Name)
+StatsSection:Label("Player: " .. game.LocalPlayer.Name)
 StatsSection:Label("Current Job ID: " .. game.JobId)
 StatsSection:Label("Current Place ID: " .. game.PlaceId)
 
