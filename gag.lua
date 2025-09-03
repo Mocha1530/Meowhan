@@ -511,7 +511,7 @@ end
   -- Select pet dropdown
 MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"Test1"}, function(selected)
     if selected then
-        Window:Notify("Selected: " .. table.concat(selected, ", "), 2)
+        Window:Notify("Selected: " table.concat(selected, ", "), 2)
     end
 end, true)
 
