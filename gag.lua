@@ -10,6 +10,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
@@ -21,6 +22,7 @@ local DEFAULT_CONFIG = {
     JobId = "",
     AutoStartPetMutation = false,
     AutoClaimMutatedPet = false,
+    SubmitGlimmering = false,
     ShowGlimmerCounter = false,
     ShowMutationTimer = true,
     WalkSpeed = 20,
@@ -31,6 +33,7 @@ local DEFAULT_CONFIG = {
 local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
+    submitGlimmering = true,
     showMutationTimer = true,
     autoBuyAll = true,
     autoBuySelected = true,
@@ -112,6 +115,108 @@ local function removeExistingButtons(parent, names)
 end
 
 removeExistingButtons(frame, buttonNames)
+
+local function holdItem(itemName)  
+    if not Backpack then
+        warn("Backpack not found for player: " .. LocalPlayer.Name)
+        return false
+    end
+    
+    if not Character then
+        Character = LocalPlayer.CharacterAdded:Wait()
+    end
+    
+    local item = Backpack:FindFirstChild(itemName)
+    if not item then
+        warn("Item not found in backpack: " .. itemName)
+        return false
+    end
+    
+    item.Parent = Character
+    return true
+end
+
+local function extractValueFromName(itemName, pattern)
+    local match = itemName:match(pattern)
+    return match and tonumber(match) or nil
+end
+
+-- Main filtering function
+local function findItem(filters)
+    local nameFilter = filters.name or "None"
+    local typeFilter = filters.type
+    local mutationFilter = filters.mutation or "None"
+    local weightFilter = filters.weight or 0
+    local weightMode = filters.weightMode or "None"
+    local ageFilter = filters.age or 0
+    local ageMode = filters.ageMode or "None"
+    local action = filters.action
+    
+    if not typeFilter or not action then
+        warn("Type and action are required parameters")
+        return false
+    end
+
+    if not Backpack then
+        warn("Backpack not found")
+        return false
+    end
+
+    for _, child in ipairs(Backpack:GetChildren()) do
+        if child:GetAttribute("d") ~= true then
+            local matchesAllFilters = true
+            
+            if child:GetAttribute("b") ~= typeFilter then
+                matchesAllFilters = false
+            end
+            
+            if matchesAllFilters and nameFilter ~= "None" and 
+               not child.Name:find(nameFilter, 1, true) then
+                matchesAllFilters = false
+            end
+            
+            if matchesAllFilters and mutationFilter then
+                local mutation = child:GetAttribute(mutationFilter)
+                if not mutation or mutation ~= true then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters and weightMode ~= "None" then
+                local weight = extractValueFromName(child.Name, "%[(%d+) KG%]")
+                
+                if not weight then
+                    matchesAllFilters = false
+                elseif weightMode == "Less" and weight >= weightFilter then
+                    matchesAllFilters = false
+                elseif weightMode == "Greater" and weight <= weightFilter then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters and ageMode ~= "None" then
+                local age = extractValueFromName(child.Name, "%[Age (%d+)%]")
+                
+                if not age then
+                    matchesAllFilters = false
+                elseif ageMode == "Less" and age >= ageFilter then
+                    matchesAllFilters = false
+                elseif ageMode == "Greater" and age <= ageFilter then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters then
+                if holdItem(child.Name) then
+                    action()
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
 
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
@@ -524,6 +629,60 @@ end, {
 
 -- Event Tab
 local EventSection = EventTab:Section("Fairy Event")
+
+-- Event vars
+local submitGlimmeringEnabled = config.SubmitGlimmering
+
+--[[ Ex use of findItem(table)
+
+findItem({
+    name = "Apple",          -- Optional: looks for names containing "Apple"
+    type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
+    mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
+    weight = 5,              -- Optional: weight threshold
+    weightMode = "Less",     -- Optional: "Less", "Greater", or "None"
+    age = 10,                -- Optional: age threshold
+    ageMode = "Greater",     -- Optional: "Less", "Greater", or "None"
+    action = function()      -- Required: function to execute if item is found
+        -- action to perform
+        game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
+    end
+})
+
+]]
+
+-- Auto submit glimmering
+
+spawn(function()
+    while Running.submitGlimmering do
+        if submitGlimmeringEnabled then
+            findItem({
+                type = "j",
+                mutation = "Glimmering",
+                action = function()
+                            GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                        end
+            })
+            task.wait(0.5)
+        else
+            task.wait(1)    
+        end
+    end
+end)
+
+EventSection:Toggle("Auto Submit Glimmering", function(state)
+    submitGlimmeringEnabled = state
+    config.SubmitGlimmering = state
+    saveConfig(config)
+
+    if state then
+        Window:Notify("Auto Submit Enabled", 2)
+    else
+        Window:Notify("Auto Submit Disabled", 2)
+    end
+end, {
+    default = submitGlimmeringEnabled
+})
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
