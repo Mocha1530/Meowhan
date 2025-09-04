@@ -672,39 +672,31 @@ end)
 FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
     submitGlimmeringEnabled = state
     config.SubmitGlimmering = state
-
+    saveConfig(config)
+        
     if state then
         Window:Notify("Auto Submit Enabled", 2)
-        if submitAllGlimmeringEnabled then
-            submitAllGlimmeringEnabled = false
-            config.SubmitAllGlimmering = false
-        end
     else
         Window:Notify("Auto Submit Disabled", 2)
     end
-    
-    saveConfig(config)
 end, {
     default = submitGlimmeringEnabled
+    group = "Fairy_Fountain_Submit"
 })
 
 FairyEventSection:Toggle("Auto Submit All Glimmering Enabled", function(state)
     submitAllGlimmeringEnabled = state
     config.SubmitAllGlimmering = state
-    
+    saveConfig(config)
+        
     if state then
         Window:Notify("Auto Submit All Enabled", 2)
-        if submitGlimmeringEnabled then
-            submitGlimmeringEnabled = false
-            config.SubmitGlimmering = false
-        end
     else
         Window:Notify("Auto Submit All Disabled", 2)
     end
-    
-    saveConfig(config)
 end, {
     default = submitAllGlimmeringEnabled
+    group = "Fairy_Fountain_Submit"
 })
 
 -- Shop Tab
