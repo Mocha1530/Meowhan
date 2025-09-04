@@ -692,7 +692,7 @@ end, {
     group = "Fairy_Fountain_Submit"
 })
 
-FairyEventSection:Toggle("Auto Submit All Glimmering Enabled", function(state)
+FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     submitAllGlimmeringEnabled = state
     config.SubmitAllGlimmering = state
         
