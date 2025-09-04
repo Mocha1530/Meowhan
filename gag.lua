@@ -23,6 +23,7 @@ local DEFAULT_CONFIG = {
     AutoStartPetMutation = false,
     AutoClaimMutatedPet = false,
     SubmitGlimmering = false,
+    SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
     ShowMutationTimer = true,
     WalkSpeed = 20,
@@ -34,6 +35,7 @@ local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
     submitGlimmering = true,
+    submitAllGlimmering = true,
     showMutationTimer = true,
     autoBuyAll = true,
     autoBuySelected = true,
@@ -632,6 +634,7 @@ local FairyEventSection = EventTab:Section("Fairy Event")
 
 -- Event vars
 local submitGlimmeringEnabled = config.SubmitGlimmering
+local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
 
 --[[ Ex use of findItem(table)
 
