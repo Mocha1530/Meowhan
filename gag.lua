@@ -683,7 +683,7 @@ FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
         Window:Notify("Auto Submit Disabled", 2)
     end
 end, {
-    default = submitGlimmeringEnabled
+    default = submitGlimmeringEnabled,
     group = "Fairy_Fountain_Submit"
 })
 
@@ -698,7 +698,7 @@ FairyEventSection:Toggle("Auto Submit All Glimmering Enabled", function(state)
         Window:Notify("Auto Submit All Disabled", 2)
     end
 end, {
-    default = submitAllGlimmeringEnabled
+    default = submitAllGlimmeringEnabled,
     group = "Fairy_Fountain_Submit"
 })
 
