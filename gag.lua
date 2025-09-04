@@ -628,7 +628,7 @@ end, {
 })
 
 -- Event Tab
-local EventSection = EventTab:Section("Fairy Event")
+local FairyEventSection = EventTab:Section("Fairy Event")
 
 -- Event vars
 local submitGlimmeringEnabled = config.SubmitGlimmering
@@ -652,7 +652,6 @@ findItem({
 ]]
 
 -- Auto submit glimmering
-
 spawn(function()
     while Running.submitGlimmering do
         if submitGlimmeringEnabled then
@@ -670,18 +669,42 @@ spawn(function()
     end
 end)
 
-EventSection:Toggle("Auto Submit Glimmering", function(state)
+FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
     submitGlimmeringEnabled = state
     config.SubmitGlimmering = state
-    saveConfig(config)
 
     if state then
         Window:Notify("Auto Submit Enabled", 2)
+        if submitAllGlimmeringEnabled then
+            submitAllGlimmeringEnabled = false
+            config.SubmitAllGlimmering = false
+        end
     else
         Window:Notify("Auto Submit Disabled", 2)
     end
+    
+    saveConfig(config)
 end, {
     default = submitGlimmeringEnabled
+})
+
+FairyEventSection:Toggle("Auto Submit All Glimmering Enabled", function(state)
+    submitAllGlimmeringEnabled = state
+    config.SubmitAllGlimmering = state
+    
+    if state then
+        Window:Notify("Auto Submit All Enabled", 2)
+        if submitGlimmeringEnabled then
+            submitGlimmeringEnabled = false
+            config.SubmitGlimmering = false
+        end
+    else
+        Window:Notify("Auto Submit All Disabled", 2)
+    end
+    
+    saveConfig(config)
+end, {
+    default = submitAllGlimmeringEnabled
 })
 
 -- Shop Tab
