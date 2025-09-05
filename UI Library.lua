@@ -1212,8 +1212,8 @@ function Library:CreateWindow(title)
                 Arrow.Font = Enum.Font.Gotham
                 Arrow.Text = "▼"
                 Arrow.TextColor3 = Theme.TextDim
-                Arrow.TextSize = 10
-                Arrow.Rotation = 0
+                Arrow.TextSize = 13
+                Arrow.Rotation = -90
                 
                 -- Dropdown List Container
                 local ListContainer = Instance.new("Frame")
@@ -1328,12 +1328,14 @@ function Library:CreateWindow(title)
                         end
                         
                         -- Close dropdown
-                        opened = false
-                        Tween(Arrow, {Rotation = 0}, 0.2)
-                        Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                        wait(0.2)
-                        ListContainer.Visible = false
-                        DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                        if not multiSelect then
+                            opened = false
+                            Tween(Arrow, {Rotation = -90}, 0.2)
+                            Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                            wait(0.2)
+                            ListContainer.Visible = false
+                            DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                        end
                         
                         if callback then callback(selected) end
                     end)
@@ -1353,9 +1355,9 @@ function Library:CreateWindow(title)
                         local listHeight = math.min(#options * (IsMobile and 28 or 24) + 8, 150)
                         DropdownFrame.Size = UDim2.new(1, 0, 0, (IsMobile and 36 or 32) + listHeight + 4)
                         Tween(ListContainer, {Size = UDim2.new(1, 0, 0, listHeight)}, 0.2)
-                        Tween(Arrow, {Rotation = 180}, 0.2)
-                    else
                         Tween(Arrow, {Rotation = 0}, 0.2)
+                    else
+                        Tween(Arrow, {Rotation = -90}, 0.2)
                         Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
                         wait(0.2)
                         ListContainer.Visible = false
