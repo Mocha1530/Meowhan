@@ -43,6 +43,8 @@ local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
     InitialDelay = 30,
     JobId = "",
+    PetToMutate = "",
+    PetMutations = {},
     AutoStartPetMutation = false,
     AutoClaimMutatedPet = false,
     SubmitGlimmering = false,
@@ -537,6 +539,8 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 -- Mutation Machine Vars
 local autoStartMachineEnabled = config.AutoStartPetMutation
 local autoClaimPetEnabled = config.AutoClaimMutatedPet
+local selectedPetToMutate = conifg.PetToMutate
+local selectedPetMutations = config.PetMutations or {}
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
 -- Mutation Machine Timer
@@ -641,12 +645,23 @@ local function toggleAutoClaimPet(state)
     end
 end
 
-  -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"None"}, function(selected)
+  -- Select mutation
+MutationMachineSection:Dropdown("Select Mutation: ", {"Rainbow", "Gold", "Mega", "Tiny"}, selectedPetMutations, function(selected)
     if selected then
-        Window:Notify("Selected: " .. table.concat(selected, ", "), 2)
+        selectedPetMutations = selected
+        config.PetMutations = selected
+        saveConfig(config)
     end
 end, true)
+
+  -- Select pet dropdown
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, selectedPetToMutate, function(selected)
+    if selected then
+        selectedPetMutations = selected
+        config.PetMutations = selected
+        saveConfig(config)
+    end
+end)
 
   -- Auto claim toggle
 local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
@@ -1118,7 +1133,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.538")
+AboutSection:Label("Version: 1.2.5")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
