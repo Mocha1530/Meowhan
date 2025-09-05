@@ -1277,7 +1277,7 @@ function Library:CreateWindow(title)
                     OptionBtn.Font = Enum.Font.Gotham
                     OptionBtn.Text = option
                     if multiSelect then
-                        OptionBtn.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                        OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
                     else
                         OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
                     end
