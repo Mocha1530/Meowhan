@@ -113,7 +113,7 @@ end
 
 -- Create UI
 local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI%20Library.lua'))()
-local Window = UILib:CreateWindow("   Grow A Garden - Meowhan")
+local Window = UILib:CreateWindow("   Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
 
