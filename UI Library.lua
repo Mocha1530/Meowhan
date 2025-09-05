@@ -81,6 +81,12 @@ function Library:TrackProcess(processType, process, identifier)
     return process
 end
 
+function Library:UntrackProcess(processType, identifier)
+    if self.RunningProcesses[processType] and self.RunningProcesses[processType][identifier] then
+        self.RunningProcesses[processType][identifier] = nil
+    end
+end
+
 -- Cleanup functions
 function Library:Cleanup()
     for _, loop in pairs(self.RunningProcesses.loops) do
@@ -531,6 +537,12 @@ function Library:CreateWindow(title)
     TitleContainer.Position = UDim2.new(0, 16, 0, 0)
     TitleContainer.Size = UDim2.new(0.5, 0, 1, 0)
     TitleContainer.ZIndex = 3
+
+    local TitleLayout = Instance.new("UIListLayout")
+    TitleLayout.Parent = TitleContainer
+    TitleLayout.FillDirection = Enum.FillDirection.Horizontal
+    TitleLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TitleLayout.Padding = UDim.new(0, IsMobile and 5 or 10)
     
     local Title0verflow = Instance.new("TextLabel")
     Title0verflow.Parent = TitleContainer
@@ -552,7 +564,7 @@ function Library:CreateWindow(title)
     TitleHub.Size = UDim2.new(0, 0, 1, 0)
     TitleHub.AutomaticSize = Enum.AutomaticSize.X
     TitleHub.Font = Enum.Font.Gotham
-    TitleHub.Text = " Hub"
+    TitleHub.Text = "Hub"
     TitleHub.TextColor3 = Theme.Text
     TitleHub.TextSize = IsMobile and 13 or 14
     TitleHub.TextXAlignment = Enum.TextXAlignment.Left
