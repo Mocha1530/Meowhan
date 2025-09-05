@@ -83,28 +83,24 @@ end
 
 -- Cleanup functions
 function Library:Cleanup()
-    -- Stop all loops
     for _, loop in pairs(self.RunningProcesses.loops) do
         if type(loop) == "boolean" then
             loop = false
         end
     end
     
-    -- Disconnect all connections
     for _, connection in pairs(self.RunningProcesses.connections) do
         if connection and typeof(connection) == "RBXScriptConnection" then
             connection:Disconnect()
         end
     end
     
-    -- Cancel all tweens
     for _, tween in pairs(self.RunningProcesses.tweens) do
         if tween and tween.PlaybackState == Enum.PlaybackState.Playing then
             tween:Cancel()
         end
     end
     
-    -- Clear all tables
     self.RunningProcesses = {loops = {}, connections = {}, tweens = {}}
 end
 
@@ -1163,8 +1159,9 @@ function Library:CreateWindow(title)
             end
             
             -- Dropdown (FIXED)
-            function Section:Dropdown(name, options, default, callback)
-                local selected = default or options[1] or ""
+            function Section:Dropdown(name, options, default, callback, multiSelect)
+                multiSelect = multiSelect or false
+                local selected = multiSelect and {} or (default or options[1] or "")
                 local opened = false
                 
                 local DropdownFrame = Instance.new("Frame")
@@ -1238,6 +1235,17 @@ function Library:CreateWindow(title)
                 ListStroke.Thickness = 1
                 ListStroke.Transparency = 0.8
                 
+                local ListSearch = Instance.new("TextBox")
+                ListSearch.Parent = ListContainer
+                ListSearch.BackgroundColor3 = Theme.Card
+                ListSearch.Position = UDim2.new(0, 4, 0, 4)
+                ListSearch.Size = UDim2.new(1, -8, 0, 24)
+                ListSearch.Font = Enum.Font.Gotham
+                ListSearch.PlaceholderText = "Search..."
+                ListSearch.TextColor3 = Theme.Text
+                ListSearch.TextSize = IsMobile and 11 or 12
+                ListSearch.ClearTextOnFocus = false
+                
                 local ListScroll = Instance.new("ScrollingFrame")
                 ListScroll.Parent = ListContainer
                 ListScroll.BackgroundTransparency = 1
@@ -1276,18 +1284,31 @@ function Library:CreateWindow(title)
                     end)
                     
                     OptionBtn.MouseButton1Click:Connect(function()
-                        if selected == option then
-                            selected = nil
-                            SelectedLabel.Text = default
+                        if multiSelect then
+                            if table.find(selected, option) then
+                                table.remove(selected, table.find(selected, option))
+                            else
+                                table.insert(selected, option)
+                            end
+                            selectedLabel.Text = table.concat(selected, ", ")
                         else
-                            selected = option
-                            SelectedLabel.Text = option
+                            if selected == option then
+                                selected = nil
+                                SelectedLabel.Text = default
+                            else
+                                selected = option
+                                SelectedLabel.Text = option
+                            end
                         end
                         
                         -- Update colors
                         for _, child in ipairs(ListScroll:GetChildren()) do
                             if child:IsA("TextButton") then
-                                child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                if multiSelect then
+                                    child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                else
+                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                end
                             end
                         end
                         
@@ -1324,6 +1345,17 @@ function Library:CreateWindow(title)
                         wait(0.2)
                         ListContainer.Visible = false
                         DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                    end
+                end)
+
+                -- Search options
+                ListSearch:GetPropertyChangedSignal("Text"):Connect(function()
+                    local search = string.lower(ListSearch.Text)
+                    for _, child in ipairs(ListScroll:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            local match = string.find(string.lower(child.Text), search, 1, true)
+                            child.Visible = match ~= nil
+                        end
                     end
                 end)
                 
