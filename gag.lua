@@ -539,7 +539,7 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 -- Mutation Machine Vars
 local autoStartMachineEnabled = config.AutoStartPetMutation
 local autoClaimPetEnabled = config.AutoClaimMutatedPet
-local selectedPetToMutate = conifg.PetToMutate
+local selectedPetToMutate = conifg.PetToMutate or ""
 local selectedPetMutations = config.PetMutations or {}
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
@@ -645,6 +645,15 @@ local function toggleAutoClaimPet(state)
     end
 end
 
+  -- Select pet dropdown
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, selectedPetToMutate, function(selected)
+    if selected then
+        selectedPetToMutate = selected
+        config.PetToMutate = selected
+        saveConfig(config)
+    end
+end)
+
   -- Select mutation
 MutationMachineSection:Dropdown("Select Mutation: ", {"Rainbow", "Gold", "Mega", "Tiny"}, selectedPetMutations, function(selected)
     if selected then
@@ -653,15 +662,6 @@ MutationMachineSection:Dropdown("Select Mutation: ", {"Rainbow", "Gold", "Mega",
         saveConfig(config)
     end
 end, true)
-
-  -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, selectedPetToMutate, function(selected)
-    if selected then
-        selectedPetMutations = selected
-        config.PetMutations = selected
-        saveConfig(config)
-    end
-end)
 
   -- Auto claim toggle
 local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
