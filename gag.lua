@@ -15,6 +15,29 @@ local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
 
+local mainFolder = Workspace:FindFirstChild("Farm")
+if not mainFolder then
+    warn("Main 'Farm' folder not found in Workspace")
+    return
+end
+
+local PlayerFarm = nil
+
+for _, child in ipairs(mainFolder:GetChildren()) do
+    if child.Name ~= "Farm" or not child:IsA("Folder") then
+        continue
+    end
+    
+    local Owner = child:FindFirstChild("Important") 
+                      and child.Important:FindFirstChild("Data") 
+                      and child.Important.Data:FindFirstChild("Owner")
+    
+    if Owner and Owner:IsA("StringValue") and Owner.Value == LocalPlayer.Name then
+        PlayerFarm = child
+        break
+    end
+end
+
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
@@ -138,7 +161,7 @@ local function holdItem(itemName)
     return true
 end
 
-local function extractValueFromName(itemName, pattern)
+local function extractItem(itemName, pattern)
     local match = itemName:match(pattern)
     return match and tonumber(match) or nil
 end
@@ -180,18 +203,21 @@ local function findItem(filters)
             if matchesAllFilters and mutationFilter then
                 local mutation = child:GetAttribute(mutationFilter)
                 if not mutation or mutation ~= true then
-                    matchesAllFilters = false
+                    local variant = child:FindFirstChild("Variant")
+                    if not variant or variant.Value ~= mutationFilter then
+                        matchesAllFilters = false
+                    end
                 end
             end
             
             if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractValueFromName(child.Name, "%[(%d+) KG%]")
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
                 
                 if not weight then
                     matchesAllFilters = false
-                elseif weightMode == "Less" and weight >= weightFilter then
+                elseif weightMode == "Less" and weight > weightFilter then
                     matchesAllFilters = false
-                elseif weightMode == "Greater" and weight <= weightFilter then
+                elseif weightMode == "Greater" and weight < weightFilter then
                     matchesAllFilters = false
                 end
             end
@@ -201,9 +227,9 @@ local function findItem(filters)
                 
                 if not age then
                     matchesAllFilters = false
-                elseif ageMode == "Less" and age >= ageFilter then
+                elseif ageMode == "Less" and age > ageFilter then
                     matchesAllFilters = false
-                elseif ageMode == "Greater" and age <= ageFilter then
+                elseif ageMode == "Greater" and age < ageFilter then
                     matchesAllFilters = false
                 end
             end
@@ -616,11 +642,11 @@ local function toggleAutoClaimPet(state)
 end
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, "None", function(selected)
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, nil, function(selected)
     if selected then
-        Window:Notify("Selected: " .. selected, 2)
+        Window:Notify("Selected: " .. table.concat(selected, ", "), 2)
     end
-end)
+end, true)
 
   -- Auto claim toggle
 local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
