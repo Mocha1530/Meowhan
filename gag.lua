@@ -642,7 +642,7 @@ local function toggleAutoClaimPet(state)
 end
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, nil, function(selected)
+MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, {"None"}, function(selected)
     if selected then
         Window:Notify("Selected: " .. table.concat(selected, ", "), 2)
     end
@@ -1118,7 +1118,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.5")
+AboutSection:Label("Version: 1.2.538")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
