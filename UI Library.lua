@@ -1305,7 +1305,7 @@ function Library:CreateWindow(title)
                             else
                                 table.insert(selected, option)
                             end
-                            selectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
+                            SelectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
                         else
                             if selected == option then
                                 selected = nil
