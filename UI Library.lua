@@ -1198,7 +1198,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected or ""
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1235,17 +1235,6 @@ function Library:CreateWindow(title)
                 ListStroke.Thickness = 1
                 ListStroke.Transparency = 0.8
                 
-                local ListSearch = Instance.new("TextBox")
-                ListSearch.Parent = ListContainer
-                ListSearch.BackgroundColor3 = Theme.Card
-                ListSearch.Position = UDim2.new(0, 4, 0, 4)
-                ListSearch.Size = UDim2.new(1, -8, 0, 24)
-                ListSearch.Font = Enum.Font.Gotham
-                ListSearch.PlaceholderText = "Search..."
-                ListSearch.TextColor3 = Theme.Text
-                ListSearch.TextSize = IsMobile and 11 or 12
-                ListSearch.ClearTextOnFocus = false
-                
                 local ListScroll = Instance.new("ScrollingFrame")
                 ListScroll.Parent = ListContainer
                 ListScroll.BackgroundTransparency = 1
@@ -1258,8 +1247,25 @@ function Library:CreateWindow(title)
                 
                 local ListLayout = Instance.new("UIListLayout")
                 ListLayout.Parent = ListScroll
+                ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
                 ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 ListLayout.Padding = UDim.new(0, 2)
+
+                local ListSearch = Instance.new("TextBox")
+                ListSearch.Parent = ListScroll
+                ListSearch.BackgroundColor3 = Theme.Card
+                ListSearch.LayoutOrder = -1
+                ListSearch.Position = UDim2.new(0, 4, 0, 4)
+                ListSearch.Size = UDim2.new(1, 0, 0, 24)
+                ListSearch.Font = Enum.Font.Gotham
+                ListSearch.PlaceholderText = "Search..."
+                ListSearch.TextColor3 = Theme.Text
+                ListSearch.TextSize = IsMobile and 11 or 12
+                ListSearch.ClearTextOnFocus = false
+
+                local SearchCorner = Instance.new("UICorner")
+                SearchCorner.CornerRadius = UDim.new(0, 6)
+                SearchCorner.Parent = ListSearch                
                 
                 -- Create option buttons
                 for _, option in ipairs(options) do
@@ -1270,8 +1276,16 @@ function Library:CreateWindow(title)
                     OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                     OptionBtn.Font = Enum.Font.Gotham
                     OptionBtn.Text = option
-                    OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                    if multiSelect then
+                        OptionBtn.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                    else
+                        OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                    end
                     OptionBtn.TextSize = IsMobile and 11 or 12
+
+                    local OptionCorner = Instance.new("UICorner")
+                    OptionCorner.CornerRadius = UDim.new(0, 6)
+                    OptionCorner.Parent = OptionBtn
                     
                     OptionBtn.MouseEnter:Connect(function()
                         if option ~= selected then
@@ -1290,7 +1304,7 @@ function Library:CreateWindow(title)
                             else
                                 table.insert(selected, option)
                             end
-                            selectedLabel.Text = table.concat(selected, ", ")
+                            selectedLabel.Text = table.concat(selected, ", ") 
                         else
                             if selected == option then
                                 selected = nil
