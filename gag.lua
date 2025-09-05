@@ -1036,9 +1036,9 @@ end, {
 
 -- Noclip toggle
 local function noClipLoop()
-    if noclipEnabled and Character ~= nil then
+    if noclipEnabled and Character then
         for _, child in ipairs(Character:GetDescendants()) do
-            if child:IsA("BasePart") and child.CanCollide == true then
+            if child:IsA("BasePart") then
                 child.CanCollide = false
             end
         end
@@ -1190,7 +1190,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.55")
+AboutSection:Label("Version: 1.2.6")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
