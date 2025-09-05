@@ -1259,6 +1259,7 @@ function Library:CreateWindow(title)
                 ListSearch.Size = UDim2.new(1, 0, 0, 24)
                 ListSearch.Font = Enum.Font.Gotham
                 ListSearch.PlaceholderText = "Search..."
+                ListSearch.Text = ""
                 ListSearch.TextColor3 = Theme.Text
                 ListSearch.TextSize = IsMobile and 11 or 12
                 ListSearch.ClearTextOnFocus = false
@@ -1304,7 +1305,7 @@ function Library:CreateWindow(title)
                             else
                                 table.insert(selected, option)
                             end
-                            selectedLabel.Text = table.concat(selected, ", ") 
+                            selectedLabel.Text = table.concat(selected, ", ") or ""
                         else
                             if selected == option then
                                 selected = nil
