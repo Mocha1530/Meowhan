@@ -9,11 +9,14 @@ local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local placeId = game.PlaceId
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+end)
 
 local mainFolder = Workspace:FindFirstChild("Farm")
 if not mainFolder then
@@ -53,9 +56,9 @@ local DEFAULT_CONFIG = {
     ShowMutationTimer = true,
     WalkSpeed = 20,
     JumpPower = 50,
-    InfiniteJump = false
+    InfiniteJump = false,
+    NoClip = false
 }
-
 local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
@@ -66,6 +69,9 @@ local Running = {
     autoBuySelected = true,
     stockUpdate = true,
     infiniteJump = true
+}
+local MachineMutations = {
+    "Ascended", "Frozen", "Golden", "Inverted", "IronSkin", "Mega", "Radiant", "Rainbow", "Shiny", "Shocked", "Tiny", "Windy"
 }
 
 -- Create folder structure
@@ -113,7 +119,7 @@ end
 
 -- Create UI
 local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI%20Library.lua'))()
-local Window = UILib:CreateWindow("   Grow A Garden")
+local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
 
@@ -655,7 +661,7 @@ MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, sel
 end)
 
   -- Select mutation
-MutationMachineSection:Dropdown("Select Mutation: ", {"Rainbow", "Gold", "Mega", "Tiny"}, selectedPetMutations, function(selected)
+MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
     if selected then
         selectedPetMutations = selected
         config.PetMutations = selected
@@ -709,6 +715,18 @@ spawn(function()
             task.wait(0.5)
         else
             task.wait(1)    
+        end
+    end
+end)
+
+-- Auto submit all glimmering
+spawn(function()
+    while Running.submitAllGlimmering do
+        if submitAllGlimmeringEnabled then
+            GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+            task.wait(5)
+        else
+            task.wait(10)
         end
     end
 end)
@@ -770,6 +788,8 @@ local Humanoid = Character:WaitForChild("Humanoid")
 local walkSpeedValue = config.WalkSpeed
 local jumpPowerValue = config.JumpPower
 local infiniteJumpEnabled = config.InfiniteJump
+local noclipEnabled = config.NoClip
+local NoClipping = nil
 
 -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
@@ -1014,6 +1034,43 @@ end, {
     default = infiniteJumpEnabled
 })
 
+-- Noclip toggle
+local function noClipLoop()
+    if noclipEnabled and Character ~= nil then
+        for _, child in ipairs(Character:GetDescendants()) do
+            if child:IsA("BasePart") and child.CanCollide == true then
+                child.CanCollide = false
+            end
+        end
+    end
+end
+
+LocalPlayerSection:Toggle("Noclip", function()
+    noclipEnabled = state
+    config.NoClip = state
+    saveConfig(config)
+
+    if state then
+        if not NoClipping then
+            NoClipping = RunService.Stepped:Connect(noClipLoop)
+            UILib:TrackProcess("connections", NoClipping, "NoClipping")
+        end
+    else
+        if NoClipping then
+            NoClipping:Disconnect()
+            NoClipping = nil
+            UILib:UntrackProcess("connections", "NoClipping")
+        end
+    end
+end, {
+    default = noclipEnabled
+})
+
+if noclipEnabled and NoClipping ~= nil then
+    NoClipping = RunService.Stepped:Connect(noClipLoop)
+    UILib:TrackProcess("connections", NoClipping, "NoClipping")
+end
+
 -- Job ID input with current job as placeholder
 local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
 
@@ -1133,7 +1190,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.5")
+AboutSection:Label("Version: 1.2.55")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
