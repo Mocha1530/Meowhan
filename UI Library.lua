@@ -1198,7 +1198,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = selected
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1474,7 +1474,7 @@ function Library:CreateWindow(title)
         NotifText.TextSize = IsMobile and 12 or 13
         NotifText.ZIndex = 1001
         
-                local AccentLine = Instance.new("Frame")
+        local AccentLine = Instance.new("Frame")
         AccentLine.Parent = Notif
         AccentLine.BackgroundColor3 = Theme.Accent
         AccentLine.BorderSizePixel = 0
