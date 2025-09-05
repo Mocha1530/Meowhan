@@ -539,7 +539,7 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 -- Mutation Machine Vars
 local autoStartMachineEnabled = config.AutoStartPetMutation
 local autoClaimPetEnabled = config.AutoClaimMutatedPet
-local selectedPetToMutate = conifg.PetToMutate or ""
+local selectedPetToMutate = config.PetToMutate or ""
 local selectedPetMutations = config.PetMutations or {}
 local MutationMachine = GameEvents.PetMutationMachineService_RE
 
