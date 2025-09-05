@@ -548,7 +548,7 @@ function Library:CreateWindow(title)
     local TitleHub = Instance.new("TextLabel")
     TitleHub.Parent = TitleContainer
     TitleHub.BackgroundTransparency = 1
-    TitleHub.Position = UDim2.new(0, IsMobile and 52 or 58, 0, 0)
+    TitleHub.Position = UDim2.new(0, IsMobile and 57 or 58, 0, 0)
     TitleHub.Size = UDim2.new(0, 0, 1, 0)
     TitleHub.AutomaticSize = Enum.AutomaticSize.X
     TitleHub.Font = Enum.Font.Gotham
@@ -1159,9 +1159,19 @@ function Library:CreateWindow(title)
             end
             
             -- Dropdown (FIXED)
-            function Section:Dropdown(name, options, default, callback, multiSelect)
+            function Section:Dropdown(name, options, default, callback, multiSelect, limit)
                 multiSelect = multiSelect or false
-                local selected = multiSelect and {} or (default or options[1] or "")
+                limit = limit or 1
+                local selected
+                    if multiSelect then
+                        if type(default) == "table" then
+                            selected = default
+                        else 
+                            selected = {}
+                        end
+                    else 
+                        selected = default or options[1] or "" 
+                    end
                 local opened = false
                 
                 local DropdownFrame = Instance.new("Frame")
@@ -1198,7 +1208,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected or ""
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1258,7 +1268,7 @@ function Library:CreateWindow(title)
                 ListSearch.Position = UDim2.new(0, 4, 0, 4)
                 ListSearch.Size = UDim2.new(1, 0, 0, 24)
                 ListSearch.Font = Enum.Font.Gotham
-                ListSearch.PlaceholderText = "Search..."
+                ListSearch.PlaceholderText = "Search"
                 ListSearch.Text = ""
                 ListSearch.TextColor3 = Theme.Text
                 ListSearch.TextSize = IsMobile and 11 or 12
@@ -1303,9 +1313,13 @@ function Library:CreateWindow(title)
                             if table.find(selected, option) then
                                 table.remove(selected, table.find(selected, option))
                             else
-                                table.insert(selected, option)
+                                if limit == 1 or #selected < limit then
+                                    table.insert(selected, option)
+                                else
+                                    return
+                                end
                             end
-                            SelectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
+                            SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
                         else
                             if selected == option then
                                 selected = nil
@@ -1415,25 +1429,57 @@ function Library:CreateWindow(title)
                             OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                             OptionBtn.Font = Enum.Font.Gotham
                             OptionBtn.Text = option
-                            OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                            if multiSelect then
+                                OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
+                            else
+                                OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                            end
                             OptionBtn.TextSize = IsMobile and 11 or 12
+
+                            local OptionCorner = Instance.new("UICorner")
+                            OptionCorner.CornerRadius = UDim.new(0, 6)
+                            OptionCorner.Parent = OptionBtn
                             
                             OptionBtn.MouseButton1Click:Connect(function()
-                                selected = option
-                                SelectedLabel.Text = option
-                                
-                                for _, child in ipairs(ListScroll:GetChildren()) do
-                                    if child:IsA("TextButton") then
-                                        child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                if multiSelect then
+                                    if table.find(selected, option) then
+                                        table.remove(selected, table.find(selected, option))
+                                    else
+                                        if limit == 1 or #selected < limit then
+                                            table.insert(selected, option)
+                                        else
+                                            return
+                                        end
+                                    end
+                                    SelectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
+                                else
+                                    if selected == option then
+                                        selected = nil
+                                        Selected.Text = default
+                                    else
+                                        selected = option
+                                        Selected.Text = option
                                     end
                                 end
                                 
-                                opened = false
-                                Tween(Arrow, {Rotation = 0}, 0.2)
-                                Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-                                wait(0.2)
-                                ListContainer.Visible = false
-                                DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                                for _, child in ipairs(ListScroll:GetChildren()) do
+                                    if child:IsA("TextButton") then
+                                        if multiSelect then
+                                            child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                        else
+                                            child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                        end
+                                    end
+                                end
+                                
+                                if not multiSelect then
+                                    opened = false
+                                    Tween(Arrow, {Rotation = -90}, 0.2)
+                                    Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                                    wait(0.2)
+                                    ListContainer.Visible = false
+                                    DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                                end
                                 
                                 if callback then callback(selected) end
                             end)
