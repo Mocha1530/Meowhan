@@ -1045,7 +1045,7 @@ local function noClipLoop()
     end
 end
 
-LocalPlayerSection:Toggle("Noclip", function()
+LocalPlayerSection:Toggle("Noclip", function(state)
     noclipEnabled = state
     config.NoClip = state
     saveConfig(config)
