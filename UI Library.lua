@@ -1175,7 +1175,7 @@ function Library:CreateWindow(title)
                 long = long or false
                 local text = default or ""
 
-                local TextFrame = Insance.new("Frame")
+                local TextFrame = Instance.new("Frame")
                 TextFrame.Parent = Elements
                 TextFrame.BackgroundColor3 = Theme.Card
                 TextFrame.Size = UDim2.new(1, 0, 0, 66)
@@ -1203,7 +1203,7 @@ function Library:CreateWindow(title)
                 TextBoxFrame.Size = UDim2.new(0.9, 28, 0, 36)
                 TextBoxFrame.ClipsDescendants = true
                 TextBoxFrame.ZIndex = 10
-                TextBoxFrame.Visible = false
+                TextBoxFrame.Visible = true
 
                 local TextBoxCorner = Instance.new("UICorner")
                 TextBoxCorner.CornerRadius = UDim.new(0, 6)
@@ -1238,6 +1238,15 @@ function Library:CreateWindow(title)
                         callback(text)
                     end
                 end)
+                
+                return {
+                    Set = function(newText)
+                        text = newText
+                    end,
+                    Get = function()
+                        return text
+                    end
+                }
             end
             
             -- Dropdown (FIXED)
