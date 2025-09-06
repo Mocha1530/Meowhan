@@ -173,6 +173,12 @@ end
 -- Job ID input with current job as placeholder
 local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
 
+RejoinSection:TextBox("Input JobId", currentJobId, currentJobId, function(text)
+    if text then
+        Window:Notify("Input: " .. text, 2)
+    end
+end)
+
   -- Delay slider
 local delayValue = 5
 local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
