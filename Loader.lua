@@ -5,5 +5,5 @@ local Url = Games[game.PlaceId]
 if Url then 
   loadstring(game:HttpGet(Url, true))()
 else
-  loadstring(game:HttpGet(""))()
+  loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/main/Global.lua", true))()
 end
