@@ -1191,7 +1191,7 @@ function Library:CreateWindow(title)
                 TextBoxLabel.Position = UDim2.new(0, 10, 0, 1)
                 TextBoxLabel.Size = UDim2.new(0.5, -10, 0, 19)
                 TextBoxLabel.Font = Enum.Font.Gotham
-                TextBoxLabel.Text = name
+                TextBoxLabel.Text = name or ""
                 TextBoxLabel.TextColor3 = Theme.Text
                 TextBoxLabel.TextSize = IsMobile and 12 or 13
                 TextBoxLabel.TextAlignment = Enum.TextAlignment.Left
@@ -1221,7 +1221,7 @@ function Library:CreateWindow(title)
                 TextBox.Position = UDim2.new(0, 10, 0, 4)
                 TextBox.Size = UDim2.new(0.9, 29, 1, 0)
                 TextBox.Font = Enum.Font.Gotham
-                TextBox.PlaceholderText = placeholder
+                TextBox.PlaceholderText = placeholder or ""
                 TextBox.Text = text
                 TextBox.TextColor3 = Theme.Text
                 TextBox.TextSize = IsMobile and 11 or 12
@@ -1230,12 +1230,9 @@ function Library:CreateWindow(title)
                 TextBox:GetPropertyChangedSignal("Text"):Connect(function()
                     if text ~= TextBox.Text then
                         text = TextBox.Text
-                    else
-                        return
-                    end
-
-                    if callback then
-                        callback(text)
+                        if callback then
+                            callback(text)
+                        end
                     end
                 end)
                 
