@@ -1178,7 +1178,7 @@ function Library:CreateWindow(title)
                 local TextFrame = Instance.new("Frame")
                 TextFrame.Parent = Elements
                 TextFrame.BackgroundColor3 = Theme.Card
-                TextFrame.Size = UDim2.new(1, 0, 0, 66)
+                TextFrame.Size = UDim2.new(1, 0, 0, 77)
                 TextFrame.ClipsDescendants = true
 
                 local TextCorner = Instance.new("UICorner")
@@ -1188,7 +1188,7 @@ function Library:CreateWindow(title)
                 local TextBoxLabel = Instance.new("TextLabel")
                 TextBoxLabel.Parent = TextFrame
                 TextBoxLabel.BackgroundTransparency = 1
-                TextBoxLabel.Position = UDim2.new(0, 10, 0, 1)
+                TextBoxLabel.Position = UDim2.new(0, 10, 0, 6)
                 TextBoxLabel.Size = UDim2.new(0.5, -10, 0, 19)
                 TextBoxLabel.Font = Enum.Font.Gotham
                 TextBoxLabel.Text = name or ""
@@ -1200,8 +1200,8 @@ function Library:CreateWindow(title)
                 local TextBoxFrame = Instance.new("Frame")
                 TextBoxFrame.Parent = TextFrame
                 TextBoxFrame.BackgroundColor3 = Theme.Surface
-                TextBoxFrame.Position = UDim2.new(0, 10, 0, IsMobile and 20 or 16)
-                TextBoxFrame.Size = UDim2.new(0.9, 28, 0, 36)
+                TextBoxFrame.Position = UDim2.new(0, 10, 0, IsMobile and 30 or 26)
+                TextBoxFrame.Size = UDim2.new(0.9, 26, 0, 36)
                 TextBoxFrame.ClipsDescendants = true
                 TextBoxFrame.ZIndex = 10
                 TextBoxFrame.Visible = true
@@ -1219,7 +1219,7 @@ function Library:CreateWindow(title)
                 local TextBox = Instance.new("TextBox")
                 TextBox.Parent = TextBoxFrame
                 TextBox.BackgroundTransparency = 1
-                TextBox.Position = UDim2.new(0, 10, 0, 4)
+                TextBox.Position = UDim2.new(0, 9, 0, 0)
                 TextBox.Size = UDim2.new(0.9, 29, 1, 0)
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.PlaceholderText = placeholder or ""
@@ -1227,6 +1227,7 @@ function Library:CreateWindow(title)
                 TextBox.TextColor3 = Theme.Text
                 TextBox.TextSize = IsMobile and 11 or 12
                 TextBox.ClearTextOnFocus = false
+                TextBox.TextTruncate = Enum.TextTruncate.AtEnd
 
                 TextBox:GetPropertyChangedSignal("Text"):Connect(function()
                     if text ~= TextBox.Text then
