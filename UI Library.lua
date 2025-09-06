@@ -1179,7 +1179,7 @@ function Library:CreateWindow(title)
                 TextFrame.Parent = Elements
                 TextFrame.BackgroundColor3 = Theme.Card
                 TextFrame.Size = UDim2.new(1, 0, 0, 66)
-                TextFrame.ClipDescendants = true
+                TextFrame.ClipsDescendants = true
 
                 local TextCorner = Instance.new("UICorner")
                 TextCorner.CornerRadius = UDim.new(0, 6)
