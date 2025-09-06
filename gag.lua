@@ -775,7 +775,7 @@ end, {
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
 -- Settings Tab
-local UISection = SettingsTab:Section("UI")
+local ESPSection = SettingsTab:Section("ESP")
 local LocalPlayerSection = SettingsTab:Section("Player")
 local RejoinSection = SettingsTab:Section("Rejoin Config")
 
@@ -954,7 +954,7 @@ end
 
 connectDestroyEvent()
 
-UISection:Toggle("Show Mutation Timer", function(state)
+ESPSection:Toggle("Show Mutation Timer", function(state)
     mutationTimerEnabled = state
     config.ShowMutationTimer = state
     saveConfig(config)
