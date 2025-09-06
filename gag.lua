@@ -44,20 +44,29 @@ end
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
-    InitialDelay = 30,
-    JobId = "",
+    -- Mutation Machine
     PetToMutate = "",
     PetMutations = {},
     AutoStartPetMutation = false,
     AutoClaimMutatedPet = false,
+
+    -- Event
     SubmitGlimmering = false,
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
+
+    -- ESP
     ShowMutationTimer = true,
+
+    -- Player
     WalkSpeed = 20,
     JumpPower = 50,
     InfiniteJump = false,
-    NoClip = false
+    NoClip = false,
+
+    -- Rejoin
+    InitialDelay = 30,
+    JobId = ""
 }
 local Running = {
     autoStartMachine = true,
