@@ -1194,7 +1194,8 @@ function Library:CreateWindow(title)
                 TextBoxLabel.Text = name or ""
                 TextBoxLabel.TextColor3 = Theme.Text
                 TextBoxLabel.TextSize = IsMobile and 12 or 13
-                TextBoxLabel.TextAlignment = Enum.TextAlignment.Left
+                TextBoxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextBoxLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
                 local TextBoxFrame = Instance.new("Frame")
                 TextBoxFrame.Parent = TextFrame
