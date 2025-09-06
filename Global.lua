@@ -1203,7 +1203,7 @@ function Library:CreateWindow(title)
                 TextBoxFrame.Size = UDim2.new(0.9, 28, 0, 36)
                 TextBoxFrame.ClipsDescendants = true
                 TextBoxFrame.ZIndex = 10
-                TextBoxFrame.Visible = false
+                TextBoxFrame.Visible = true
 
                 local TextBoxCorner = Instance.new("UICorner")
                 TextBoxCorner.CornerRadius = UDim.new(0, 6)
