@@ -1169,6 +1169,76 @@ function Library:CreateWindow(title)
                     end
                 }
             end
+
+            -- TextBox
+            function Section:TextBox(name, placeholder, default, callback, long)
+                long = long or false
+                local text = default or ""
+
+                local TextFrame = Insance.new("Frame")
+                TextFrame.Parent = Elements
+                TextFrame.BackgroundColor3 = Theme.Card
+                TextFrame.Size = UDim2.new(1, 0, 0, 66)
+                TextFrame.ClipDescendants = true
+
+                local TextCorner = Instance.new("UICorner")
+                TextCorner.CornerRadius = UDim.new(0, 6)
+                TextCorner.Parent = TextFrame
+
+                local TextBoxLabel = Instance.new("TextLabel")
+                TextBoxLabel.Parent = TextFrame
+                TextBoxLabel.BackgroundTransparency = 1
+                TextBoxLabel.Position = UDim2.new(0, 10, 0, 1)
+                TextBoxLabel.Size = UDim2.new(0.5, -10, 0, 19)
+                TextBoxLabel.Font = Enum.Font.Gotham
+                TextBoxLabel.Text = name
+                TextBoxLabel.TextColor3 = Theme.Text
+                TextBoxLabel.TextSize = IsMobile and 12 or 13
+                TextBoxLabel.TextAlignment = Enum.TextAlignment.Left
+
+                local TextBoxFrame = Instance.new("Frame")
+                TextBoxFrame.Parent = TextFrame
+                TextBoxFrame.BackgroundColor3 = Theme.Surface
+                TextBoxFrame.Position = UDim2.new(0, 10, 0, IsMobile and 20 or 16)
+                TextBoxFrame.Size = UDim2.new(0.9, 28, 0, 36)
+                TextBoxFrame.ClipsDescendants = true
+                TextBoxFrame.ZIndex = 10
+                TextBoxFrame.Visible = false
+
+                local TextBoxCorner = Instance.new("UICorner")
+                TextBoxCorner.CornerRadius = UDim.new(0, 6)
+                TextBoxCorner.Parent = TextBoxFrame
+
+                local TextBoxStroke = Instance.new("UIStroke")
+                TextBoxStroke.Parent = TextBoxFrame
+                TextBoxStroke.Color = Theme.Accent
+                TextBoxStroke.Thickness = 1
+                TextBoxStroke.Transparency = 0.8
+
+                local TextBox = Instance.new("TextBox")
+                TextBox.Parent = TextBoxFrame
+                TextBox.BackgroundTransparency = 1
+                TextBox.Position = UDim2.new(0, 10, 0, 4)
+                TextBox.Size = UDim2.new(0.9, 29, 1, 0)
+                TextBox.Font = Enum.Font.Gotham
+                TextBox.PlaceholderText = placeholder
+                TextBox.Text = text
+                TextBox.TextColor3 = Theme.Text
+                TextBox.TextSize = IsMobile and 11 or 12
+                TextBox.ClearTextOnFocus = false
+
+                TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if text ~= TextBox.Text then
+                        text = TextBox.Text
+                    else
+                        return
+                    end
+
+                    if callback then
+                        callback(text)
+                    end
+                end)
+            end
             
             -- Dropdown (FIXED)
             function Section:Dropdown(name, options, default, callback, multiSelect, limit)
