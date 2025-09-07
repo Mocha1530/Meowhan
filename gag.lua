@@ -1024,12 +1024,12 @@ spawn(function()
                         type = "Fruit",
                         mutation = "Glimmering",
                         action = function(fruit)
-                            fruit.Transparency = 1
-                            fruit.CanCollide = false
-                            fruit.CFrame = HumanoidRootPart.CFrame
-                            
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
+                                    base = child.Parent
+                                    base.Transparency = 1
+                                    base.CanCollide = false
+                                    base.CFrame = HumanoidRootPart.CFrame
                                     child:InputHoldBegin()
                                     child:InputHoldEnd()
                                     break
