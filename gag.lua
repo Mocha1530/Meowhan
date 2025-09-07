@@ -1026,7 +1026,8 @@ spawn(function()
                         action = function(fruit)
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
-                                    child:FireTriggered(LocalPlayer.Name)
+                                    child:InputHoldBegin()
+                                    child:InputHoldEnd()
                                     break
                                 end
                             end
@@ -1080,7 +1081,7 @@ FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
             config.AutoCollectSelectedFruits = false
         end
     else
-        Window:Notiy("Auto Collect Disabled", 2)
+        Window:Notify("Auto Collect Disabled", 2)
     end
     
     saveConfig(config)
@@ -1539,7 +1540,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.61")
+AboutSection:Label("Version: 1.2.6")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
