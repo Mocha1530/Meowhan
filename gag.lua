@@ -1539,7 +1539,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.6")
+AboutSection:Label("Version: 1.3.2")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
