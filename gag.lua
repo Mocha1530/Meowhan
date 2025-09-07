@@ -319,7 +319,7 @@ local function findItem(filters)
             end
             
             if matchesAllFilters and ageMode ~= "None" then
-                local age = extractValueFromName(child.Name, "%[Age (%d+)%]")
+                local age = extractItem(child.Name, "%[Age (%d+)%]")
                 
                 if not age then
                     matchesAllFilters = false
@@ -1021,8 +1021,8 @@ spawn(function()
     while Running.collectGlimmering do
         if autoCollectGlimmeringEnabed then
             findFruit({
-                        type = "Fruit"
-                        mutation = "Glimmering"
+                        type = "Fruit",
+                        mutation = "Glimmering",
                         action = function(fruit)
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
@@ -1539,7 +1539,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.2")
+AboutSection:Label("Version: 1.2.61")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
