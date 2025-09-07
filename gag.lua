@@ -866,7 +866,7 @@ CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
     saveConfig(config)
 end, {
     default = autoCollectSelectedFruitsEnabled,
-    groups = "Auto_Collect"
+    group = "Auto_Collect"
 })
 
 -- Mutation Machine Timer
