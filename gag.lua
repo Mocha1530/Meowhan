@@ -1027,7 +1027,7 @@ spawn(function()
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
                                     base = child.Parent
-                                    base.Transparency = 1
+                                    base.Transparency = 0
                                     base.CanCollide = false
                                     base.CFrame = HumanoidRootPart.CFrame
                                     child:InputHoldBegin()
