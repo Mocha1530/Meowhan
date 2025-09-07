@@ -1027,9 +1027,19 @@ spawn(function()
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
                                     base = child.Parent
-                                    base.Transparency = 0
-                                    base.CanCollide = false
-                                    base.CFrame = HumanoidRootPart.CFrame
+                                    
+                                    if base then
+                                        base.Transparency = 0
+                                        base.CanCollide = false
+                                        base.CFrame = HumanoidRootPart.CFrame
+                                        for _, effects in ipairs(base:GetChildren()) do
+                                            if effects:IsA("BasePart") then
+                                                effects.Transparency = 0
+                                                effects.CanCollide = false
+                                            end
+                                        end
+                                    end
+                                    
                                     child:InputHoldBegin()
                                     child:InputHoldEnd()
                                     break
@@ -1544,7 +1554,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.6")
+AboutSection:Label("Version: 1.2.67")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
