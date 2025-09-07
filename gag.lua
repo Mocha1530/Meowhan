@@ -1026,7 +1026,7 @@ spawn(function()
                         action = function(fruit)
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
-                                    base = child.Parent
+                                    local base = child.Parent
                                     
                                     if base then
                                         base.Transparency = 0
@@ -1047,9 +1047,9 @@ spawn(function()
                             end
                         end
             })
-            task.wait(0.5)
-        else
             task.wait(1)
+        else
+            task.wait(2)
         end
     end
 end)
@@ -1554,7 +1554,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.67")
+AboutSection:Label("Version: 1.2.6")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
