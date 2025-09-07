@@ -1,3 +1,4 @@
+-- All Variables
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
@@ -30,11 +31,11 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     if child.Name ~= "Farm" or not child:IsA("Folder") then
         continue
     end
-    
+        
     local Owner = child:FindFirstChild("Important") 
-                      and child.Important:FindFirstChild("Data") 
-                      and child.Important.Data:FindFirstChild("Owner")
-    
+                    and child.Important:FindFirstChild("Data") 
+                    and child.Important.Data:FindFirstChild("Owner")
+        
     if Owner and Owner:IsA("StringValue") and Owner.Value == LocalPlayer.Name then
         PlayerFarm = child
         break
@@ -44,6 +45,13 @@ end
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
+    -- Collect Fruits
+    FruitsToCollect = {},
+    FruitMutationsToCollect = {},
+    FruitWeightToCollect = 0,
+    FruitWeightModeToCollect = "None",
+    AutoCollectSelectedFruits = false,
+    
     -- Mutation Machine
     PetToMutate = "",
     PetMutations = {},
@@ -51,6 +59,7 @@ local DEFAULT_CONFIG = {
     AutoClaimMutatedPet = false,
 
     -- Event
+    CollectGlimmering = false,
     SubmitGlimmering = false,
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
@@ -71,6 +80,7 @@ local DEFAULT_CONFIG = {
 local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
+    collectGlimmering = true,
     submitGlimmering = true,
     submitAllGlimmering = true,
     showMutationTimer = true,
@@ -138,6 +148,39 @@ local ShopTab = Window:Tab("Shop")
 local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
 
+-- Tab Vars
+    -- Collect Fruit Vars
+    local selectedFruitsToCollect = config.FruitsToCollect or {}
+    local selectedFruitMutations = config.FruitMutationsToCollect or {}
+    local selectedFruitWeight = config.FruitWeightToCollect or 0
+    local selectedWeightMode = config.FruitWeightModeToCollect or "None"
+    local autoCollectSelectedFruitsEnabled = config.AutoCollectSelectedFruits
+
+    -- Mutation Machine Vars
+    local autoStartMachineEnabled = config.AutoStartPetMutation
+    local autoClaimPetEnabled = config.AutoClaimMutatedPet
+    local selectedPetToMutate = config.PetToMutate or ""
+    local selectedPetMutations = config.PetMutations or {}
+    local MutationMachine = GameEvents.PetMutationMachineService_RE
+
+    -- Event vars
+    local autoCollectGlimmeringEnabed = config.CollectGlimmering
+    local submitGlimmeringEnabled = config.SubmitGlimmering
+    local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+
+    -- Settings Vars
+    local mutationTimerEnabled = config.ShowMutationTimer
+    local originalBillboardPosition = nil
+    local billboardGui = nil
+    local scalingLoop = nil
+    local Humanoid = Character:WaitForChild("Humanoid")
+    local walkSpeedValue = config.WalkSpeed
+    local jumpPowerValue = config.JumpPower
+    local infiniteJumpEnabled = config.InfiniteJump
+    local noclipEnabled = config.NoClip
+    local NoClipping = nil
+    local jobIdInput = config.JobId or ""
+
 -- Initialize
 local teleport = PlayerGui:FindFirstChild("Teleport_UI")
 local frame = teleport:FindFirstChild("Frame")
@@ -183,7 +226,7 @@ local function extractItem(itemName, pattern)
     return match and tonumber(match) or nil
 end
 
--- Main filtering function
+-- Main filtering function (Inventory)
 local function findItem(filters)
     local nameFilter = filters.name or "None"
     local typeFilter = filters.type
@@ -212,18 +255,54 @@ local function findItem(filters)
                 matchesAllFilters = false
             end
             
-            if matchesAllFilters and nameFilter ~= "None" and 
-               not child.Name:find(nameFilter, 1, true) then
-                matchesAllFilters = false
+            if matchesAllFilters and nameFilter ~= "None" then
+                local nameMatch = false
+
+                if type(nameFilter) == "table" then
+                    for _, name in ipairs(nameFilter) do
+                        if child.Name:find(name, 1, true) then
+                            nameMatch = true
+                            break
+                        end
+                    end
+                else
+                    nameMatch = child.Name:find(nameFilter, 1 , true)
+                end
+
+                if not nameMatch then
+                    matchesAllFilters = false
+                end
             end
             
-            if matchesAllFilters and mutationFilter then
-                local mutation = child:GetAttribute(mutationFilter)
-                if not mutation or mutation ~= true then
-                    local variant = child:FindFirstChild("Variant")
-                    if not variant or variant.Value ~= mutationFilter then
-                        matchesAllFilters = false
+            if matchesAllFilters and mutationFilter ~= "None" then
+                local mutationMatch = false
+
+                if type(mutationFilter) == "table" then
+                    for _, mutation in ipairs(mutationFilter) do
+                        local attributeValue = child:GetAttribute(mutation)
+                        if attributeValue then
+                            mutationMatch = true
+                            break
+                        end
+
+                        local variant = child:FindFirstChild("Variant")
+                        if variant and variant.Value == mutation then
+                            mutationMatch = true
+                            break
+                        end
                     end
+                else
+                    local attributeValue = child:GetAttribute(mutationFilter)
+                    if attributeValue then
+                        mutationMatch = true
+                    else
+                        local variant = child:FindFirstChild("Variant")
+                        mutationMatch = variant and variant.Value == mutationFilter
+                    end
+                end
+
+                if not mutationMatch then
+                    matchesAllFilters = false
                 end
             end
             
@@ -262,6 +341,195 @@ local function findItem(filters)
     
     return false
 end
+
+-- Main filtering function (Farm)
+local function findFruit(filters)
+    local nameFilter = filters.name or "None"
+    local typeFilter = filters.type
+    local mutationFilter = filters.mutation or "None"
+    local weightFilter = filters.weight or 0
+    local weightMode = filters.weightMode or "None"
+    local action = filters.action
+    local plants = PlayerFarm.Important:FindFirstChild("Plants_Physical")
+    
+    if not typeFilter or not action then
+        warn("Type and action are required parameters")
+        return false
+    end
+
+    if not plants then
+        warn("PlayerFarm not found")
+        return false
+    end
+
+    local function checkFruit(fruit)
+        if fruit:GetAttribute("Favorited") == true then
+            return false
+        end
+
+        local matchesAllFilters = true
+        
+        if matchesAllFilters and nameFilter ~= "None" then
+            local nameMatch = false
+            if type(nameFilter) == "table" then
+                for _, name in ipairs(nameFilter) do
+                    if fruit.Name:find(name, 1, true) then
+                        nameMatch = true
+                        break
+                    end
+                end
+            else
+                nameMatch = fruit.Name:find(nameFilter, 1, true)
+            end
+            matchesAllFilters = nameMatch
+        end
+
+        if matchesAllFilters and mutationFilter ~= "None" then
+            local mutationMatch = false
+            if type(mutationFilter) == "table" then
+                for _, mutation in ipairs(mutationFilter) do
+                    local attributeValue = fruit:GetAttribute(mutation)
+                    if attributeValue then
+                        mutationMatch = true
+                        break
+                    end
+                    local variant = fruit:FindFirstChild("Variant")
+                    if variant and variant.Value == mutation then
+                        mutationMatch = true
+                        break
+                    end
+                end
+            else
+                local attributeValue = fruit:GetAttribute(mutationFilter)
+                if attributeValue then
+                    mutationMatch = true
+                else
+                    local variant = fruit:FindFirstChild("Variant")
+                    mutationMatch = variant and variant.Value == mutationFilter
+                end
+            end
+            matchesAllFilters = mutationMatch
+        end
+
+        if matchesAllFilters and weightMode ~= "None" then
+            local weight = fruit:FindFirstChild("Weight")
+            if not weight then
+                matchesAllFilters = false
+            else
+                weight = tonumber(weight.Value)
+                if weightMode == "Less" and weight > weightFilter then
+                    matchesAllFilters = false
+                elseif weightMode == "Greater" and weight < weightFilter then
+                    matchesAllFilters = false
+                end
+            end
+        end
+
+        return matchesAllFilters
+    end
+
+    for _, child in ipairs(plants:GetChildren()) do
+        if child:IsA("Model") then
+            local fruitsFolder = child:FindFirstChild("Fruits")
+            if fruitsFolder then
+                for _, fruit in ipairs(fruitsFolder:GetChildren()) do
+                    if fruit:IsA("Model") and checkFruit(fruit) then
+                        if action(fruit) then
+                            return true
+                        end
+                    end
+                end
+            else
+                if checkFruit(child) then
+                    if action(child) then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+--[[
+    for _, child in ipairs(plants:GetChildren()) do    
+        if child:GetAttribute("Favorited") ~= true then
+            local matchesAllFilters = true
+            
+            if matchesAllFilters and nameFilter ~= "None" then
+                local nameMatch = false
+            
+                if type(nameFilter) == "table" then
+                    for _, name in ipairs(nameFilter) do
+                        if child.Name:find(name, 1, true) then
+                            nameMatch = true
+                            break
+                        end
+                    end
+                else
+                    nameMatch = child.Name:find(nameFilter, 1 , true)
+                end
+    
+                if not nameMatch then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters and mutationFilter ~= "None" then
+                local mutationMatch = false
+
+                if type(mutationFilter) == "table" then
+                    for _, mutation in ipairs(mutationFilter) do
+                        local attributeValue = child:GetAttribute(mutation)
+                        if attributeValue then
+                            mutationMatch = true
+                            break
+                        end
+
+                        local variant = child:FindFirstChild("Variant")
+                        if variant and variant.Value == mutation then
+                            mutationMatch = true
+                            break
+                        end
+                    end
+                else
+                    local attributeValue = child:GetAttribute(mutationFilter)
+                    if attributeValue then
+                        mutationMatch = true
+                    else
+                        local variant = child:FindFirstChild("Variant")
+                        mutationMatch = variant and variant.Value == mutationFilter
+                    end
+                end
+
+                if not mutationMatch then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters and weightMode ~= "None" then
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
+                
+                if not weight then
+                    matchesAllFilters = false
+                elseif weightMode == "Less" and weight > weightFilter then
+                    matchesAllFilters = false
+                elseif weightMode == "Greater" and weight < weightFilter then
+                    matchesAllFilters = false
+                end
+            end
+            
+            if matchesAllFilters then
+                if holdItem(child.Name) then
+                    action()
+                    return true
+                end
+            end
+        end
+    
+    return false
+end ]] --
 
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
@@ -548,15 +816,58 @@ petButton.MouseButton1Click:Connect(function()
 end)
 
 -- Main Tab
+local CollectFruitSection = MainTab:Section("Collect Fruit")
 local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
--- Mutation Machine Vars
-local autoStartMachineEnabled = config.AutoStartPetMutation
-local autoClaimPetEnabled = config.AutoClaimMutatedPet
-local selectedPetToMutate = config.PetToMutate or ""
-local selectedPetMutations = config.PetMutations or {}
-local MutationMachine = GameEvents.PetMutationMachineService_RE
+CollectFruitSection:Dropdown("Select Fruits: ", MachineMutations, selectedFruitsToCollect, function(selected)
+    if selected then
+        selectedFruitsToCollect = selected
+        config.FruitsToCollect = selected
+        saveConfig(config)
+    end
+end, true)
+
+CollectFruitSection:Dropdown("Select Mutations: ", MachineMutations, selectedFruitMutations, function(selected)
+    if selected then
+        selectedFruitMutations = selected
+        config.FruitMutationsToCollect = selected
+        saveConfig(config)
+    end
+end, true)
+
+CollectFruitSection:Dropdown("Weight Mode: ", {"None", "Below", "Above"}, selectedWeightMode, function(selected)
+    if selected then
+        selectedWeightMode = selected
+        config.FruitWeightModeToCollect = selected
+        saveConfig(config)
+    end
+end)
+
+CollectFruitSection:TextBox("Weight: ", "Fruit Weight", tostring(selectedFruitWeight), function(weight)
+    selectedFruitWeight = tonumber(weight)
+    config.FruitWeightToCollect = tonumber(weight)
+end)
+
+CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
+    autoCollectSelectedFruitsEnabled = state
+    config.AutoCollectSelectedFruits = state
+        
+    if state then
+        Window:Notify("Auto Collect Enabled", 2)
+        if autoCollectGlimmeringEnabed then
+            autoCollectGlimmeringEnabed = false
+            config.CollectGlimmering = false
+        end
+    else
+        Window:Notify("Auto Collect Disabled", 2)
+    end
+
+    saveConfig(config)
+end, {
+    default = autoCollectSelectedFruitsEnabled,
+    groups = "Auto_Collect"
+})
 
 -- Mutation Machine Timer
 local function getMutationMachineTimer()
@@ -688,10 +999,6 @@ end, {
 -- Event Tab
 local FairyEventSection = EventTab:Section("Fairy Event")
 
--- Event vars
-local submitGlimmeringEnabled = config.SubmitGlimmering
-local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
-
 --[[ Ex use of findItem(table)
 
 findItem({
@@ -709,6 +1016,28 @@ findItem({
 })
 
 ]]
+-- Auto collect glimmering
+spawn(function()
+    while Running.collectGlimmering do
+        if autoCollectGlimmeringEnabed then
+            findFruit({
+                        type = "Fruit"
+                        mutation = "Glimmering"
+                        action = function(fruit)
+                            for _, child in ipairs(fruit:GetDescendants()) do
+                                if child.Name == "ProximityPrompt" then
+                                    child:FireTriggered(LocalPlayer.Name)
+                                    break
+                                end
+                            end
+                        end
+            })
+            task.wait(0.5)
+        else
+            task.wait(1)
+        end
+    end
+end)
 
 -- Auto submit glimmering
 spawn(function()
@@ -739,6 +1068,26 @@ spawn(function()
         end
     end
 end)
+
+FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
+    autoCollectGlimmeringEnabed = state
+    config.CollectGlimmering = state
+    
+    if state then
+        Window:Notify("Auto Collect Enabled", 2)
+        if autoCollectSelectedFruitsEnabled then
+            autoCollectSelectedFruitsEnabled = false
+            config.AutoCollectSelectedFruits = false
+        end
+    else
+        Window:Notiy("Auto Collect Disabled", 2)
+    end
+    
+    saveConfig(config)
+end, {
+    default = autoCollectGlimmeringEnabed,
+    group = "Auto_Collect"
+})
 
 FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
     submitGlimmeringEnabled = state
@@ -787,18 +1136,6 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 local ESPSection = SettingsTab:Section("ESP")
 local LocalPlayerSection = SettingsTab:Section("Player")
 local RejoinSection = SettingsTab:Section("Rejoin Config")
-
--- Settings Vars
-local mutationTimerEnabled = config.ShowMutationTimer
-local originalBillboardPosition = nil
-local billboardGui = nil
-local scalingLoop = nil
-local Humanoid = Character:WaitForChild("Humanoid")
-local walkSpeedValue = config.WalkSpeed
-local jumpPowerValue = config.JumpPower
-local infiniteJumpEnabled = config.InfiniteJump
-local noclipEnabled = config.NoClip
-local NoClipping = nil
 
 -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
@@ -1080,15 +1417,18 @@ if noclipEnabled and NoClipping ~= nil then
     UILib:TrackProcess("connections", NoClipping, "NoClipping")
 end
 
--- Job ID input with current job as placeholder
-local jobIdInput = RejoinSection:Label("Current Job ID: " .. currentJobId)
-
   -- Delay slider
 local delayValue = config.InitialDelay or 5
 local delaySlider = RejoinSection:Slider("Rejoin Delay", 0, 60, delayValue, function(value)
     delayValue = value
     config.InitialDelay = value
     saveConfig(config)
+end)
+
+  -- Job ID input with current job as placeholder
+RejoinSection:TextBox("Input JobId", "Leave empty to use current", currentJobId, function(text)
+    jobIdInput = text
+    config.JobId = text
 end)
 
   -- Countdown function
@@ -1171,7 +1511,7 @@ RejoinSection:Button("Auto Rejoin", function()
     -- Update and save config
     local newConfig = {
         InitialDelay = delayValue,
-        JobId = currentJobId
+        JobId = jobIdInput
     }
     saveConfig(newConfig)
     
