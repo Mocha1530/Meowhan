@@ -1600,7 +1600,7 @@ local function download(asset)
     local success, err = pcall(function()
         local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=Png&isCircular=false"
         local response = HttpService:GetAsync(url, true)
-        local data = HttSevice:JSONDecode(response)
+        local data = HttpService:JSONDecode(response)
         
         if not data or not data.data or #data.data == 0 then
             error("No asset image found")
@@ -1615,7 +1615,7 @@ local function download(asset)
         ensureFolderStructure()
 
         local folder = IMAGE_FOLDER
-        local filename = asset
+        local filename = asset .. ".png"
         saveFile(folder, filename, image)
         return true
     end)
