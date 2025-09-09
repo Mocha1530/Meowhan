@@ -549,8 +549,8 @@ gearButton.Position = UDim2.new(0.688038409, 0, 0.114772804, 0)
 gearButton.Size = UDim2.new(0.259808183, 0, 0.790713012, 0)
 gearButton.ZIndex = 1
 gearButton.ScaleType = Enum.ScaleType.Fit
-gearButton.Image = "rbxassetid://139632749336322"
-gearButton.HoverImage = "rbxassetid://139632749336322"
+gearButton.Image = "rbxassetid://0"
+gearButton.HoverImage = "rbxassetid://0"
 gearButton.Parent = frame
 
 local gearAspectRatio = Instance.new("UIAspectRatioConstraint")
@@ -722,8 +722,8 @@ petButton.Position = UDim2.new(0.688038409, 0, 0.114772804, 0)
 petButton.Size = UDim2.new(0.259808183, 0, 0.790713012, 0)
 petButton.ZIndex = 1
 petButton.ScaleType = Enum.ScaleType.Fit
-petButton.Image = "rbxassetid://109511942140479"
-petButton.HoverImage = "rbxassetid://109511942140479"
+petButton.Image = "rbxassetid://0"
+petButton.HoverImage = "rbxassetid://0"
 petButton.Parent = frame
 
 local petAspectRatio = Instance.new("UIAspectRatioConstraint")
