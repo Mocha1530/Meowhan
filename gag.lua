@@ -1608,7 +1608,7 @@ local function download(asset)
         
         local imageUrl = data.data[1].imageUrl
         if not imageUrl then
-            error(No image Url)
+            error("No image Url")
         end
         
         local image = HttpService:GetAsync(imageUrl, true)
@@ -1624,7 +1624,7 @@ local function download(asset)
         return true
     else
         downloadError = tostring(err)
-        return
+        return false
     end
 end
 
@@ -1632,7 +1632,7 @@ AssetToPNGSection:TextBox("Input Asset", "rbxassetid://12345678 or 12345678", ""
     assetInput = text
 end)
 
-StatsSection:Button("Download", function()
+AssetToPNGSection:Button("Download", function()
     asset = extractItem(assetInput, "%d+", true)
     if download(asset) then
         Window:Notify("Downloaded", 2)
