@@ -1634,10 +1634,15 @@ end)
 
 AssetToPNGSection:Button("Download", function()
     asset = extractItem(assetInput, "%d+", true)
-    if download(asset) then
-        Window:Notify("Downloaded", 2)
+    if asset then
+        if download(asset) then
+            Window:Notify("Downloaded", 2)
+        else
+            Window:Notify("Failed: " .. downloadError, 2)
+            warn(downloadError)
+        end
     else
-        Window:Notify("Failed: " .. downloadError, 2)
+        Window:Notify("Invalid Asset ID", 2)
     end
 end)
         
