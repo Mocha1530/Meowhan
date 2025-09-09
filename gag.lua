@@ -1642,7 +1642,7 @@ AssetToPNGSection:TextBox("Input Asset", "rbxassetid://12345678 or 12345678", ""
 end)
 
 AssetToPNGSection:Button("Download", function()
-    asset = extractItem(assetInput, "%d+", true)
+    asset = extractItem(assetInput, "%d+", false)
     if asset then
         if download(asset) then
             Window:Notify("Downloaded", 2)
