@@ -1598,7 +1598,7 @@ local downloadError = ""
 
 local function download(asset)
     local success, err = pcall(function()
-        local url = "https://thumbnails.roproxy.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=png"
+        [[local url = "https://thumbnails.roproxy.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=png"
         local response = HttpService:GetAsync(url, true)
         local data = HttpService:JSONDecode(response)
         
@@ -1609,11 +1609,20 @@ local function download(asset)
         local imageUrl = data.data[1].imageUrl
         if not imageUrl then
             error("No image Url")
+        end]]
+        local assetInfo = MarketplaceService:GetProductInfo(asset)
+        if not assetInfo then
+            error("Asset not found")
         end
         
+        local imageUrl = assetInfo.Thumbnail.Url
+        if not imageUrl then
+            error("No image url")
+        end
+            
         local image = HttpService:GetAsync(imageUrl, true)
         ensureFolderStructure()
-
+            
         local folder = IMAGE_FOLDER
         local filename = asset .. ".png"
         saveFile(folder, filename, image)
