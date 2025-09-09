@@ -1598,7 +1598,7 @@ local downloadError = ""
 
 local function download(asset)
     local success, err = pcall(function()
-        local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=Png&isCircular=false"
+        local url = "https://thumbnails.roproxy.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=png"
         local response = HttpService:GetAsync(url, true)
         local data = HttpService:JSONDecode(response)
         
