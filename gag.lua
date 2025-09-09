@@ -42,6 +42,7 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
+local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
@@ -102,9 +103,13 @@ local function ensureFolderStructure()
         if not isfolder("Meowhan/Config") then
             makefolder("Meowhan/Config")
         end
+        if not isfolder("Meowhan/Image/GrowAGarden") then
+            makefolder("Meowhan/Image/GrowAGarden")
+        end
     end) then
         warn("Could not create folder structure - using root directory")
         CONFIG_FOLDER = ""
+        IMAGE_FOLDER = ""
     end
 end
 
@@ -133,6 +138,18 @@ local function saveConfig(config)
     end)
     if not success then
         warn("Failed to save config:", err)
+    end
+end
+
+-- Save file
+local function saveFile(folder, filename, data)
+    ensureFolderStructure()
+    local fullpath = folder .. filename
+    local success, err = pcall(function()
+        writefile(fullpath, data)
+    end)
+    if not success then
+        warn("Failed to save file:", err)
     end
 end
 
@@ -221,9 +238,13 @@ local function holdItem(itemName)
     return true
 end
 
-local function extractItem(itemName, pattern)
+local function extractItem(itemName, pattern, string)
     local match = itemName:match(pattern)
-    return match and tonumber(match) or nil
+    if match then
+        return string and tostring(match) or tonumber(match)
+    else
+        return nil
+    end
 end
 
 -- Main filtering function (Inventory)
@@ -307,7 +328,7 @@ local function findItem(filters)
             end
             
             if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]", false) or extractItem(child.Name, "%[(%d*%.?%d+)kg%]", false)
                 
                 if not weight then
                     matchesAllFilters = false
@@ -319,7 +340,7 @@ local function findItem(filters)
             end
             
             if matchesAllFilters and ageMode ~= "None" then
-                local age = extractItem(child.Name, "%[Age (%d+)%]")
+                local age = extractItem(child.Name, "%[Age (%d+)%]", false)
                 
                 if not age then
                     matchesAllFilters = false
@@ -1551,6 +1572,7 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
+local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
@@ -1569,3 +1591,54 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
+
+-- Asset To PNG
+local assetInput = ""
+local downloadError = ""
+
+local function download(asset)
+    local success, err = pcall(function()
+        local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=Png&isCircular=false"
+        local response = HttpService:GetAsync(url, true)
+        local data = HttSevice:JSONDecode(response)
+        
+        if not data or not data.data or #data.data == 0 then
+            error("No asset image found")
+        end
+        
+        local imageUrl = data.data[1].imageUrl
+        if not imageUrl then
+            error(No image Url)
+        end
+        
+        local image = HttpService:GetAsync(imageUrl, true)
+        ensureFolderStructure()
+
+        local folder = IMAGE_FOLDER
+        local filename = asset
+        saveFile(folder, filename, image)
+        return true
+    end)
+
+    if success then
+        return true
+    else
+        downloadError = tostring(err)
+        return
+    end
+end
+
+AssetToPNGSection:TextBox("Input Asset", "rbxassetid://12345678 or 12345678", "", function(text)
+    assetInput = text
+end)
+
+StatsSection:Button("Download", function()
+    asset = extractItem(assetInput, "%d+", true)
+    if download(asset) then
+        Window:Notify("Downloaded", 2)
+    else
+        Window:Notify("Failed: " .. downloadError, 2)
+    end
+end)
+        
+        
