@@ -42,7 +42,32 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
-local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
+-- Seed Shop Vars
+    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)    
+    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)   
+    local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
+    local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedshop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
+
+local function refreshSeeds()
+    local shopSeeds = {}
+    local shopSeedStocks = {}
+
+    if seedShopDataService and seedShopDataService.SeedStocks then
+        local tabSeeds = seedShopDataService.SeedStocks["Tier 1"] or {}
+        
+        for i_s, v_s in pairs(seedShopData) do
+            local seedTier = shopHandler:IsItemLockedByTab("Seed", i_s)
+            if v_s.DisplayInShop and not seedTier then
+                shopSeedStocks[i_s] = tabSeeds.Stocks and tabSeeds.Stocks[i_s] or 0
+                table.insert(shopSeeds, i_s)
+            end
+        end
+    end
+    return shopSeeds, shopSeedStocks
+end
+
+local seeds, stocks = refreshSeeds()
+
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
@@ -65,6 +90,11 @@ local DEFAULT_CONFIG = {
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
 
+    -- Seed Shop
+    SelectedSeeds = {},
+    BuySelectedSeeds = false,
+    BuyAllSeeds = false,
+
     -- ESP
     ShowMutationTimer = true,
 
@@ -84,10 +114,8 @@ local Running = {
     collectGlimmering = true,
     submitGlimmering = true,
     submitAllGlimmering = true,
+    autoBuySeeds = true,
     showMutationTimer = true,
-    autoBuyAll = true,
-    autoBuySelected = true,
-    stockUpdate = true,
     infiniteJump = true
 }
 local MachineMutations = {
@@ -103,13 +131,9 @@ local function ensureFolderStructure()
         if not isfolder("Meowhan/Config") then
             makefolder("Meowhan/Config")
         end
-        if not isfolder("Meowhan/Image/GrowAGarden") then
-            makefolder("Meowhan/Image/GrowAGarden")
-        end
     end) then
         warn("Could not create folder structure - using root directory")
         CONFIG_FOLDER = ""
-        IMAGE_FOLDER = ""
     end
 end
 
@@ -141,23 +165,12 @@ local function saveConfig(config)
     end
 end
 
--- Save file
-local function saveFile(folder, filename, data)
-    ensureFolderStructure()
-    local fullpath = folder .. filename
-    local success, err = pcall(function()
-        writefile(fullpath, data)
-    end)
-    if not success then
-        warn("Failed to save file:", err)
-    end
-end
-
 -- Create UI
 local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI%20Library.lua'))()
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
+local allSeeds = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/Seeds.lua'))() or {}
 
 local MainTab = Window:Tab("Main")
 local EventTab = Window:Tab("Event")
@@ -184,6 +197,12 @@ local InfoTab = Window:Tab("Info")
     local autoCollectGlimmeringEnabed = config.CollectGlimmering
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+
+    -- Seed Shop Vars
+    local seeds, stocks = refreshSeeds()
+    local selectedSeeds = config.SelectedSeeds
+    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
+    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -238,13 +257,9 @@ local function holdItem(itemName)
     return true
 end
 
-local function extractItem(itemName, pattern, string)
+local function extractItem(itemName, pattern)
     local match = itemName:match(pattern)
-    if match then
-        return string and tostring(match) or tonumber(match)
-    else
-        return nil
-    end
+    return match and tonumber(match) or nil
 end
 
 -- Main filtering function (Inventory)
@@ -328,7 +343,7 @@ local function findItem(filters)
             end
             
             if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]", false) or extractItem(child.Name, "%[(%d*%.?%d+)kg%]", false)
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
                 
                 if not weight then
                     matchesAllFilters = false
@@ -340,7 +355,7 @@ local function findItem(filters)
             end
             
             if matchesAllFilters and ageMode ~= "None" then
-                local age = extractItem(child.Name, "%[Age (%d+)%]", false)
+                local age = extractItem(child.Name, "%[Age (%d+)%]")
                 
                 if not age then
                     matchesAllFilters = false
@@ -1050,12 +1065,12 @@ spawn(function()
                                     local base = child.Parent
                                     
                                     if base then
-                                        base.Transparency = 0
+                                        base.Transparency = 1
                                         base.CanCollide = false
                                         base.CFrame = HumanoidRootPart.CFrame
                                         for _, effects in ipairs(base:GetChildren()) do
                                             if effects:IsA("BasePart") then
-                                                effects.Transparency = 0
+                                                effects.Transparency = 1
                                                 effects.CanCollide = false
                                             end
                                         end
@@ -1158,7 +1173,6 @@ FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     else
         Window:Notify("Auto Submit All Disabled", 2)
     end
-
     saveConfig(config)
 end, {
     default = submitAllGlimmeringEnabled,
@@ -1167,6 +1181,84 @@ end, {
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+
+spawn(function()
+    local lastRestockCheck = os.time()
+    while Running.autoBuySeeds then
+        if os.time() - lastRestockCheck >= 300 then
+            seeds, stocks = refreshSeeds()
+            lastRestockCheck = os.time()
+        end
+        
+        if autoBuySelectedSeedsEnabled then
+            for _, v_select in ipairs(selectedSeeds) do
+                if stocks[v_select] and stocks[v_select] > 0 then
+                    for i = 1, stocks[v_select] do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        elseif autoBuyAllSeedsEnabled then
+            for i_all, v_all in pairs(stocks) do
+                if v_all > 0 then
+                    for i = 1, v_all do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+        task.wait(5)
+    end
+end)
+
+-- Select seeds
+SeedShopSection:Dropdown("Select Seeds: ", seeds, selectedSeeds, function(selected)
+    if selected then
+        selectedSeeds = selected
+        config.SelectedSeeds = selected
+        saveConfig(config)
+    end
+end, true)
+
+SeedShopSection:Toggle("Auto Buy Selected", function(state)
+    autoBuySelectedSeedsEnabled = state
+    config.BuySelectedSeeds = state
+
+    if state then
+        Window:Notify("Auto Buy Selected Enabled", 2)
+        if autoBuyAllSeedsEnabled then
+            autoBuyAllSeedsEnabled = false
+            config.BuyAllSeeds = false
+        end
+    else
+        Window:Notify("Auto Buy Selected Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuySelectedSeedsEnabled,
+    group = "Buy_Shop_Seeds"
+})
+
+SeedShopSection:Toggle("Auto Buy All", function(state)
+    autoBuyAllSeedsEnabled = state
+    config.BuyAllSeeds = state
+
+    if state then
+        Window:Notify("Auto Buy Selected Enabled", 2)
+        if autoBuySelectedSeedsEnabled then
+            autoBuyAllSeedsEnabled = false
+            config.BuySelectedSeeds = false
+        end
+    else
+        Window:Notify("Auto Buy Selected Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuyAllSeedsEnabled,
+    group = "Buy_Shop_Seeds"
+})
 
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
@@ -1572,7 +1664,6 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
-local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
@@ -1591,68 +1682,3 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
-
--- Asset To PNG
-local assetInput = ""
-local downloadError = ""
-
-local function download(asset)
-    local success, err = pcall(function()
-        --[[local url = "https://thumbnails.roproxy.com/v1/assets?assetIds=" .. asset .. "&size=420x420&format=png"
-        local response = HttpService:GetAsync(url, true)
-        local data = HttpService:JSONDecode(response)
-        
-        if not data or not data.data or #data.data == 0 then
-            error("No asset image found")
-        end
-        
-        local imageUrl = data.data[1].imageUrl
-        if not imageUrl then
-            error("No image Url")
-        end]]
-        local assetInfo = MarketplaceService:GetProductInfo(asset)
-        if not assetInfo then
-            error("Asset not found")
-        end
-        
-        local imageUrl = assetInfo.Thumbnail.Url
-        if not imageUrl then
-            error("No image url")
-        end
-            
-        local image = HttpService:GetAsync(imageUrl, true)
-        ensureFolderStructure()
-            
-        local folder = IMAGE_FOLDER
-        local filename = asset .. ".png"
-        saveFile(folder, filename, image)
-        return true
-    end)
-
-    if success then
-        return true
-    else
-        downloadError = tostring(err)
-        return false
-    end
-end
-
-AssetToPNGSection:TextBox("Input Asset", "rbxassetid://12345678 or 12345678", "", function(text)
-    assetInput = text
-end)
-
-AssetToPNGSection:Button("Download", function()
-    asset = extractItem(assetInput, "%d+", false)
-    if asset then
-        if download(asset) then
-            Window:Notify("Downloaded", 2)
-        else
-            Window:Notify("Failed: " .. downloadError, 2)
-            warn(downloadError)
-        end
-    else
-        Window:Notify("Invalid Asset ID", 2)
-    end
-end)
-        
-        
