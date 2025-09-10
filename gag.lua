@@ -42,32 +42,32 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
-local seedShop = PlayerGui:FindFirstChild("Seed_Shop")
-local seedScrollingFrame = seedShop:FindFirstChild("Frame"):FindFirstChild("ScrollingFrame")
-local function refreshSeeds()
-    local shopSeeds = {}
-    local shopSeedStocks = {}
-        
-    if #seedScrollingFrame:GetChildren() <= 1 then
-        task.wait(1)
-    end
-        
-    for _, v_s in ipairs(seedScrollingFrame:GetChildren()) do
-        if v_s:IsA("Frame") and v_s.Name ~= "UIListLayout" then
-            local i_s = v_s.Name:gsub("_Padding$", "")
-            local tc_s = v_s.Main_Frame:FindFirstChild("Stock_Text")
-                
-            if tc_s then
-                local c_s = tonumber(tc_s:match("%d+")) or 0
-                shopSeedStocks[i_s] = c_s
-                table.insert(shopSeeds, i_s)
-            end
-        end
-    end
-    return shopSeeds, shopSeedStocks
+local SeedStock = {}
+local ShopSeedList = {}
+local function getSeedStock(): table
+	local SeedShop = PlayerGui.Seed_Shop
+	local Items = SeedShop:FindFirstChild("Blueberry", true).Parent
+
+	for _, Item in next, Items:GetChildren() do
+		local MainFrame = Item:FindFirstChild("Main_Frame")
+		if not MainFrame then continue end
+
+		local StockText = MainFrame.Stock_Text.Text
+		local StockCount = tonumber(StockText:match("%d+"))
+
+		SeedStock[Item.Name] = StockCount
+	end
+
+	return SeedStock
 end
 
-local seeds, stocks = refreshSeeds()
+getSeedStock()
+
+for k_s, _ in pairs(SeedStock) do
+    if k_s then
+        table.insert(ShopSeedList, k_s)
+    end
+end
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
@@ -1188,7 +1188,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 
 spawn(function()
     while Running.autoBuySeeds then
-        seeds, stocks = refreshSeeds()
+        local stocks = getSeedStock()
         
         if autoBuySelectedSeedsEnabled then
             for _, v_select in ipairs(selectedSeeds) do
@@ -1214,7 +1214,7 @@ spawn(function()
 end)
 
 -- Select seeds
-SeedShopSection:Dropdown("Select Seeds: ", seeds, selectedSeeds, function(selected)
+SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedSeeds, function(selected)
     if selected then
         selectedSeeds = selected
         config.SelectedSeeds = selected
