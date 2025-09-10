@@ -44,7 +44,8 @@ end
 
 -- Seed Shop Vars
     local shopHandler = require(ReplicatedStorage.Data.ShopTabData)    
-    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)   
+    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
+    local seedshop = PlayerGui:WaitForChild("Seed_Shop")
     local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
     local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedshop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
 
@@ -199,7 +200,6 @@ local InfoTab = Window:Tab("Info")
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
 
     -- Seed Shop Vars
-    local seeds, stocks = refreshSeeds()
     local selectedSeeds = config.SelectedSeeds
     local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
     local autoBuyAllSeedsEnabled = config.BuyAllSeeds
