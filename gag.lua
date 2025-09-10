@@ -42,7 +42,7 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
-local SeedStock = {}
+local SeedStock = {"Test" = 1}
 local ShopSeedList = {"Test"}
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
@@ -1164,7 +1164,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 
 spawn(function()
     while Running.autoBuySeeds then
-        local stocks = getSeedStock()
+        local stocks = SeedStock
         
         if autoBuySelectedSeedsEnabled then
             for _, v_select in ipairs(selectedShopSeeds) do
