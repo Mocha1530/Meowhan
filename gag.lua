@@ -31,71 +31,18 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     if child.Name ~= "Farm" or not child:IsA("Folder") then
         continue
     end
-        
+
     local Owner = child:FindFirstChild("Important") 
                     and child.Important:FindFirstChild("Data") 
                     and child.Important.Data:FindFirstChild("Owner")
-        
+
     if Owner and Owner:IsA("StringValue") and Owner.Value == LocalPlayer.Name then
         PlayerFarm = child
         break
     end
 end
 
--- Seed Shop Ini
-    local seedShop = PlayerGui:WaitForChild("Seed_Shop")
-    local seedScrollingFrame = seedShop:WaitForChild("Frame"):WaitForChild("ScrollingFrame")
-    
-    local function refreshSeeds()
-        local shopSeeds = {}
-        local shopSeedStocks = {}
-        
-        if #seedScrollingFrame:GetChildren() <= 1 then
-            wait(1)
-        end
-        
-        for _, v_s in ipairs(seedScrollingFrame:GetChildren()) do
-            if v_s:IsA("Frame") and v_s.Name ~= "UIListLayout" then
-                local i_s = v_s.Name:gsub("_Padding$", "")
-                local tc_s = v_s:FindFirstChild("Stock_Text")
-                
-                if tc_s then
-                    local c_s = tonumber(tc_s:match("%d+")) or 0
-                    shopSeedStocks[i_s] = c_s
-                    table.insert(shopSeeds, i_s)
-                end
-            end
-        end
-        
-        return shopSeeds, shopSeedStocks
-    end
-
---[[ Seed Shop Vars
-    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)
-    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
-    local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
-    local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedShop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
-
-local function refreshSeeds()
-    local shopSeeds = {}
-    local shopSeedStocks = {}
-
-    if seedShopDataService and seedShopDataService.SeedStocks then
-        local tabSeeds = seedShopDataService.SeedStocks["Tier 1"] or {}
-        
-        for i_s, v_s in pairs(seedShopData) do
-            local seedTier = shopHandler:IsItemLockedByTab("Seed", i_s)
-            if v_s.DisplayInShop and not seedTier then
-                shopSeedStocks[i_s] = tabSeeds.Stocks and tabSeeds.Stocks[i_s] or 0
-                table.insert(shopSeeds, i_s)
-            end
-        end
-    end
-    return shopSeeds, shopSeedStocks
-end ]]
-
-local seeds, stocks = refreshSeeds()
-
+local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
 local DEFAULT_CONFIG = {
@@ -105,7 +52,7 @@ local DEFAULT_CONFIG = {
     FruitWeightToCollect = 0,
     FruitWeightModeToCollect = "None",
     AutoCollectSelectedFruits = false,
-    
+
     -- Mutation Machine
     PetToMutate = "",
     PetMutations = {},
@@ -117,11 +64,6 @@ local DEFAULT_CONFIG = {
     SubmitGlimmering = false,
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
-
-    -- Seed Shop
-    SelectedSeeds = {},
-    BuySelectedSeeds = false,
-    BuyAllSeeds = false,
 
     -- ESP
     ShowMutationTimer = true,
@@ -142,8 +84,10 @@ local Running = {
     collectGlimmering = true,
     submitGlimmering = true,
     submitAllGlimmering = true,
-    autoBuySeeds = true,
     showMutationTimer = true,
+    autoBuyAll = true,
+    autoBuySelected = true,
+    stockUpdate = true,
     infiniteJump = true
 }
 local MachineMutations = {
@@ -159,9 +103,13 @@ local function ensureFolderStructure()
         if not isfolder("Meowhan/Config") then
             makefolder("Meowhan/Config")
         end
+        if not isfolder("Meowhan/Image/GrowAGarden") then
+            makefolder("Meowhan/Image/GrowAGarden")
+        end
     end) then
         warn("Could not create folder structure - using root directory")
         CONFIG_FOLDER = ""
+        IMAGE_FOLDER = ""
     end
 end
 
@@ -169,15 +117,15 @@ end
 local function loadConfig()
     ensureFolderStructure()
     local fullPath = CONFIG_FOLDER .. CONFIG_FILENAME
-    
+
     if not pcall(function() return readfile(fullPath) end) then
         return DEFAULT_CONFIG
     end
-    
+
     local success, config = pcall(function()
         return HttpService:JSONDecode(readfile(fullPath))
     end)
-    
+
     return success and config or DEFAULT_CONFIG
 end
 
@@ -190,6 +138,18 @@ local function saveConfig(config)
     end)
     if not success then
         warn("Failed to save config:", err)
+    end
+end
+
+-- Save file
+local function saveFile(folder, filename, data)
+    ensureFolderStructure()
+    local fullpath = folder .. filename
+    local success, err = pcall(function()
+        writefile(fullpath, data)
+    end)
+    if not success then
+        warn("Failed to save file:", err)
     end
 end
 
@@ -224,11 +184,6 @@ local InfoTab = Window:Tab("Info")
     local autoCollectGlimmeringEnabed = config.CollectGlimmering
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
-
-    -- Seed Shop Vars
-    local selectedSeeds = config.SelectedSeeds or {}
-    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
-    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -268,24 +223,28 @@ local function holdItem(itemName)
         warn("Backpack not found for player: " .. LocalPlayer.Name)
         return false
     end
-    
+
     if not Character then
         Character = LocalPlayer.CharacterAdded:Wait()
     end
-    
+
     local item = Backpack:FindFirstChild(itemName)
     if not item then
         warn("Item not found in backpack: " .. itemName)
         return false
     end
-    
+
     item.Parent = Character
     return true
 end
 
-local function extractItem(itemName, pattern)
+local function extractItem(itemName, pattern, string)
     local match = itemName:match(pattern)
-    return match and tonumber(match) or nil
+    if match then
+        return string and tostring(match) or tonumber(match)
+    else
+        return nil
+    end
 end
 
 -- Main filtering function (Inventory)
@@ -298,7 +257,7 @@ local function findItem(filters)
     local ageFilter = filters.age or 0
     local ageMode = filters.ageMode or "None"
     local action = filters.action
-    
+
     if not typeFilter or not action then
         warn("Type and action are required parameters")
         return false
@@ -312,11 +271,11 @@ local function findItem(filters)
     for _, child in ipairs(Backpack:GetChildren()) do
         if child:GetAttribute("d") ~= true then
             local matchesAllFilters = true
-            
+
             if child:GetAttribute("b") ~= typeFilter then
                 matchesAllFilters = false
             end
-            
+
             if matchesAllFilters and nameFilter ~= "None" then
                 local nameMatch = false
 
@@ -335,7 +294,7 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-            
+
             if matchesAllFilters and mutationFilter ~= "None" then
                 local mutationMatch = false
 
@@ -367,10 +326,10 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-            
+
             if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
-                
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]", false) or extractItem(child.Name, "%[(%d*%.?%d+)kg%]", false)
+
                 if not weight then
                     matchesAllFilters = false
                 elseif weightMode == "Less" and weight > weightFilter then
@@ -379,10 +338,10 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-            
+
             if matchesAllFilters and ageMode ~= "None" then
-                local age = extractItem(child.Name, "%[Age (%d+)%]")
-                
+                local age = extractItem(child.Name, "%[Age (%d+)%]", false)
+
                 if not age then
                     matchesAllFilters = false
                 elseif ageMode == "Less" and age > ageFilter then
@@ -391,7 +350,7 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-            
+
             if matchesAllFilters then
                 if holdItem(child.Name) then
                     action()
@@ -400,7 +359,7 @@ local function findItem(filters)
             end
         end
     end
-    
+
     return false
 end
 
@@ -413,7 +372,7 @@ local function findFruit(filters)
     local weightMode = filters.weightMode or "None"
     local action = filters.action
     local plants = PlayerFarm.Important:FindFirstChild("Plants_Physical")
-    
+
     if not typeFilter or not action then
         warn("Type and action are required parameters")
         return false
@@ -430,7 +389,7 @@ local function findFruit(filters)
         end
 
         local matchesAllFilters = true
-        
+
         if matchesAllFilters and nameFilter ~= "None" then
             local nameMatch = false
             if type(nameFilter) == "table" then
@@ -842,7 +801,7 @@ local Tp_Points = Workspace:FindFirstChild("Tutorial_Points")
 
 gearButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Tutorial_Point_3
-    
+
     if teleportPoint then
         HumanoidRootPart.CFrame = teleportPoint.CFrame
     end
@@ -850,7 +809,7 @@ end)
 
 eventButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Event_Point
-    
+
     if teleportPoint then
         HumanoidRootPart.CFrame = teleportPoint.CFrame
     end
@@ -865,13 +824,13 @@ rebirthButton.MouseButton1Click:Connect(function()
         -4.49386484e-08, 1, -8.6322423e-08, 
         0.693127275, -3.10743182e-08, -0.720815241
     )
-    
+
     HumanoidRootPart.CFrame = targetCFrame
 end)
 
 petButton.MouseButton1Click:Connect(function()
     local teleportPoint = Tp_Points.Tutorial_Point_4
-    
+
     if teleportPoint then
         HumanoidRootPart.CFrame = teleportPoint.CFrame
     end
@@ -914,7 +873,7 @@ end)
 CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
     autoCollectSelectedFruitsEnabled = state
     config.AutoCollectSelectedFruits = state
-        
+
     if state then
         Window:Notify("Auto Collect Enabled", 2)
         if autoCollectGlimmeringEnabed then
@@ -934,7 +893,7 @@ end, {
 -- Mutation Machine Timer
 local function getMutationMachineTimer()
     local model = Workspace:FindFirstChild("NPCS")
-    
+
     if model then
         model = model:FindFirstChild("PetMutationMachine")
         if model then
@@ -957,7 +916,7 @@ local function getMutationMachineTimer()
             end
         end
     end
-    
+
     return nil
 end
 
@@ -980,7 +939,7 @@ MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
     autoStartMachineEnabled = state
     config.AutoStartPetMutation = state
     saveConfig(config)
-    
+
     if state then
         Window:Notify("Auto Start Machine Enabled", 2)
     else
@@ -1025,7 +984,7 @@ local function toggleAutoClaimPet(state)
     autoClaimPetEnabled = state
     config.AutoClaimMutatedPet = state
     saveConfig(config)
-    
+
     if state then
         Window:Notify("Auto Claim Pet Enabled", 2)
     else
@@ -1089,19 +1048,19 @@ spawn(function()
                             for _, child in ipairs(fruit:GetDescendants()) do
                                 if child.Name == "ProximityPrompt" then
                                     local base = child.Parent
-                                    
+
                                     if base then
-                                        base.Transparency = 1
+                                        base.Transparency = 0
                                         base.CanCollide = false
                                         base.CFrame = HumanoidRootPart.CFrame
                                         for _, effects in ipairs(base:GetChildren()) do
                                             if effects:IsA("BasePart") then
-                                                effects.Transparency = 1
+                                                effects.Transparency = 0
                                                 effects.CanCollide = false
                                             end
                                         end
                                     end
-                                    
+
                                     child:InputHoldBegin()
                                     child:InputHoldEnd()
                                     break
@@ -1149,7 +1108,7 @@ end)
 FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
     autoCollectGlimmeringEnabed = state
     config.CollectGlimmering = state
-    
+
     if state then
         Window:Notify("Auto Collect Enabled", 2)
         if autoCollectSelectedFruitsEnabled then
@@ -1159,7 +1118,7 @@ FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
     else
         Window:Notify("Auto Collect Disabled", 2)
     end
-    
+
     saveConfig(config)
 end, {
     default = autoCollectGlimmeringEnabed,
@@ -1169,7 +1128,7 @@ end, {
 FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
     submitGlimmeringEnabled = state
     config.SubmitGlimmering = state
-        
+
     if state then
         Window:Notify("Auto Submit Enabled", 2)
         if submitAllGlimmeringEnabled then
@@ -1189,7 +1148,7 @@ end, {
 FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     submitAllGlimmeringEnabled = state
     config.SubmitAllGlimmering = state
-        
+
     if state then
         Window:Notify("Auto Submit All Enabled", 2)
         if submitGlimmeringEnabled then
@@ -1199,6 +1158,7 @@ FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     else
         Window:Notify("Auto Submit All Disabled", 2)
     end
+
     saveConfig(config)
 end, {
     default = submitAllGlimmeringEnabled,
@@ -1208,80 +1168,6 @@ end, {
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
-spawn(function()
-    while Running.autoBuySeeds then
-        seeds, stocks = refreshSeeds()
-        
-        if autoBuySelectedSeedsEnabled then
-            for _, v_select in ipairs(selectedSeeds) do
-                if stocks[v_select] and stocks[v_select] > 0 then
-                    for i = 1, stocks[v_select] do
-                        GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                        task.wait(0.1)
-                    end
-                end
-            end
-        elseif autoBuyAllSeedsEnabled then
-            for i_all, v_all in pairs(stocks) do
-                if v_all > 0 then
-                    for i = 1, v_all do
-                        GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                        task.wait(0.1)
-                    end
-                end
-            end
-        end
-        task.wait(5)
-    end
-end)
-
--- Select seeds
-SeedShopSection:Dropdown("Select Seeds: ", seeds, selectedSeeds, function(selected)
-    if selected then
-        selectedSeeds = selected
-        config.SelectedSeeds = selected
-        saveConfig(config)
-    end
-end, true)
-
-SeedShopSection:Toggle("Auto Buy Selected", function(state)
-    autoBuySelectedSeedsEnabled = state
-    config.BuySelectedSeeds = state
-
-    if state then
-        Window:Notify("Auto Buy Selected Enabled", 2)
-        if autoBuyAllSeedsEnabled then
-            autoBuyAllSeedsEnabled = false
-            config.BuyAllSeeds = false
-        end
-    else
-        Window:Notify("Auto Buy Selected Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuySelectedSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
-
-SeedShopSection:Toggle("Auto Buy All", function(state)
-    autoBuyAllSeedsEnabled = state
-    config.BuyAllSeeds = state
-
-    if state then
-        Window:Notify("Auto Buy All Enabled", 2)
-        if autoBuySelectedSeedsEnabled then
-            autoBuySelectedSeedsEnabled = false
-            config.BuySelectedSeeds = false
-        end
-    else
-        Window:Notify("Auto Buy All Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuyAllSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
-
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
 local LocalPlayerSection = SettingsTab:Section("Player")
@@ -1290,7 +1176,7 @@ local RejoinSection = SettingsTab:Section("Rejoin Config")
 -- Function to find and store the BillboardGui reference
 local function findBillboardGui()
     local model2 = Workspace:FindFirstChild("NPCS")
-    
+
     if model2 then
         model2 = model2:FindFirstChild("PetMutationMachine")
         if model2 then
@@ -1299,20 +1185,20 @@ local function findBillboardGui()
                 for _, child in ipairs(model2:GetChildren()) do
                     if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
                         local billboardPart = child.BillboardPart
-                        
+
                         if not originalBillboardPosition then
                             originalBillboardPosition = billboardPart.Position
                         end
-                        
+
                         local currentPosition = billboardPart.Position
                         billboardPart.Position = Vector3.new(
                             currentPosition.X,
                             15,               
                             currentPosition.Z
                         )
-                        
+
                         billboardPart.CanCollide = false
-                        
+
                         billboardGui = billboardPart:FindFirstChild("BillboardGui")
                         if billboardGui then
                             billboardGui.MaxDistance = 10000
@@ -1323,7 +1209,7 @@ local function findBillboardGui()
             end
         end
     end
-    
+
     return false
 end
 
@@ -1341,29 +1227,29 @@ local function startScalingLoop()
             end
             return
         end
-        
+
         local localPlayer = Players.LocalPlayer
-        
+
         if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local playerPos = localPlayer.Character.HumanoidRootPart.Position
             local billboardPos = billboardGui.Parent.Parent.Position
             local distance = (playerPos - billboardPos).Magnitude
-            
+
             -- Size parameters
             local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
             local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
-            
+
             -- Distance parameters
             local minDistance = 60  -- Distance where size is minimum
             local maxDistance = 200 -- Distance where size is maximum
-            
+
             -- Calculate scale factor (0 to 1)
             local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
-            
+
             -- Interpolate between min and max size
             local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
             local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
-            
+
             billboardGui.Size = UDim2.new(newX, 0, newY, 0)
         end
     end)
@@ -1373,7 +1259,7 @@ end
 local function restoreOriginalProperties()
     if originalBillboardPosition then
         local model3 = Workspace:FindFirstChild("NPCS")
-        
+
         if model3 then
             model3 = model3:FindFirstChild("PetMutationMachine")
             if model3 then
@@ -1384,7 +1270,7 @@ local function restoreOriginalProperties()
                             local billboardPart = child.BillboardPart
                             billboardPart.Position = originalBillboardPosition
                             billboardPart.CanCollide = true  -- Restore collision
-                            
+
                             -- Restore the BillboardGui properties
                             local gui = billboardPart:FindFirstChild("BillboardGui")
                             if gui then
@@ -1397,12 +1283,12 @@ local function restoreOriginalProperties()
             end
         end
     end
-    
+
     if scalingLoop then
         scalingLoop:Disconnect()
         scalingLoop = nil
     end
-    
+
     billboardGui = nil
 end
 
@@ -1413,7 +1299,7 @@ local function showMutationTimerDisplay()
     end
 
     local success = findBillboardGui()
-    
+
     if success and billboardGui then
         startScalingLoop()
         return true
@@ -1433,7 +1319,7 @@ end
 
 local function connectDestroyEvent()
     local uiScreenGui = CoreGui:FindFirstChild("MeowhanUI") or PlayerGui:WaitForChild("MeowhanUI")
-    
+
     if uiScreenGui then
         uiScreenGui.Destroying:Connect(function()
             for key, _ in pairs(Running) do
@@ -1499,7 +1385,7 @@ LocalPlayerSection:Slider("Jump Power", 50, 1000, jumpPowerValue, function(value
     jumpPowerValue = value
     config.JumpPower = value
     saveConfig(config)
-    
+
     if value then
         setJumpPower(value)
     end
@@ -1520,7 +1406,7 @@ LocalPlayerSection:Toggle("Infinite Jump", function(state)
     infiniteJumpEnabled = state
     config.InfiniteJump = state
     saveConfig(config)
-    
+
     if state then
         Window:Notify("Infinite Jump Enabled", 2)
     else
@@ -1593,11 +1479,11 @@ end
 local function persistentTeleport(jobId, initialDelay)
     local ATTEMPT_COUNTER = 0
     local FIXED_RETRY_DELAY = 2
-    
+
     if ATTEMPT_COUNTER == 0 then
         countdown(initialDelay)
     end
-    
+
     while true do
         ATTEMPT_COUNTER += 1
         print("\nAttempt #" .. ATTEMPT_COUNTER .. " to rejoin server")
@@ -1613,7 +1499,7 @@ local function persistentTeleport(jobId, initialDelay)
                 failureConnection:Disconnect()
             end
         end)
-        
+
         local success, err = pcall(function()
             TeleportService:TeleportToPlaceInstance(placeId, jobId, Players.LocalPlayer)
         end)
@@ -1626,7 +1512,7 @@ local function persistentTeleport(jobId, initialDelay)
         if failureConnection.Connected then
             failureConnection:Disconnect()
         end
-        
+
         if teleportSucceeded then
             print("Rejoined")
             return
@@ -1639,12 +1525,12 @@ local function persistentTeleport(jobId, initialDelay)
         else
             warn("Rejoin failed for unknown reason")
         end
-        
+
         local jitter = math.random(0, 20) * 0.1
         local total_delay = FIXED_RETRY_DELAY + jitter
-        
+
         print("Next attempt in " .. string.format("%.1f", total_delay) .. " seconds")
-        
+
         local wait_interval = 1 
         local waited = 0
         while waited < total_delay do
@@ -1664,15 +1550,15 @@ RejoinSection:Button("Auto Rejoin", function()
         JobId = jobIdInput
     }
     saveConfig(newConfig)
-    
+
     -- Determine job ID to use
     local targetJobId = #newConfig.JobId > 0 and newConfig.JobId or currentJobId
-    
+
     -- Start teleport process
     local success, err = pcall(function()
         persistentTeleport(targetJobId, newConfig.InitialDelay)
     end)
-    
+
     if not success then
         warn("CRITICAL ERROR:", err)
         print("Restarting rejoin process...")
@@ -1686,6 +1572,7 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
+local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
