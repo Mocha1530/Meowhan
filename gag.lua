@@ -198,7 +198,6 @@ local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha15
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
-local allSeeds = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/Seeds.lua'))() or {}
 
 local MainTab = Window:Tab("Main")
 local EventTab = Window:Tab("Event")
@@ -227,7 +226,7 @@ local InfoTab = Window:Tab("Info")
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
 
     -- Seed Shop Vars
-    local selectedSeeds = config.SelectedSeeds
+    local selectedSeeds = config.SelectedSeeds or {}
     local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
     local autoBuyAllSeedsEnabled = config.BuyAllSeeds
 
@@ -1269,13 +1268,13 @@ SeedShopSection:Toggle("Auto Buy All", function(state)
     config.BuyAllSeeds = state
 
     if state then
-        Window:Notify("Auto Buy Selected Enabled", 2)
+        Window:Notify("Auto Buy All Enabled", 2)
         if autoBuySelectedSeedsEnabled then
-            autoBuyAllSeedsEnabled = false
+            autoBuySelectedSeedsEnabled = false
             config.BuySelectedSeeds = false
         end
     else
-        Window:Notify("Auto Buy Selected Disabled", 2)
+        Window:Notify("Auto Buy All Disabled", 2)
     end
     saveConfig(config)
 end, {
