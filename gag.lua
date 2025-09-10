@@ -43,9 +43,9 @@ for _, child in ipairs(mainFolder:GetChildren()) do
 end
 
 -- Seed Shop Vars
-    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)    
-    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
+    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)
     local seedShop = PlayerGui:WaitForChild("Seed_Shop")
+    local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
     local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
     local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedshop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
 
