@@ -1045,27 +1045,7 @@ spawn(function()
                         type = "Fruit",
                         mutation = "Glimmering",
                         action = function(fruit)
-                            for _, child in ipairs(fruit:GetDescendants()) do
-                                if child.Name == "ProximityPrompt" then
-                                    local base = child.Parent
-
-                                    if base then
-                                        base.Transparency = 0
-                                        base.CanCollide = false
-                                        base.CFrame = HumanoidRootPart.CFrame
-                                        for _, effects in ipairs(base:GetChildren()) do
-                                            if effects:IsA("BasePart") then
-                                                effects.Transparency = 0
-                                                effects.CanCollide = false
-                                            end
-                                        end
-                                    end
-
-                                    child:InputHoldBegin()
-                                    child:InputHoldEnd()
-                                    break
-                                end
-                            end
+                            GameEvents.Crops.Collect:FireServer({fruit})
                         end
             })
             task.wait(1)
