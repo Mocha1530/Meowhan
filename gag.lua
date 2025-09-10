@@ -1167,7 +1167,7 @@ spawn(function()
         local stocks = getSeedStock()
         
         if autoBuySelectedSeedsEnabled then
-            for _, v_select in ipairs(selectedSeeds) do
+            for _, v_select in ipairs(selectedShopSeeds) do
                 if stocks[v_select] and stocks[v_select] > 0 then
                     for i = 1, stocks[v_select] do
                         GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
@@ -1190,9 +1190,9 @@ spawn(function()
 end)
 
 -- Select seeds
-SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedSeeds, function(selected)
+SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedShopSeeds, function(selected)
     if selected then
-        selectedSeeds = selected
+        selectedShopSeeds = selected
         config.SelectedSeeds = selected
         saveConfig(config)
     end
