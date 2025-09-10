@@ -42,6 +42,33 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
+local seedShop = PlayerGui:WaitForChild("Seed_Shop")
+local seedScrollingFrame = seedShop:WaitForChild("Frame"):WaitForChild("ScrollingFrame")
+local function refreshSeeds()
+    local shopSeeds = {}
+    local shopSeedStocks = {}
+        
+    if #seedScrollingFrame:GetChildren() <= 1 then
+        task.wait(1)
+    end
+        
+    for _, v_s in ipairs(seedScrollingFrame:GetChildren()) do
+        if v_s:IsA("Frame") and v_s.Name ~= "UIListLayout" then
+            local i_s = v_s.Name:gsub("_Padding$", "")
+            local tc_s = v_s:FindFirstChild("Stock_Text")
+                
+            if tc_s then
+                local c_s = tonumber(tc_s:match("%d+")) or 0
+                shopSeedStocks[i_s] = c_s
+                table.insert(shopSeeds, i_s)
+            end
+        end
+    end
+    return shopSeeds, shopSeedStocks
+end
+
+local seeds, stocks = refreshSeeds()
+
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -65,6 +92,11 @@ local DEFAULT_CONFIG = {
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
 
+    -- Seed Shop
+    SelectedSeeds = {},
+    BuySelectedSeeds = false,
+    BuyAllSeeds = false,
+    
     -- ESP
     ShowMutationTimer = true,
 
@@ -85,6 +117,7 @@ local Running = {
     submitGlimmering = true,
     submitAllGlimmering = true,
     showMutationTimer = true,
+    autoBuySeeds = true,
     autoBuyAll = true,
     autoBuySelected = true,
     stockUpdate = true,
@@ -184,6 +217,11 @@ local InfoTab = Window:Tab("Info")
     local autoCollectGlimmeringEnabed = config.CollectGlimmering
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+
+    -- Seed Shop Vars
+    local selectedSeeds = config.SelectedSeeds or {}
+    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
+    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -1147,6 +1185,80 @@ end, {
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+
+spawn(function()
+    while Running.autoBuySeeds then
+        seeds, stocks = refreshSeeds()
+        
+        if autoBuySelectedSeedsEnabled then
+            for _, v_select in ipairs(selectedSeeds) do
+                if stocks[v_select] and stocks[v_select] > 0 then
+                    for i = 1, stocks[v_select] do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        elseif autoBuyAllSeedsEnabled then
+            for i_all, v_all in pairs(stocks) do
+                if v_all > 0 then
+                    for i = 1, v_all do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+        task.wait(5)
+    end
+end)
+
+-- Select seeds
+SeedShopSection:Dropdown("Select Seeds: ", seeds, selectedSeeds, function(selected)
+    if selected then
+        selectedSeeds = selected
+        config.SelectedSeeds = selected
+        saveConfig(config)
+    end
+end, true)
+
+SeedShopSection:Toggle("Auto Buy Selected", function(state)
+    autoBuySelectedSeedsEnabled = state
+    config.BuySelectedSeeds = state
+
+    if state then
+        Window:Notify("Auto Buy Selected Enabled", 2)
+        if autoBuyAllSeedsEnabled then
+            autoBuyAllSeedsEnabled = false
+            config.BuyAllSeeds = false
+        end
+    else
+        Window:Notify("Auto Buy Selected Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuySelectedSeedsEnabled,
+    group = "Buy_Shop_Seeds"
+})
+
+SeedShopSection:Toggle("Auto Buy All", function(state)
+    autoBuyAllSeedsEnabled = state
+    config.BuyAllSeeds = state
+
+    if state then
+        Window:Notify("Auto Buy All Enabled", 2)
+        if autoBuySelectedSeedsEnabled then
+            autoBuySelectedSeedsEnabled = false
+            config.BuySelectedSeeds = false
+        end
+    else
+        Window:Notify("Auto Buy All Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuyAllSeedsEnabled,
+    group = "Buy_Shop_Seeds"
+})
 
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
