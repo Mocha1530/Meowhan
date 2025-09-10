@@ -195,7 +195,7 @@ local InfoTab = Window:Tab("Info")
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
 
     -- Seed Shop Vars
-    local selectedSeeds = config.SelectedSeeds or {}
+    local selectedShopSeeds = config.SelectedSeeds or {}
     local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
     local autoBuyAllSeedsEnabled = config.BuyAllSeeds
 
