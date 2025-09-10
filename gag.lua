@@ -42,9 +42,36 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
--- Seed Shop Vars
-    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)
+-- Seed Shop Ini
     local seedShop = PlayerGui:WaitForChild("Seed_Shop")
+    local seedScrollingFrame = seedShop:WaitForChild("Frame"):WaitForChild("ScrollingFrame")
+    
+    local function refreshSeeds()
+        local shopSeeds = {}
+        local shopSeedStocks = {}
+        
+        if #seedScrollingFrame:GetChildren() <= 1 then
+            wait(1)
+        end
+        
+        for _, v_s in ipairs(seedScrollingFrame:GetChildren()) do
+            if v_s:IsA("Frame") and v_s.Name ~= "UIListLayout" then
+                local i_s = v_s.Name:gsub("_Padding$", "")
+                local tc_s = v_s:FindFirstChild("Stock_Text")
+                
+                if tc_s then
+                    local c_s = tonumber(tc_s:match("%d+")) or 0
+                    shopSeedStocks[i_s] = c_s
+                    table.insert(shopSeeds, i_s)
+                end
+            end
+        end
+        
+        return shopSeeds, shopSeedStocks
+    end
+
+--[[ Seed Shop Vars
+    local shopHandler = require(ReplicatedStorage.Data.ShopTabData)
     local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
     local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
     local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedShop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
@@ -65,7 +92,7 @@ local function refreshSeeds()
         end
     end
     return shopSeeds, shopSeedStocks
-end
+end ]]
 
 local seeds, stocks = refreshSeeds()
 
@@ -1183,12 +1210,8 @@ end, {
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
 spawn(function()
-    local lastRestockCheck = os.time()
     while Running.autoBuySeeds then
-        if os.time() - lastRestockCheck >= 300 then
-            seeds, stocks = refreshSeeds()
-            lastRestockCheck = os.time()
-        end
+        seeds, stocks = refreshSeeds()
         
         if autoBuySelectedSeedsEnabled then
             for _, v_select in ipairs(selectedSeeds) do
@@ -1667,7 +1690,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.735")
+AboutSection:Label("Version: 1.2.6")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
