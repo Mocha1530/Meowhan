@@ -1166,7 +1166,7 @@ spawn(function()
     while Running.autoBuySeeds then
         local stocks = SeedStock
         
-        if autoBuySelectedSeedsEnabled then
+        if autoBuySelectedSeedsEnabled and selectedShopSeeds then
             for _, v_select in ipairs(selectedShopSeeds) do
                 if stocks[v_select] and stocks[v_select] > 0 then
                     for i = 1, stocks[v_select] do
