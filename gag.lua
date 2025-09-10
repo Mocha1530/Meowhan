@@ -45,7 +45,7 @@ end
 -- Seed Shop Vars
     local shopHandler = require(ReplicatedStorage.Data.ShopTabData)    
     local seedShopData = require(ReplicatedStorage.Data.SeedShopData)
-    local seedshop = PlayerGui:WaitForChild("Seed_Shop")
+    local seedShop = PlayerGui:WaitForChild("Seed_Shop")
     local seedShopDataService = require(ReplicatedStorage.Modules.DataService)
     local tabHelperModule = require(ReplicatedStorage.Modules.UITabHelperModule).CreateOrGetTabHandler("SeedShop", seedshop:WaitForChild("TabAnchor"):WaitForChild("TabList"), ReplicatedStorage.UITemplates:WaitForChild("TabButtonTemplates"))
 
@@ -1667,7 +1667,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.6")
+AboutSection:Label("Version: 1.2.735")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
