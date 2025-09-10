@@ -42,8 +42,8 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
-local seedShop = PlayerGui:WaitForChild("Seed_Shop")
-local seedScrollingFrame = seedShop:WaitForChild("Frame"):WaitForChild("ScrollingFrame")
+local seedShop = PlayerGui:FindFirstChild("Seed_Shop")
+local seedScrollingFrame = seedShop:FindFirstChild("Frame"):FindFirstChild("ScrollingFrame")
 local function refreshSeeds()
     local shopSeeds = {}
     local shopSeedStocks = {}
@@ -55,7 +55,7 @@ local function refreshSeeds()
     for _, v_s in ipairs(seedScrollingFrame:GetChildren()) do
         if v_s:IsA("Frame") and v_s.Name ~= "UIListLayout" then
             local i_s = v_s.Name:gsub("_Padding$", "")
-            local tc_s = v_s:FindFirstChild("Stock_Text")
+            local tc_s = v_s.Main_Frame:FindFirstChild("Stock_Text")
                 
             if tc_s then
                 local c_s = tonumber(tc_s:match("%d+")) or 0
