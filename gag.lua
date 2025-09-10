@@ -43,31 +43,7 @@ for _, child in ipairs(mainFolder:GetChildren()) do
 end
 
 local SeedStock = {}
-local ShopSeedList = {}
-local function getSeedStock(): table
-	local SeedShop = PlayerGui.Seed_Shop
-	local Items = SeedShop:FindFirstChild("Blueberry", true).Parent
-
-	for _, Item in next, Items:GetChildren() do
-		local MainFrame = Item:FindFirstChild("Main_Frame")
-		if not MainFrame then continue end
-
-		local StockText = MainFrame.Stock_Text.Text
-		local StockCount = tonumber(StockText:match("%d+"))
-
-		SeedStock[Item.Name] = StockCount
-	end
-
-	return SeedStock
-end
-
-getSeedStock()
-
-for k_s, _ in pairs(SeedStock) do
-    if k_s then
-        table.insert(ShopSeedList, k_s)
-    end
-end
+local ShopSeedList = {"Test"}
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
