@@ -1017,7 +1017,7 @@ spawn(function()
             task.wait(0.5)
         elseif autoCollectSelectedFruitsEnabled then
             findFruit({
-                        name = selectedFruitMutations,
+                        name = selectedFruitsToCollect,
                         type = "Fruit",
                         mutation = selectedFruitMutations,
                         weight = selectedFruitWeight,
