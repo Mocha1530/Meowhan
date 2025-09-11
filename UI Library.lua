@@ -1,3 +1,9 @@
+--[[
+    This is a UI lib modified and made for Meowhan script hub.
+    tiktok.com/@yohan_gdm
+    tiktok.com/@ikimasu_
+]]
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
