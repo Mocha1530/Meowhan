@@ -1004,7 +1004,7 @@ findItem({
 
 ]]
 -- Auto collect glimmering
-spawn(function()
+--[[ spawn(function()
     while Running.collectCrops do
         if autoCollectGlimmeringEnabed then
             findFruit({
@@ -1031,7 +1031,7 @@ spawn(function()
 			task.wait(2)	
         end
     end
-end)
+end) ]]
 
 -- Auto submit glimmering
 spawn(function()
@@ -1137,7 +1137,7 @@ spawn(function()
                 if stocks[v_select] and stocks[v_select] > 0 then
                     for i = 1, stocks[v_select] do
                         GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                        task.wait(0.1)
+                        task.wait(0.3)
                     end
                 end
             end
@@ -1146,13 +1146,12 @@ spawn(function()
                 if v_all > 0 then
                     for i = 1, v_all do
                         GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                        task.wait(0.1)
+                        task.wait(0.3)
                     end
                 end
             end
-		else
-			task.wait(5)
-        end
+		end
+		task.wait(5)
     end
 end)
 
