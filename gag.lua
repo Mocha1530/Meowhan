@@ -75,6 +75,12 @@ for k_a_s, _ in pairs(a_s_data) do
     table.insert(a_s_list, k_a_s)
 end
 
+local a_s_m_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/FruitMutations.lua", true))()
+local a_s_m_list = {}
+for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
+    table.insert(a_s_m_list, v_a_s_m.display_name)
+end
+
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -119,7 +125,7 @@ local DEFAULT_CONFIG = {
 local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
-    collectGlimmering = true,
+    collectCrops = true,
     submitGlimmering = true,
     submitAllGlimmering = true,
     showMutationTimer = true,
@@ -809,7 +815,7 @@ CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollec
     end
 end, true)
 
-CollectFruitSection:Dropdown("Select Mutations: ", MachineMutations, selectedFruitMutations, function(selected)
+CollectFruitSection:Dropdown("Select Mutations: ", a_s_m_list, selectedFruitMutations, function(selected)
     if selected then
         selectedFruitMutations = selected
         config.FruitMutationsToCollect = selected
@@ -999,11 +1005,23 @@ findItem({
 ]]
 -- Auto collect glimmering
 spawn(function()
-    while Running.collectGlimmering do
+    while Running.collectCrops do
         if autoCollectGlimmeringEnabed then
             findFruit({
-                        type = "Fruit",
+                        type = "Fruit"
                         mutation = "Glimmering",
+                        action = function(fruit)
+                            GameEvents.Crops.Collect:FireServer({fruit})
+                        end
+            })
+            task.wait(0.5)
+        elseif autoCollectSelectedFruitsEnabled then
+            findFruit({
+                        name = selectedFruitMutations,
+                        type = "Fruit",
+                        mutation = selectedFruitMutations,
+                        weight = selectedFruitWeight,
+                        weightMode = selectedWeightMode
                         action = function(fruit)
                             GameEvents.Crops.Collect:FireServer({fruit})
                         end
@@ -1014,7 +1032,7 @@ spawn(function()
         end
     end
 end)
-
+    
 -- Auto submit glimmering
 spawn(function()
     while Running.submitGlimmering do
@@ -1028,7 +1046,7 @@ spawn(function()
             })
             task.wait(0.5)
         else
-            task.wait(1)    
+            task.wait(2)    
         end
     end
 end)
@@ -1132,8 +1150,9 @@ spawn(function()
                     end
                 end
             end
+        else
+            task.wait(5)
         end
-        task.wait(5)
     end
 end)
 
@@ -1592,7 +1611,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.755")
+AboutSection:Label("Version: 1.2.756")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
