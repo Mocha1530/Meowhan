@@ -1,3 +1,7 @@
+--[[
+	Grow A Garden automation and more by Mocha1530
+]]
+
 -- All Variables
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
@@ -126,8 +130,7 @@ local Running = {
     autoStartMachine = true,
     autoClaimPet = true,
     collectCrops = true,
-    submitGlimmering = true,
-    submitAllGlimmering = true,
+    autoSubmitGlimmering = true,
     showMutationTimer = true,
     autoBuySeeds = true,
     infiniteJump = true
@@ -323,7 +326,7 @@ local function findItem(filters)
                 matchesAllFilters = false
             end
             
-            if matchesAllFilters and nameFilter ~= "None" then
+            if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
                 local nameMatch = false
 
                 if type(nameFilter) == "table" then
@@ -342,7 +345,7 @@ local function findItem(filters)
                 end
             end
             
-            if matchesAllFilters and mutationFilter ~= "None" then
+            if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
                 local mutationMatch = false
 
                 if type(mutationFilter) == "table" then
@@ -437,7 +440,7 @@ local function findFruit(filters)
 
         local matchesAllFilters = true
         
-        if matchesAllFilters and nameFilter ~= "None" then
+        if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
             local nameMatch = false
             if type(nameFilter) == "table" then
                 for _, name in ipairs(nameFilter) do
@@ -452,7 +455,7 @@ local function findFruit(filters)
             matchesAllFilters = nameMatch
         end
 
-        if matchesAllFilters and mutationFilter ~= "None" then
+        if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
             local mutationMatch = false
             if type(mutationFilter) == "table" then
                 for _, mutation in ipairs(mutationFilter) do
@@ -517,6 +520,43 @@ local function findFruit(filters)
 
     return false
 end
+
+-- Tab Functions
+    -- Auto Collect
+    local function startCollectCrops()
+        spawn(function()
+            while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
+                if autoCollectGlimmeringEnabed then
+                    findFruit({
+                                type = "Fruit",
+                                mutation = "Glimmering",
+                                action = function(fruit)
+                                    GameEvents.Crops.Collect:FireServer({fruit})
+                                end
+                    })
+                    task.wait(0.5)
+                elseif autoCollectSelectedFruitsEnabled then
+        			findFruit({
+        						name = selectedFruitsToCollect,
+                                type = "Fruit",
+                                mutation = selectedFruitMutations,
+        						weight = selectedFruitWeight,
+        						weightMode = selectedWeightMode,
+                                action = function(fruit)
+                                    GameEvents.Crops.Collect:FireServer({fruit})
+                                end
+                    })
+                    task.wait(0.5)
+        		else
+        			task.wait(2)	
+                end
+            end
+        end)
+    end
+    
+    if autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled then
+        startCollectCrops()
+    end
 
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
@@ -809,6 +849,7 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
 CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
+        startCollectCrops()
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
         saveConfig(config)
@@ -887,6 +928,22 @@ local function getMutationMachineTimer()
 end
 
 -- Mutation Machine (Vuln)
+local function startAutoStartMachine()
+    spawn(function()
+        while Running.autoStartMachine and autoStartMachineEnabled do
+            local timerStatus = getMutationMachineTimer()
+            if timerStatus == nil or timerStatus == "" then
+                MutationMachine:FireServer("StartMachine")
+            end
+            task.wait(10)
+        end
+    end)
+end
+
+if autoStartMachineEnabled then
+    startAutoStartMachine()
+end
+
 MutationMachineVulnSection:Button("Submit Held Pet", function()
     MutationMachine:FireServer("SubmitHeldPet")
 end)
@@ -907,6 +964,7 @@ MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
     saveConfig(config)
 
     if state then
+        startAutoStartMachine()
         Window:Notify("Auto Start Machine Enabled", 2)
     else
         Window:Notify("Auto Start Machine Disabled", 2)
@@ -915,39 +973,23 @@ end, {
     default = autoStartMachineEnabled
 })
 
-spawn(function()
-    while Running.autoStartMachine and autoStartMachineEnabled do
-        local timerStatus = getMutationMachineTimer()
-        if timerStatus == nil or timerStatus == "" then
-            MutationMachine:FireServer("StartMachine")
-        end
-        task.wait(10)
-    end
-end)
-
 -- Mutation machine functions
-spawn(function()
-    while Running.autoClaimPet and autoClaimPetEnabled do
-        local timerStatus = getMutationMachineTimer()
-        if timerStatus == "READY" then
-            MutationMachine:FireServer("ClaimMutatedPet")
-            task.wait(2)
-        else
-            task.wait(1)
+local function startAutoClaimPet()
+    spawn(function()
+        while Running.autoClaimPet and autoClaimPetEnabled do
+            local timerStatus = getMutationMachineTimer()
+            if timerStatus == "READY" then
+                MutationMachine:FireServer("ClaimMutatedPet")
+                task.wait(2)
+            else
+                task.wait(1)
+            end
         end
-    end
-end)
+    end)
+end
 
-local function toggleAutoClaimPet(state)
-    autoClaimPetEnabled = state
-    config.AutoClaimMutatedPet = state
-    saveConfig(config)
-
-    if state then
-        Window:Notify("Auto Claim Pet Enabled", 2)
-    else
-        Window:Notify("Auto Claim Pet Disabled", 2)
-    end
+if autoClaimPetEnabled then
+   startAutoClaimPet()
 end
 
   -- Select pet dropdown
@@ -969,8 +1011,17 @@ MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedP
 end, true)
 
   -- Auto claim toggle
-local autoClaimPet = MutationMachineSection:Toggle("Auto Claim Pet", function(state)
-    toggleAutoClaimPet(state)
+MutationMachineSection:Toggle("Auto Claim Pet", function(state)
+    autoClaimPetEnabled = state
+    config.AutoClaimMutatedPet = state
+    saveConfig(config)
+
+    if state then
+        startAutoClaimPet()
+        Window:Notify("Auto Claim Pet Enabled", 2)
+    else
+        Window:Notify("Auto Claim Pet Disabled", 2)
+    end
 end, {
     default = autoClaimPetEnabled
 })
@@ -995,63 +1046,38 @@ findItem({
 })
 
 ]]
--- Auto collect glimmering
-spawn(function()
-    while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
-        if autoCollectGlimmeringEnabed then
-            findFruit({
-                        type = "Fruit",
-                        mutation = "Glimmering",
-                        action = function(fruit)
-                            GameEvents.Crops.Collect:FireServer({fruit})
-                        end
-            })
-            task.wait(0.5)
-        elseif autoCollectSelectedFruitsEnabled then
-			findFruit({
-						name = selectedFruitsToCollect,
-                        type = "Fruit",
-                        mutation = selectedFruitMutations,
-						weight = selectedFruitWeight,
-						weightMode = selectedWeightMode,
-                        action = function(fruit)
-                            GameEvents.Crops.Collect:FireServer({fruit})
-                        end
-            })
-            task.wait(0.5)
-		else
-			task.wait(2)	
-        end
-    end
-end)
 
 -- Auto submit glimmering
-spawn(function()
-    while Running.submitGlimmering and submitGlimmeringEnabled do
-        findItem({
-            type = "j",
-            mutation = "Glimmering",
-            action = function()
-                        GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
-                    end
-        })
-        task.wait(0.5)
-    end
-end)
+local function startAutoSubmitGlimmering()
+    spawn(function()
+        while Running.autoSubmitGlimmering and (submitGlimmeringEnabled or submitAllGlimmeringEnabled) do
+            if submitGlimmeringEnabled then
+                findItem({
+                    type = "j",
+                    mutation = "Glimmering",
+                    action = function()
+                                GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                            end
+                })
+                task.wait(0.5)
+            elseif submitAllGlimmeringEnabled then
+                GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+                task.wait(5)
+            end
+        end
+    end)
+end
 
--- Auto submit all glimmering
-spawn(function()
-    while Running.submitAllGlimmering and submitAllGlimmeringEnabled do
-        GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
-        task.wait(5)
-    end
-end)
+if submitGlimmeringEnabled or submitAllGlimmeringEnabled then
+    startAutoSubmitGlimmering()
+end
 
 FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
     autoCollectGlimmeringEnabed = state
     config.CollectGlimmering = state
 
     if state then
+        startCollectCrops()
         Window:Notify("Auto Collect Enabled", 2)
         if autoCollectSelectedFruitsEnabled then
             autoCollectSelectedFruitsEnabled = false
@@ -1072,6 +1098,7 @@ FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
     config.SubmitGlimmering = state
 
     if state then
+        startAutoSubmitGlimmering()
         Window:Notify("Auto Submit Enabled", 2)
         if submitAllGlimmeringEnabled then
             submitAllGlimmeringEnabled = false
@@ -1092,6 +1119,7 @@ FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     config.SubmitAllGlimmering = state
 
     if state then
+        startAutoSubmitGlimmering()
         Window:Notify("Auto Submit All Enabled", 2)
         if submitGlimmeringEnabled then
             submitGlimmeringEnabled = false
@@ -1112,32 +1140,38 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 
 SeedShopSection:Label("Tier 1")
 
-spawn(function()
-    while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
-        local stocks = getSeedStock()
-        
-        if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
-            for _, v_select in ipairs(selectedShopSeeds) do
-                if stocks[v_select] and stocks[v_select] > 0 then
-                    for i = 1, stocks[v_select] do
-                        GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                        task.wait(0.1)
+local function startBuySeeds()
+    spawn(function()
+        while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
+            local stocks = getSeedStock()
+            
+            if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
+                for _, v_select in ipairs(selectedShopSeeds) do
+                    if stocks[v_select] and stocks[v_select] > 0 then
+                        for i = 1, stocks[v_select] do
+                            GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
+                            task.wait(0.1)
+                        end
                     end
                 end
-            end
-        elseif autoBuyAllSeedsEnabled then
-            for i_all, v_all in pairs(stocks) do
-                if v_all > 0 then
-                    for i = 1, v_all do
-                        GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                        task.wait(0.1)
+            elseif autoBuyAllSeedsEnabled then
+                for i_all, v_all in pairs(stocks) do
+                    if v_all > 0 then
+                        for i = 1, v_all do
+                            GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
+                            task.wait(0.1)
+                        end
                     end
                 end
-            end
-		end
-		task.wait(5)
-    end
-end)
+    		end
+    		task.wait(5)
+        end
+    end)
+end
+
+if autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled then
+    startBuySeeds()
+end
 
 -- Select seeds
 SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedShopSeeds, function(selected)
@@ -1153,6 +1187,7 @@ SeedShopSection:Toggle("Auto Buy Selected", function(state)
     config.BuySelectedSeeds = state
 
     if state then
+        startBuySeeds()
         Window:Notify("Auto Buy Selected Enabled", 2)
         if autoBuyAllSeedsEnabled then
             autoBuyAllSeedsEnabled = false
@@ -1172,6 +1207,7 @@ SeedShopSection:Toggle("Auto Buy All", function(state)
     config.BuyAllSeeds = state
 
     if state then
+        startBuySeeds()
         Window:Notify("Auto Buy All Enabled", 2)
         if autoBuySelectedSeedsEnabled then
             autoBuySelectedSeedsEnabled = false
@@ -1594,7 +1630,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.758")
+AboutSection:Label("Version: 1.2.760")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
