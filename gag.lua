@@ -42,6 +42,18 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
+local a_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/Seeds.lua", true))()
+local a_s_list = {}
+for k_a_s, _ in pairs(a_s_data) do
+    table.insert(a_s_list, k_a_s)
+end
+
+local a_s_m_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/FruitMutations.lua", true))()
+local a_s_m_list = {}
+for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
+    table.insert(a_s_m_list, v_a_s_m.display_name)
+end
+
 local SeedStock = {}
 local ShopSeedList = {}
 local function getSeedStock(): table
@@ -67,18 +79,6 @@ for k_s, _ in pairs(SeedStock) do
     if k_s then
         table.insert(ShopSeedList, k_s)
     end
-end
-
-local a_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/Seeds.lua", true))()
-local a_s_list = {}
-for k_a_s, _ in pairs(a_s_data) do
-    table.insert(a_s_list, k_a_s)
-end
-
-local a_s_m_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/FruitMutations.lua", true))()
-local a_s_m_list = {}
-for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
-    table.insert(a_s_m_list, v_a_s_m.display_name)
 end
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
@@ -379,9 +379,9 @@ local function findItem(filters)
                 
                 if not weight then
                     matchesAllFilters = false
-                elseif weightMode == "Less" and weight > weightFilter then
+                elseif weightMode == "Below" and weight > weightFilter then
                     matchesAllFilters = false
-                elseif weightMode == "Greater" and weight < weightFilter then
+                elseif weightMode == "Above" and weight < weightFilter then
                     matchesAllFilters = false
                 end
             end
@@ -391,9 +391,9 @@ local function findItem(filters)
                 
                 if not age then
                     matchesAllFilters = false
-                elseif ageMode == "Less" and age > ageFilter then
+                elseif ageMode == "Below" and age > ageFilter then
                     matchesAllFilters = false
-                elseif ageMode == "Greater" and age < ageFilter then
+                elseif ageMode == "Above" and age < ageFilter then
                     matchesAllFilters = false
                 end
             end
@@ -485,9 +485,9 @@ local function findFruit(filters)
                 matchesAllFilters = false
             else
                 weight = tonumber(weight.Value)
-                if weightMode == "Less" and weight > weightFilter then
+                if weightMode == "Below" and weight > weightFilter then
                     matchesAllFilters = false
-                elseif weightMode == "Greater" and weight < weightFilter then
+                elseif weightMode == "Above" and weight < weightFilter then
                     matchesAllFilters = false
                 end
             end
@@ -807,7 +807,7 @@ local CollectFruitSection = MainTab:Section("Collect Fruit")
 local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
-CollectFruitSection:Dropdown("Select Fruits: ", {"Sugar Apple", "Beanstalk"}, selectedFruitsToCollect, function(selected)
+CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
@@ -815,7 +815,7 @@ CollectFruitSection:Dropdown("Select Fruits: ", {"Sugar Apple", "Beanstalk"}, se
     end
 end, true)
 
-CollectFruitSection:Dropdown("Select Mutations: ", {"Glimmering", "Sandy", "Wet"}, selectedFruitMutations, function(selected)
+CollectFruitSection:Dropdown("Select Mutations: ", a_s_m_list, selectedFruitMutations, function(selected)
     if selected then
         selectedFruitMutations = selected
         config.FruitMutationsToCollect = selected
@@ -916,30 +916,22 @@ end, {
 })
 
 spawn(function()
-    while Running.autoStartMachine do
-        if autoStartMachineEnabled then
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == nil or timerStatus == "" then
-                MutationMachine:FireServer("StartMachine")
-            end
-            task.wait(10)
-        else
-            task.wait(1)
+    while Running.autoStartMachine and autoStartMachineEnabled do
+        local timerStatus = getMutationMachineTimer()
+        if timerStatus == nil or timerStatus == "" then
+            MutationMachine:FireServer("StartMachine")
         end
+        task.wait(10)
     end
 end)
 
 -- Mutation machine functions
 spawn(function()
-    while Running.autoClaimPet do
-        if autoClaimPetEnabled then
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == "READY" then
-                MutationMachine:FireServer("ClaimMutatedPet")
-                task.wait(2)
-            else
-                task.wait(1)
-            end
+    while Running.autoClaimPet and autoClaimPetEnabled do
+        local timerStatus = getMutationMachineTimer()
+        if timerStatus == "READY" then
+            MutationMachine:FireServer("ClaimMutatedPet")
+            task.wait(2)
         else
             task.wait(1)
         end
@@ -993,9 +985,9 @@ findItem({
     type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
     mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
     weight = 5,              -- Optional: weight threshold
-    weightMode = "Less",     -- Optional: "Less", "Greater", or "None"
+    weightMode = "Below",     -- Optional: "Below", "Above", or "None"
     age = 10,                -- Optional: age threshold
-    ageMode = "Greater",     -- Optional: "Less", "Greater", or "None"
+    ageMode = "Greater",     -- Optional: "Below", "Above", or "None"
     action = function()      -- Required: function to execute if item is found
         -- action to perform
         game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
@@ -1005,7 +997,7 @@ findItem({
 ]]
 -- Auto collect glimmering
 spawn(function()
-    while Running.collectCrops do
+    while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
         if autoCollectGlimmeringEnabed then
             findFruit({
                         type = "Fruit",
@@ -1016,50 +1008,42 @@ spawn(function()
             })
             task.wait(0.5)
         elseif autoCollectSelectedFruitsEnabled then
-            findFruit({
-                        name = selectedFruitsToCollect,
+			findFruit({
+						name = selectedFruitsToCollect,
                         type = "Fruit",
                         mutation = selectedFruitMutations,
-                        weight = selectedFruitWeight,
-                        weightMode = selectedWeightMode,
+						weight = selectedFruitWeight,
+						weightMode = selectedWeightMode,
                         action = function(fruit)
                             GameEvents.Crops.Collect:FireServer({fruit})
                         end
             })
             task.wait(0.5)
-        else
-            task.wait(2)
+		else
+			task.wait(2)	
         end
     end
 end)
-    
+
 -- Auto submit glimmering
 spawn(function()
-    while Running.submitGlimmering do
-        if submitGlimmeringEnabled then
-            findItem({
-                type = "j",
-                mutation = "Glimmering",
-                action = function()
-                            GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
-                        end
-            })
-            task.wait(0.5)
-        else
-            task.wait(2)    
-        end
+    while Running.submitGlimmering and submitGlimmeringEnabled do
+        findItem({
+            type = "j",
+            mutation = "Glimmering",
+            action = function()
+                        GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                    end
+        })
+        task.wait(0.5)
     end
 end)
 
 -- Auto submit all glimmering
 spawn(function()
-    while Running.submitAllGlimmering do
-        if submitAllGlimmeringEnabled then
-            GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
-            task.wait(5)
-        else
-            task.wait(10)
-        end
+    while Running.submitAllGlimmering and submitAllGlimmeringEnabled do
+        GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+        task.wait(5)
     end
 end)
 
@@ -1129,7 +1113,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 SeedShopSection:Label("Tier 1")
 
 spawn(function()
-    while Running.autoBuySeeds do
+    while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
         local stocks = getSeedStock()
         
         if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
@@ -1150,9 +1134,8 @@ spawn(function()
                     end
                 end
             end
-        else
-            task.wait(5)
-        end
+		end
+		task.wait(5)
     end
 end)
 
@@ -1611,7 +1594,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.756")
+AboutSection:Label("Version: 1.2.758")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
