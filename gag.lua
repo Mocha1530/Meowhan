@@ -495,6 +495,7 @@ local function findFruit(filters)
                             task.wait(1)
                             return true
                         end
+                        task.wait(1)
                     end
                 end
             else
@@ -503,6 +504,7 @@ local function findFruit(filters)
                         task.wait(1)
                         return true
                     end
+                    task.wait(1)
                 end
             end
         end
