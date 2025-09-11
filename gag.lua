@@ -42,9 +42,6 @@ for _, child in ipairs(mainFolder:GetChildren()) do
     end
 end
 
-local SeedStock = {"Test" = 1}
-local ShopSeedList = {"Test"}
-
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -68,11 +65,6 @@ local DEFAULT_CONFIG = {
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
 
-    -- Seed Shop
-    SelectedSeeds = {},
-    BuySelectedSeeds = false,
-    BuyAllSeeds = false,
-    
     -- ESP
     ShowMutationTimer = true,
 
@@ -93,7 +85,6 @@ local Running = {
     submitGlimmering = true,
     submitAllGlimmering = true,
     showMutationTimer = true,
-    autoBuySeeds = true,
     autoBuyAll = true,
     autoBuySelected = true,
     stockUpdate = true,
@@ -193,8 +184,6 @@ local InfoTab = Window:Tab("Info")
     local autoCollectGlimmeringEnabed = config.CollectGlimmering
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
-
-
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
