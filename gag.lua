@@ -292,7 +292,7 @@ local function findItem(filters)
     local ageFilter = filters.age or 0
     local ageMode = filters.ageMode or "None"
     local action = filters.action
-
+    
     if not typeFilter or not action then
         warn("Type and action are required parameters")
         return false
@@ -306,11 +306,11 @@ local function findItem(filters)
     for _, child in ipairs(Backpack:GetChildren()) do
         if child:GetAttribute("d") ~= true then
             local matchesAllFilters = true
-
+            
             if child:GetAttribute("b") ~= typeFilter then
                 matchesAllFilters = false
             end
-
+            
             if matchesAllFilters and nameFilter ~= "None" then
                 local nameMatch = false
 
@@ -329,7 +329,7 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-
+            
             if matchesAllFilters and mutationFilter ~= "None" then
                 local mutationMatch = false
 
@@ -361,10 +361,10 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-
+            
             if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]", false) or extractItem(child.Name, "%[(%d*%.?%d+)kg%]", false)
-
+                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
+                
                 if not weight then
                     matchesAllFilters = false
                 elseif weightMode == "Less" and weight > weightFilter then
@@ -373,10 +373,10 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-
+            
             if matchesAllFilters and ageMode ~= "None" then
-                local age = extractItem(child.Name, "%[Age (%d+)%]", false)
-
+                local age = extractItem(child.Name, "%[Age (%d+)%]")
+                
                 if not age then
                     matchesAllFilters = false
                 elseif ageMode == "Less" and age > ageFilter then
@@ -385,16 +385,17 @@ local function findItem(filters)
                     matchesAllFilters = false
                 end
             end
-
+            
             if matchesAllFilters then
                 if holdItem(child.Name) then
                     action()
+                    task.wait(0.5)
                     return true
                 end
             end
         end
     end
-
+    
     return false
 end
 
@@ -407,7 +408,7 @@ local function findFruit(filters)
     local weightMode = filters.weightMode or "None"
     local action = filters.action
     local plants = PlayerFarm.Important:FindFirstChild("Plants_Physical")
-
+    
     if not typeFilter or not action then
         warn("Type and action are required parameters")
         return false
@@ -424,7 +425,7 @@ local function findFruit(filters)
         end
 
         local matchesAllFilters = true
-
+        
         if matchesAllFilters and nameFilter ~= "None" then
             local nameMatch = false
             if type(nameFilter) == "table" then
@@ -491,6 +492,7 @@ local function findFruit(filters)
                 for _, fruit in ipairs(fruitsFolder:GetChildren()) do
                     if fruit:IsA("Model") and checkFruit(fruit) then
                         if action(fruit) then
+                            task.wait(1)
                             return true
                         end
                     end
@@ -498,6 +500,7 @@ local function findFruit(filters)
             else
                 if checkFruit(child) then
                     if action(child) then
+                        task.wait(1)
                         return true
                     end
                 end
