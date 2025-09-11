@@ -69,6 +69,12 @@ for k_s, _ in pairs(SeedStock) do
     end
 end
 
+local a_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/SeedShopData.lua", true))()
+local a_s_list = {}
+for k_a_s, _ in pairs(a_s_data) do
+    table.insert(a_s_list, k_a_s)
+end
+
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -506,85 +512,6 @@ local function findFruit(filters)
     return false
 end
 
---[[
-    for _, child in ipairs(plants:GetChildren()) do    
-        if child:GetAttribute("Favorited") ~= true then
-            local matchesAllFilters = true
-            
-            if matchesAllFilters and nameFilter ~= "None" then
-                local nameMatch = false
-            
-                if type(nameFilter) == "table" then
-                    for _, name in ipairs(nameFilter) do
-                        if child.Name:find(name, 1, true) then
-                            nameMatch = true
-                            break
-                        end
-                    end
-                else
-                    nameMatch = child.Name:find(nameFilter, 1 , true)
-                end
-    
-                if not nameMatch then
-                    matchesAllFilters = false
-                end
-            end
-            
-            if matchesAllFilters and mutationFilter ~= "None" then
-                local mutationMatch = false
-
-                if type(mutationFilter) == "table" then
-                    for _, mutation in ipairs(mutationFilter) do
-                        local attributeValue = child:GetAttribute(mutation)
-                        if attributeValue then
-                            mutationMatch = true
-                            break
-                        end
-
-                        local variant = child:FindFirstChild("Variant")
-                        if variant and variant.Value == mutation then
-                            mutationMatch = true
-                            break
-                        end
-                    end
-                else
-                    local attributeValue = child:GetAttribute(mutationFilter)
-                    if attributeValue then
-                        mutationMatch = true
-                    else
-                        local variant = child:FindFirstChild("Variant")
-                        mutationMatch = variant and variant.Value == mutationFilter
-                    end
-                end
-
-                if not mutationMatch then
-                    matchesAllFilters = false
-                end
-            end
-            
-            if matchesAllFilters and weightMode ~= "None" then
-                local weight = extractItem(child.Name, "%[(%d*%.?%d+) KG%]") or extractItem(child.Name, "%[(%d*%.?%d+)kg%]")
-                
-                if not weight then
-                    matchesAllFilters = false
-                elseif weightMode == "Less" and weight > weightFilter then
-                    matchesAllFilters = false
-                elseif weightMode == "Greater" and weight < weightFilter then
-                    matchesAllFilters = false
-                end
-            end
-            
-            if matchesAllFilters then
-                if holdItem(child.Name) then
-                    action()
-                    return true
-                end
-            end
-        end
-    
-    return false
-end ]] --
-
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
 if seedButton then
@@ -874,7 +801,7 @@ local CollectFruitSection = MainTab:Section("Collect Fruit")
 local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
-CollectFruitSection:Dropdown("Select Fruits: ", MachineMutations, selectedFruitsToCollect, function(selected)
+CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
@@ -1180,6 +1107,8 @@ end, {
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+
+SeedShopSection:Label("Tier 1")
 
 spawn(function()
     while Running.autoBuySeeds do
@@ -1663,7 +1592,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.6")
+AboutSection:Label("Version: 1.2.755")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
