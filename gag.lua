@@ -1004,7 +1004,7 @@ findItem({
 
 ]]
 -- Auto collect glimmering
---[[ spawn(function()
+spawn(function()
     while Running.collectCrops do
         if autoCollectGlimmeringEnabed then
             findFruit({
@@ -1031,7 +1031,7 @@ findItem({
 			task.wait(2)	
         end
     end
-end) ]]
+end)
 
 -- Auto submit glimmering
 spawn(function()
@@ -1150,9 +1150,8 @@ spawn(function()
                     end
                 end
             end
-		else
-			task.wait(5)
 		end
+		task.wait(5)
     end
 end)
 
