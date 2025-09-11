@@ -326,7 +326,7 @@ local function findItem(filters)
                 matchesAllFilters = false
             end
             
-            if matchesAllFilters and nameFilter ~= "None" then
+            if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
                 local nameMatch = false
 
                 if type(nameFilter) == "table" then
@@ -345,7 +345,7 @@ local function findItem(filters)
                 end
             end
             
-            if matchesAllFilters and mutationFilter ~= "None" then
+            if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
                 local mutationMatch = false
 
                 if type(mutationFilter) == "table" then
@@ -440,7 +440,7 @@ local function findFruit(filters)
 
         local matchesAllFilters = true
         
-        if matchesAllFilters and nameFilter ~= "None" then
+        if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
             local nameMatch = false
             if type(nameFilter) == "table" then
                 for _, name in ipairs(nameFilter) do
@@ -455,7 +455,7 @@ local function findFruit(filters)
             matchesAllFilters = nameMatch
         end
 
-        if matchesAllFilters and mutationFilter ~= "None" then
+        if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
             local mutationMatch = false
             if type(mutationFilter) == "table" then
                 for _, mutation in ipairs(mutationFilter) do
@@ -1630,7 +1630,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.759")
+AboutSection:Label("Version: 1.2.760")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
