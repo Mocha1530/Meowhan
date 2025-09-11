@@ -807,7 +807,7 @@ local CollectFruitSection = MainTab:Section("Collect Fruit")
 local MutationMachineSection = MainTab:Section("Mutation Machine")
 local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
-CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
+CollectFruitSection:Dropdown("Select Fruits: ", {"Sugar Apple", "Beanstalk"}, selectedFruitsToCollect, function(selected)
     if selected then
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
@@ -815,7 +815,7 @@ CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollec
     end
 end, true)
 
-CollectFruitSection:Dropdown("Select Mutations: ", a_s_m_list, selectedFruitMutations, function(selected)
+CollectFruitSection:Dropdown("Select Mutations: ", {"Glimmering", "Sandy", "Wet"}, selectedFruitMutations, function(selected)
     if selected then
         selectedFruitMutations = selected
         config.FruitMutationsToCollect = selected
