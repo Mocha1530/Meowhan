@@ -194,10 +194,7 @@ local InfoTab = Window:Tab("Info")
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
 
-    -- Seed Shop Vars
-    local selectedShopSeeds = config.SelectedSeeds or {}
-    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
-    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
+
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
