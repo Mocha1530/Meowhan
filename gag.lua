@@ -69,7 +69,7 @@ for k_s, _ in pairs(SeedStock) do
     end
 end
 
-local a_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/SeedShopData.lua", true))()
+local a_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/Seeds.lua", true))()
 local a_s_list = {}
 for k_a_s, _ in pairs(a_s_data) do
     table.insert(a_s_list, k_a_s)
