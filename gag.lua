@@ -1084,7 +1084,7 @@ spawn(function()
                             GameEvents.Crops.Collect:FireServer({fruit})
                         end
             })
-            task.wait(1)
+            task.wait(0.5)
         else
             task.wait(2)
         end
