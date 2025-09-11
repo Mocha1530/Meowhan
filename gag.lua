@@ -491,20 +491,16 @@ local function findFruit(filters)
             if fruitsFolder then
                 for _, fruit in ipairs(fruitsFolder:GetChildren()) do
                     if fruit:IsA("Model") and checkFruit(fruit) then
-                        if action(fruit) then
-                            task.wait(1)
-                            return true
-                        end
-                        task.wait(1)
+                        action(fruit)
+						task.wait(0.5)
+                        return true
                     end
                 end
             else
                 if checkFruit(child) then
-                    if action(child) then
-                        task.wait(1)
-                        return true
-                    end
-                    task.wait(1)
+                    action(child)
+                    task.wait(0.5)
+                    return true
                 end
             end
         end
