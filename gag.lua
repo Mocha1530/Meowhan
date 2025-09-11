@@ -1008,7 +1008,7 @@ spawn(function()
     while Running.collectCrops do
         if autoCollectGlimmeringEnabed then
             findFruit({
-                        type = "Fruit"
+                        type = "Fruit",
                         mutation = "Glimmering",
                         action = function(fruit)
                             GameEvents.Crops.Collect:FireServer({fruit})
@@ -1021,7 +1021,7 @@ spawn(function()
                         type = "Fruit",
                         mutation = selectedFruitMutations,
                         weight = selectedFruitWeight,
-                        weightMode = selectedWeightMode
+                        weightMode = selectedWeightMode,
                         action = function(fruit)
                             GameEvents.Crops.Collect:FireServer({fruit})
                         end
