@@ -1159,6 +1159,33 @@ end, {
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
+spawn(function()
+    while Running.autoBuySeeds then
+        local stocks = SeedStock
+        
+        if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
+            for _, v_select in ipairs(selectedShopSeeds) do
+                if stocks[v_select] and stocks[v_select] > 0 then
+                    for i = 1, stocks[v_select] do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        elseif autoBuyAllSeedsEnabled then
+            for i_all, v_all in pairs(stocks) do
+                if v_all > 0 then
+                    for i = 1, v_all do
+                        GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+        task.wait(5)
+    end
+end)
+
 -- Select seeds
 SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedShopSeeds, function(selected)
     if selected then
