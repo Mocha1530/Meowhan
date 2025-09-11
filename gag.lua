@@ -1150,8 +1150,9 @@ spawn(function()
                     end
                 end
             end
+		else
+			task.wait(5)
 		end
-		task.wait(5)
     end
 end)
 
