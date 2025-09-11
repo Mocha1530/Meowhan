@@ -389,7 +389,6 @@ local function findItem(filters)
             if matchesAllFilters then
                 if holdItem(child.Name) then
                     action()
-                    task.wait(0.5)
                     return true
                 end
             end
@@ -492,14 +491,12 @@ local function findFruit(filters)
                 for _, fruit in ipairs(fruitsFolder:GetChildren()) do
                     if fruit:IsA("Model") and checkFruit(fruit) then
                         action(fruit)
-						task.wait(0.5)
                         return true
                     end
                 end
             else
                 if checkFruit(child) then
                     action(child)
-                    task.wait(0.5)
                     return true
                 end
             end
