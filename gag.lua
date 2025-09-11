@@ -916,30 +916,22 @@ end, {
 })
 
 spawn(function()
-    while Running.autoStartMachine do
-        if autoStartMachineEnabled then
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == nil or timerStatus == "" then
-                MutationMachine:FireServer("StartMachine")
-            end
-            task.wait(10)
-        else
-            task.wait(1)
+    while Running.autoStartMachine and autoStartMachineEnabled do
+        local timerStatus = getMutationMachineTimer()
+        if timerStatus == nil or timerStatus == "" then
+            MutationMachine:FireServer("StartMachine")
         end
+        task.wait(10)
     end
 end)
 
 -- Mutation machine functions
 spawn(function()
-    while Running.autoClaimPet do
-        if autoClaimPetEnabled then
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == "READY" then
-                MutationMachine:FireServer("ClaimMutatedPet")
-                task.wait(2)
-            else
-                task.wait(1)
-            end
+    while Running.autoClaimPet and autoClaimPetEnabled do
+        local timerStatus = getMutationMachineTimer()
+        if timerStatus == "READY" then
+            MutationMachine:FireServer("ClaimMutatedPet")
+            task.wait(2)
         else
             task.wait(1)
         end
@@ -1005,7 +997,7 @@ findItem({
 ]]
 -- Auto collect glimmering
 spawn(function()
-    while Running.collectCrops do
+    while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
         if autoCollectGlimmeringEnabed then
             findFruit({
                         type = "Fruit",
@@ -1035,31 +1027,23 @@ end)
 
 -- Auto submit glimmering
 spawn(function()
-    while Running.submitGlimmering do
-        if submitGlimmeringEnabled then
-            findItem({
-                type = "j",
-                mutation = "Glimmering",
-                action = function()
-                            GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
-                        end
-            })
-            task.wait(0.5)
-        else
-            task.wait(2)    
-        end
+    while Running.submitGlimmering and submitGlimmeringEnabled do
+        findItem({
+            type = "j",
+            mutation = "Glimmering",
+            action = function()
+                        GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                    end
+        })
+        task.wait(0.5)
     end
 end)
 
 -- Auto submit all glimmering
 spawn(function()
-    while Running.submitAllGlimmering do
-        if submitAllGlimmeringEnabled then
-            GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
-            task.wait(5)
-        else
-            task.wait(10)
-        end
+    while Running.submitAllGlimmering and submitAllGlimmeringEnabled do
+        GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+        task.wait(5)
     end
 end)
 
@@ -1129,7 +1113,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 SeedShopSection:Label("Tier 1")
 
 spawn(function()
-    while Running.autoBuySeeds do
+    while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
         local stocks = getSeedStock()
         
         if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
@@ -1137,7 +1121,7 @@ spawn(function()
                 if stocks[v_select] and stocks[v_select] > 0 then
                     for i = 1, stocks[v_select] do
                         GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                        task.wait(0.3)
+                        task.wait(0.1)
                     end
                 end
             end
@@ -1146,7 +1130,7 @@ spawn(function()
                 if v_all > 0 then
                     for i = 1, v_all do
                         GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                        task.wait(0.3)
+                        task.wait(0.1)
                     end
                 end
             end
@@ -1610,7 +1594,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.756")
+AboutSection:Label("Version: 1.2.758")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
