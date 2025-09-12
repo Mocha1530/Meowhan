@@ -627,10 +627,10 @@ end
                 
                 if Wish and Wish.Text == "Claim your wish!" then
                     GameEvents.FairyService.MakeFairyWish:FireServer()
-                    task.wait(0.1)
+                    task.wait(1)
                     selectButton()
                 end
-                task.wait(1)
+                task.wait(2)
             end
         end)
     end
