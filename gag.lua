@@ -576,11 +576,12 @@ end
         local left = {}
 
 		for _, button in ipairs(Items:GetChildren()) do
+            if button.Name == "Template" and button:IsA("ImageButton") and button.Selectable and button.Visible then
             table.insert(left, button)
         end
 	
         for _, prio in ipairs(selectedFairyWishRewards) do
-            for _, button in ipairs(Items:GetChildren()) do
+            for _, button in ipairs(left) do
                 local title = button:FindFirstChild("Title") or button:FindFirstChildWhichIsA("TextLabel")
                 if title and title.Text == prio then
                     table.insert(selected, title.Text)
@@ -613,12 +614,17 @@ end
     end
     
     local function startAutoMakeAWish()
-        local Wish = Workspace:FindFirstChild("FairyEvent"):FindFirstChild("WishFountain"):FindFirstChild("WishingWellGUI"):FindFirstChild("ProgressBilboard"):FindFirstChild("TextLabel")
-        
         spawn(function()
             while Running.autoMakeAWish and autoMakeAWishEnabled then
-                if Wish.Text == "Claim your wish!" then
+                local Wish = Workspace:FindFirstChild("FairyEvent") 
+                        and Workspace.FairyEvent:FindFirstChild("WishFountain") 
+                        and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
+                        and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
+                        and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
+                
+                if Wish and Wish.Text == "Claim your wish!" then
                     GameEvents.FairyService.MakeFairyWish:FireServer()
+                    task.wait(0.1)
                     selectButton()
                 end
             end
