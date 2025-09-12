@@ -577,7 +577,8 @@ end
 
 		for _, button in ipairs(Items:GetChildren()) do
             if button.Name == "Template" and button:IsA("ImageButton") and button.Selectable and button.Visible then
-            table.insert(left, button)
+                table.insert(left, button)
+            end
         end
 	
         for _, prio in ipairs(selectedFairyWishRewards) do
