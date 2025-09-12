@@ -1170,7 +1170,6 @@ FairyEventSection:Toggle("Auto Make a Wish", function(state)
     config.MakeAWish = state
 
     if state then
-        startAutoMakeAWish()
         Window:Notify("Auto Make A Wish Enabled", 2)
     else
         Window:Notify("Auto Make A Wish Disabled", 2)
