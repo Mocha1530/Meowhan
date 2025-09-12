@@ -574,7 +574,11 @@ end
         local Items = ChooseRewards:FindFirstChild("Frame"):FindFirstChild("Main"):FindFirstChild("Items")
         local selected = {}
         local left = {}
-        
+
+		for _, button in ipairs(Items:GetChildren()) do
+            table.insert(left, button)
+        end
+	
         for _, prio in ipairs(selectedFairyWishRewards) do
             for _, button in ipairs(Items:GetChildren()) do
                 local title = button:FindFirstChild("Title") or button:FindFirstChildWhichIsA("TextLabel")
@@ -589,8 +593,6 @@ end
                         end)
                     end
                     return
-                else
-                    table.insert(left, button)
                 end
             end
         end
@@ -611,7 +613,7 @@ end
     end
     
     local function startAutoMakeAWish()
-        local Wish = Workspace:FindFirstChild("FairyEvent"):FindFirstChild("WishFountain"):FindFirstChild("WishingWellGUI"):FindFirstChild("ProgressBillboard"):FindFirstChild("TextLabel")
+        local Wish = Workspace:FindFirstChild("FairyEvent"):FindFirstChild("WishFountain"):FindFirstChild("WishingWellGUI"):FindFirstChild("ProgressBilboard"):FindFirstChild("TextLabel")
         
         spawn(function()
             while Running.autoMakeAWish and autoMakeAWishEnabled then
@@ -1223,7 +1225,9 @@ FairyEventSection:Toggle("Auto Make a Wish", function(state)
         Window:Notify("Auto Make A Wish Disabled", 2)
     end
     saveConfig(config)
-end)
+end, {
+	default = autoMakeAWishEnabled
+})
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
