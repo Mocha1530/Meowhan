@@ -921,7 +921,6 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
 CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
-        startCollectCrops()
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
         saveConfig(config)
@@ -954,6 +953,7 @@ CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
     config.AutoCollectSelectedFruits = state
 
     if state then
+		startCollectCrops()
         Window:Notify("Auto Collect Enabled", 2)
         if autoCollectGlimmeringEnabed then
             autoCollectGlimmeringEnabed = false
@@ -1075,11 +1075,11 @@ end)
 
   -- Select mutation
 MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
-    if selected then
+	if selected then
         selectedPetMutations = selected
         config.PetMutations = selected
         saveConfig(config)
-    end
+	end
 end, true)
 
   -- Auto claim toggle
@@ -1212,7 +1212,7 @@ FairyEventSection:Dropdown("Select Rewards:", FairyWishRewards, selectedFairyWis
         config.SelectedRewards = selected
         saveConfig(config)
     end
-end)
+end, true)
 
 FairyEventSection:Toggle("Auto Make a Wish", function(state)
     autoMakeAWishEnabled = state
