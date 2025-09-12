@@ -110,6 +110,7 @@ local DEFAULT_CONFIG = {
     ShowGlimmerCounter = false,
     SelectedRewards = {},
     MakeAWish = false,
+    RestartWish = false,
 
     -- Seed Shop
     SelectedSeeds = {},
@@ -135,6 +136,7 @@ local Running = {
     collectCrops = true,
     autoSubmitGlimmering = true,
     autoMakeAWish = true,
+    autoRestartWish = true,
     showMutationTimer = true,
     autoBuySeeds = true,
     infiniteJump = true
@@ -238,6 +240,7 @@ local InfoTab = Window:Tab("Info")
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
     local selectedFairyWishRewards = config.SelectedRewards or {}
     local autoMakeAWishEnabled = config.MakeAWish
+    local autoRestartWishEnabled = config.RestartWish
 
     -- Seed Shop Vars
     local selectedShopSeeds = config.SelectedSeeds or {}
@@ -568,6 +571,12 @@ end
     end
 
     -- Auto Make a Wish
+    local Wish = Workspace:FindFirstChild("FairyEvent") 
+                    and Workspace.FairyEvent:FindFirstChild("WishFountain") 
+                    and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
+
     local function selectButton()
         local ChooseRewards = PlayerGui:FindFirstChild("ChooseFairyRewards_UI")
         if not ChooseRewards then return end
@@ -617,12 +626,6 @@ end
     end
     
     local function startAutoMakeAWish()
-		local Wish = Workspace:FindFirstChild("FairyEvent") 
-                    and Workspace.FairyEvent:FindFirstChild("WishFountain") 
-                    and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
-                    and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
-                    and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
-	
         spawn(function()
             while Running.autoMakeAWish and autoMakeAWishEnabled do
                 if Wish and Wish.Text == "Claim your wish!" then
@@ -630,13 +633,30 @@ end
                     task.wait(2)
                     selectButton()
                 end
-                task.wait(5)
+                task.wait(3)
             end
         end)
     end
     
     if autoMakeAWishEnabled then
         startAutoMakeAWish()
+    end
+
+    local function startAutoRestartWish()
+        spawn(function()
+            while Running.autoRestartWish and autoRestartWishEnabled do
+                local Progress = Wish.Parent:FindFirstChild("UpgradeBar") 
+                                and Wish.Parent.UpgradeBar:FindFirstChild("ProgressionLabel")
+                if Progress and Progress.Text == "Out of Wishes" then
+                    GameEvents.FairyService.RestartFairyTrack:FireServer()
+                end
+                task.wait(10)
+            end
+        end)
+    end
+
+    if autoRestartWishEnabled then
+        startAutoRestartWish()
     end
 
 -- Seeds teleport button UI
@@ -1238,6 +1258,21 @@ end, {
 	default = autoMakeAWishEnabled
 })
 
+FairyEventSection:Toggle("Auto Restart Wish", function(state)
+    autoRestartWishEnabled = state
+    config.RestartWish = state
+
+    if state then
+        startAutoRestartWish()
+        Window:Notify("Auto Restart Wish Enabled", 2)
+    else
+        Window:Notify("Auto Restart Wish Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoRestartWishEnabled
+})
+
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 
@@ -1733,7 +1768,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.770")
+AboutSection:Label("Version: 1.2.776")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
