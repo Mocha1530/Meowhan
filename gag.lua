@@ -569,7 +569,7 @@ end
 
     -- Auto Make a Wish
     local function selectButton()
-        local ChooseRewards = playerGui:FindFirstChild("ChooseFairyRewards_UI")
+        local ChooseRewards = PlayerGui:FindFirstChild("ChooseFairyRewards_UI")
         if not ChooseRewards then return end
         local Items = ChooseRewards:FindFirstChild("Frame"):FindFirstChild("Main"):FindFirstChild("Items")
         local selected = {}
@@ -598,6 +598,13 @@ end
         if #left > 0 then
             local randSelect = left[math.random(#left)]
             GuiService.SelectedObject = randSelect
+            if GuiService.SelectedObject then
+                pcall(function()
+                    for _, connection in pairs(getconnections(GuiService.SelectedObject.Activated)) do
+                        pcall(connection.Function)
+                    end
+                end)
+            end
         else
             warn("No selectable buttons found.")
         end
