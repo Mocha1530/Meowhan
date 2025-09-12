@@ -3,15 +3,16 @@
 ]]
 
 -- All Variables
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GuiService = game:GetService("GuiService")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:FindFirstChild("Backpack")
@@ -107,6 +108,8 @@ local DEFAULT_CONFIG = {
     SubmitGlimmering = false,
     SubmitAllGlimmering = false,
     ShowGlimmerCounter = false,
+    SelectedRewards = {},
+    MakeAWish = false,
 
     -- Seed Shop
     SelectedSeeds = {},
@@ -131,12 +134,16 @@ local Running = {
     autoClaimPet = true,
     collectCrops = true,
     autoSubmitGlimmering = true,
+    autoMakeAWish = true,
     showMutationTimer = true,
     autoBuySeeds = true,
     infiniteJump = true
 }
 local MachineMutations = {
     "Ascended", "Frozen", "Golden", "Inverted", "IronSkin", "Mega", "Radiant", "Rainbow", "Shiny", "Shocked", "Tiny", "Windy"
+}
+local FairyWishRewards = {
+    "Aurora Vine", "Enchanted Crate", "Enchanted Egg", "Enchanted Seed Pack", "FairyPoints", "Fairy Targeter", "Glimmering Radar", "Mutation Spray Glimmering", "Pet Shard Glimmering"
 }
 
 -- Create folder structure
@@ -229,6 +236,8 @@ local InfoTab = Window:Tab("Info")
     local autoCollectGlimmeringEnabed = config.CollectGlimmering
     local submitGlimmeringEnabled = config.SubmitGlimmering
     local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+    local selectedFairyWishRewards = config.SelectedRewards or {}
+    local autoMakeAWishEnabled = config.MakeAWish
 
     -- Seed Shop Vars
     local selectedShopSeeds = config.SelectedSeeds or {}
@@ -556,6 +565,60 @@ end
     
     if autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled then
         startCollectCrops()
+    end
+
+    -- Auto Make a Wish
+    local function selectButton()
+        local ChooseRewards = playerGui:FindFirstChild("ChooseFairyRewards_UI")
+        if not ChooseRewards then return end
+        local Items = ChooseRewards:FindFirstChild("Frame"):FindFirstChild("Main"):FindFirstChild("Items")
+        local selected = {}
+        local left = {}
+        
+        for _, prio in ipairs(selectedFairyWishRewards) do
+            for _, button in ipairs(Items:GetChildren()) do
+                local title = button:FindFirstChild("Title") or button:FindFirstChildWhichIsA("TextLabel")
+                if title and title.Text == prio then
+                    table.insert(selected, title.Text)
+                    GuiService.SelectedObject = button
+                    if GuiService.SelectedObject then
+                        pcall(function()
+                            for _, connection in pairs(getconnections(GuiService.SelectedObject.Activated)) do
+                                pcall(connection.Function)
+                            end
+                        end)
+                    end
+                    return
+                else
+                    table.insert(left, button)
+                end
+            end
+        end
+        
+        if #left > 0 then
+            local randSelect = left[math.random(#left)]
+            GuiService.SelectedObject = randSelect
+        else
+            warn("No selectable buttons found.")
+        end
+    end
+    
+    local function startAutoMakeAWish()
+        local Wish = Workspace:FindFirstChild("FairyEvent"):FindFirstChild("WishFountain"):FindFirstChild("WishingWellGUI"):FindFirstChild("ProgressBillboard"):FindFirstChild("TextLabel")
+        
+        spawn(function()
+            while Running.autoMakeAWish and autoMakeAWishEnabled then
+                if Wish.Text == "Claim your wish!" then
+                    GameEvents.FairyService.MakeFairyWish:FireServer()
+                    selectButton()
+                end
+            end
+            task.wait(1)
+        end)
+    end
+    
+    if autoMakeAWishEnabled then
+        startAutoMakeAWish()
     end
 
 -- Seeds teleport button UI
@@ -1128,12 +1191,32 @@ FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
     else
         Window:Notify("Auto Submit All Disabled", 2)
     end
-
     saveConfig(config)
 end, {
     default = submitAllGlimmeringEnabled,
     group = "Fairy_Fountain_Submit"
 })
+
+FairyEventSection:Dropdown("Select Rewards:", FairyWishRewards, selectedFairyWishRewards, function(selected)
+    if selected then
+        selectedFairyWishRewards = selected
+        config.SelectedRewards = selected
+        saveConfig(config)
+    end
+end)
+
+FairyEventSection:Toggle("Auto Make a Wish", function(state)
+    autoMakeAWishEnabled = state
+    config.MakeAWish = state
+
+    if state then
+        startAutoMakeAWish()
+        Window:Notify("Auto Make A Wish Enabled", 2)
+    else
+        Window:Notify("Auto Make A Wish Disabled", 2)
+    end
+    saveConfig(config)
+end)
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
@@ -1630,7 +1713,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.760")
+AboutSection:Label("Version: 1.2.770")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
