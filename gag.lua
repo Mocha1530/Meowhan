@@ -630,8 +630,8 @@ end
                     task.wait(0.1)
                     selectButton()
                 end
+                task.wait(1)
             end
-            task.wait(1)
         end)
     end
     
