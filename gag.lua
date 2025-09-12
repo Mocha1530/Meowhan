@@ -617,20 +617,20 @@ end
     end
     
     local function startAutoMakeAWish()
+		local Wish = Workspace:FindFirstChild("FairyEvent") 
+                    and Workspace.FairyEvent:FindFirstChild("WishFountain") 
+                    and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
+	
         spawn(function()
             while Running.autoMakeAWish and autoMakeAWishEnabled do
-                local Wish = Workspace:FindFirstChild("FairyEvent") 
-                        and Workspace.FairyEvent:FindFirstChild("WishFountain") 
-                        and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
-                        and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
-                        and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
-                
                 if Wish and Wish.Text == "Claim your wish!" then
                     GameEvents.FairyService.MakeFairyWish:FireServer()
-                    task.wait(1)
+                    task.wait(2)
                     selectButton()
                 end
-                task.wait(2)
+                task.wait(5)
             end
         end)
     end
