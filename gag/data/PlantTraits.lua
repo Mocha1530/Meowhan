@@ -1,5 +1,5 @@
 return {
-    Berry = {
+    ["Berry Plants"] = {
         "Strawberry",
         "Blueberry",
         "Raspberry",
@@ -10,7 +10,7 @@ return {
         "Grape",
         "Elder Strawberry"
     },
-    Flower = {
+    ["Flower Plants"] = {
         "Rose",
         "Artichoke",
         "Orange Tulip",
@@ -56,7 +56,7 @@ return {
         "Tranquil Bloom",
         "Bone Blossom"
     },
-    Fruit = {
+    ["Fruit Plants"] = {
         "Strawberry",
         "Blueberry",
         "Pricklefruit",
@@ -99,7 +99,7 @@ return {
         "Sugar Apple",
         "Elder Strawberry"
     },
-    Leafy = {
+    ["Leafy Plants"] = {
         "Strawberry",
         "Parsley",
         "Blueberry",
@@ -145,7 +145,7 @@ return {
         "Romanesco",
         "Maple Resin"
     },
-    Sweet = {
+    ["Sweet Plants"] = {
         "Strawberry",
         "Chocolate Carrot",
         "Blueberry",
@@ -176,7 +176,7 @@ return {
         "Sugar Apple",
         "Romanesco"
     },
-    Tropical = {
+    ["Tropical Plants"] = {
         "Banana",
         "Durian",
         "Papaya",
@@ -190,7 +190,7 @@ return {
         "Passionfruit",
         "Pineapple"
     },
-    Vegetable = {
+    ["Vegetable Plants"] = {
         "Carrot",
         "Chocolate Carrot",
         "Turnip",
@@ -223,7 +223,7 @@ return {
         "Beanstalk",
         "Romanesco"
     },
-    Prickly = {
+    ["Prickly Plants"] = {
         "Pricklefruit",
         "Twisted Tangle",
         "Aloe Vera",
@@ -240,7 +240,7 @@ return {
         "Princess Thorn",
         "Venus Fly Trap"
     },
-    Woody = {
+    ["Woody Plants"] = {
         "Duskpuff",
         "Pear",
         "Apple",
@@ -268,7 +268,7 @@ return {
         "Sugar Apple",
         "Maple Resin"
     },
-    Stalky = {
+    ["Stalky Plants"] = {
         "Spring Onion",
         "Stonebite",
         "Parsley",
