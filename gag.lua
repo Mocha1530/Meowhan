@@ -556,14 +556,17 @@ end
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 if autoCollectRequestedEnabed then
                     if PlantTraits[requestedPlant] then
-                    findFruit({
-                                name = PlantTraits[requestedPlant],
-                                type = "Fruit",
-                                action = function(fruit)
-                                    GameEvents.Crops.Collect:FireServer({fruit})
-                                end
-                    })
-                    task.wait(0.5)
+                        findFruit({
+                                    name = PlantTraits[requestedPlant],
+                                    type = "Fruit",
+                                    action = function(fruit)
+                                        GameEvents.Crops.Collect:FireServer({fruit})
+                                    end
+                        })
+                        task.wait(0.5)
+                    else
+                        task.wait(5)
+                    end
                 elseif autoCollectSelectedFruitsEnabled then
         			findFruit({
         						name = selectedFruitsToCollect,
