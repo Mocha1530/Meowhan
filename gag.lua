@@ -18,6 +18,7 @@ local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
+local UpdateItems = Workspace.Interaction.UpdateItems
 local placeId = game.PlaceId
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
@@ -104,14 +105,20 @@ local DEFAULT_CONFIG = {
     AutoClaimMutatedPet = false,
 
     -- Event
-    CollectGlimmering = false,
-    SubmitGlimmering = false,
-    SubmitAllGlimmering = false,
-    ShowGlimmerCounter = false,
-    SelectedRewards = {},
-    MakeAWish = false,
-    RestartWish = false,
+        --[[ Fairy Event
+        CollectGlimmering = false,
+        SubmitGlimmering = false,
+        SubmitAllGlimmering = false,
+        ShowGlimmerCounter = false,
+        SelectedRewards = {},
+        MakeAWish = false,
+        RestartWish = false, ]]
 
+        -- Fall Market Event
+        CollectRequested = false,
+        FeedRequested = false,
+        FeedAllRequested = false,
+        
     -- Seed Shop
     SelectedSeeds = {},
     BuySelectedSeeds = false,
@@ -137,6 +144,7 @@ local Running = {
     autoSubmitGlimmering = true,
     autoMakeAWish = true,
     autoRestartWish = true,
+    autoFeedRequested = true,
     showMutationTimer = true,
     autoBuySeeds = true,
     infiniteJump = true
@@ -147,6 +155,7 @@ local MachineMutations = {
 local FairyWishRewards = {
     "Aurora Vine", "Enchanted Crate", "Enchanted Egg", "Enchanted Seed Pack", "FairyPoints", "Fairy Targeter", "Glimmering Radar", "Mutation Spray Glimmering", "Pet Shard Glimmering"
 }
+local PlantTraits = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/PlantTraits.lua", true))()
 
 -- Create folder structure
 local function ensureFolderStructure()
@@ -235,12 +244,19 @@ local InfoTab = Window:Tab("Info")
     local MutationMachine = GameEvents.PetMutationMachineService_RE
 
     -- Event vars
-    local autoCollectGlimmeringEnabed = config.CollectGlimmering
-    local submitGlimmeringEnabled = config.SubmitGlimmering
-    local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
-    local selectedFairyWishRewards = config.SelectedRewards or {}
-    local autoMakeAWishEnabled = config.MakeAWish
-    local autoRestartWishEnabled = config.RestartWish
+        --[[ Fairy Event
+        local autoCollectGlimmeringEnabed = config.CollectGlimmering
+        local submitGlimmeringEnabled = config.SubmitGlimmering
+        local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+        local selectedFairyWishRewards = config.SelectedRewards or {}
+        local autoMakeAWishEnabled = config.MakeAWish
+        local autoRestartWishEnabled = config.RestartWish]]
+
+        -- Fall Market Event
+        local autoCollectRequestedEnabed = config.CollectRequested
+        local feedRequestedEnabled = config.FeedRequested
+        local feedAllRequestedEnabled = config.FeedAllRequested
+        local requestedPlant = nil
 
     -- Seed Shop Vars
     local selectedShopSeeds = config.SelectedSeeds or {}
@@ -537,11 +553,12 @@ end
     -- Auto Collect
     local function startCollectCrops()
         spawn(function()
-            while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
-                if autoCollectGlimmeringEnabed then
+            while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
+                if autoCollectRequestedEnabed then
+                    if PlantTraits[requestedPlant] then
                     findFruit({
+                                name = PlantTraits[requestedPlant],
                                 type = "Fruit",
-                                mutation = "Glimmering",
                                 action = function(fruit)
                                     GameEvents.Crops.Collect:FireServer({fruit})
                                 end
@@ -566,12 +583,12 @@ end
         end)
     end
     
-    if autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled then
+    if autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled then
         startCollectCrops()
     end
 
     -- Auto Make a Wish
-    local Wish = Workspace:FindFirstChild("FairyEvent") 
+    --[[ local Wish = Workspace:FindFirstChild("FairyEvent") 
                     and Workspace.FairyEvent:FindFirstChild("WishFountain") 
                     and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
                     and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
@@ -657,6 +674,58 @@ end
 
     if autoRestartWishEnabled then
         startAutoRestartWish()
+    end]]
+
+    -- Auto Feed Requested
+    local OaklayProgress = nil
+    local OaklayTrait = nil
+    for _, v_e in ipairs(UpdateItems:GetDescendants()) do
+        if v_e:IsA("TextLabel") then
+            if v_e.Name == "TraitTextLabel" then
+                OaklayTrait = v_e
+                requestedPlant = extractItem(v_e.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+            elseif v_e.Name == "ProgressionLabel" then
+                OaklayProgress = v_e
+            end
+        end
+        if OaklayProgress and OaklayTrait then break end
+    end
+    
+    OaklayTrait:GetPropertyChangedSignal("Text"):Connect(function()
+        requestedPlant = extractItem(OaklayTrait.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+    end)
+
+    local function startAutoFeedRequested()
+        spawn(function()
+            while Running.autoFeedRequested and (feedRequestedEnabled or feedAllRequestedEnabled) do
+                if not extractItem(OaklayProgress.Text, "%b(Cooldown)", true) then
+                    if feedRequestedEnabled then
+                        if PlantTraits[requestedPlant] then
+                            findItem({
+                                name = PlantTraits[requestedPlant],
+                                type = "j",
+                                action = function()
+                                            GameEvents.FallMarketEvent.SubmitHeldPlant:FireServer()
+                                        end
+                            })
+                            task.wait(0.5)
+                        else
+                            warn("Plant Trait '" .. requestedPlant .. "' Not Found")
+                            task.wait(5)
+                        end
+                    elseif feedAllRequestedEnabled then
+                        GameEvents.FallMarketEvent.SubmitAllPlants:FireServer()
+                        task.wait(5)
+                    end
+                else
+                    task.wait(10)
+                end
+            end
+        end)
+    end
+    
+    if feedRequestedEnabled or feedAllRequestedEnabled then
+        startAutoFeedRequested()
     end
 
 -- Seeds teleport button UI
@@ -984,9 +1053,9 @@ CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
     if state then
 		startCollectCrops()
         Window:Notify("Auto Collect Enabled", 2)
-        if autoCollectGlimmeringEnabed then
-            autoCollectGlimmeringEnabed = false
-            config.CollectGlimmering = false
+        if autoCollectRequestedEnabed then
+            autoCollectRequestedEnabed = false
+            config.CollectRequested = false
         end
     else
         Window:Notify("Auto Collect Disabled", 2)
@@ -1128,150 +1197,214 @@ end, {
 })
 
 -- Event Tab
-local FairyEventSection = EventTab:Section("Fairy Event")
-
---[[ Ex use of findItem(table)
-
-findItem({
-    name = "Apple",          -- Optional: looks for names containing "Apple"
-    type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
-    mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
-    weight = 5,              -- Optional: weight threshold
-    weightMode = "Below",     -- Optional: "Below", "Above", or "None"
-    age = 10,                -- Optional: age threshold
-    ageMode = "Greater",     -- Optional: "Below", "Above", or "None"
-    action = function()      -- Required: function to execute if item is found
-        -- action to perform
-        game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
-    end
-})
-
-]]
-
--- Auto submit glimmering
-local function startAutoSubmitGlimmering()
-    spawn(function()
-        while Running.autoSubmitGlimmering and (submitGlimmeringEnabled or submitAllGlimmeringEnabled) do
-            if submitGlimmeringEnabled then
-                findItem({
-                    type = "j",
-                    mutation = "Glimmering",
-                    action = function()
-                                GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
-                            end
-                })
-                task.wait(0.5)
-            elseif submitAllGlimmeringEnabled then
-                GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
-                task.wait(5)
+    --[[ Fairy Event
+    local FairyEventSection = EventTab:Section("Fairy Event")
+    
+     Ex use of findItem(table)
+    
+    findItem({
+        name = "Apple",          -- Optional: looks for names containing "Apple"
+        type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
+        mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
+        weight = 5,              -- Optional: weight threshold
+        weightMode = "Below",     -- Optional: "Below", "Above", or "None"
+        age = 10,                -- Optional: age threshold
+        ageMode = "Greater",     -- Optional: "Below", "Above", or "None"
+        action = function()      -- Required: function to execute if item is found
+            -- action to perform
+            game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
+        end
+    })
+    
+    -- Auto submit glimmering
+    local function startAutoSubmitGlimmering()
+        spawn(function()
+            while Running.autoSubmitGlimmering and (submitGlimmeringEnabled or submitAllGlimmeringEnabled) do
+                if submitGlimmeringEnabled then
+                    findItem({
+                        type = "j",
+                        mutation = "Glimmering",
+                        action = function()
+                                    GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                                end
+                    })
+                    task.wait(0.5)
+                elseif submitAllGlimmeringEnabled then
+                    GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+                    task.wait(5)
+                end
             end
-        end
-    end)
-end
-
-if submitGlimmeringEnabled or submitAllGlimmeringEnabled then
-    startAutoSubmitGlimmering()
-end
-
-FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
-    autoCollectGlimmeringEnabed = state
-    config.CollectGlimmering = state
-
-    if state then
-        startCollectCrops()
-        Window:Notify("Auto Collect Enabled", 2)
-        if autoCollectSelectedFruitsEnabled then
-            autoCollectSelectedFruitsEnabled = false
-            config.AutoCollectSelectedFruits = false
-        end
-    else
-        Window:Notify("Auto Collect Disabled", 2)
+        end)
     end
-
-    saveConfig(config)
-end, {
-    default = autoCollectGlimmeringEnabed,
-    group = "Auto_Collect"
-})
-
-FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
-    submitGlimmeringEnabled = state
-    config.SubmitGlimmering = state
-
-    if state then
+    
+    if submitGlimmeringEnabled or submitAllGlimmeringEnabled then
         startAutoSubmitGlimmering()
-        Window:Notify("Auto Submit Enabled", 2)
-        if submitAllGlimmeringEnabled then
-            submitAllGlimmeringEnabled = false
-            config.SubmitAllGlimmering = false
-        end            
-    else
-        Window:Notify("Auto Submit Disabled", 2)
     end
-
-    saveConfig(config)
-end, {
-    default = submitGlimmeringEnabled,
-    group = "Fairy_Fountain_Submit"
-})
-
-FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
-    submitAllGlimmeringEnabled = state
-    config.SubmitAllGlimmering = state
-
-    if state then
-        startAutoSubmitGlimmering()
-        Window:Notify("Auto Submit All Enabled", 2)
-        if submitGlimmeringEnabled then
-            submitGlimmeringEnabled = false
-            config.SubmitGlimmering = false
-        end   
-    else
-        Window:Notify("Auto Submit All Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = submitAllGlimmeringEnabled,
-    group = "Fairy_Fountain_Submit"
-})
-
-FairyEventSection:Dropdown("Select Rewards:", FairyWishRewards, selectedFairyWishRewards, function(selected)
-    if selected then
-        selectedFairyWishRewards = selected
-        config.SelectedRewards = selected
+    
+    FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
+        autoCollectGlimmeringEnabed = state
+        config.CollectGlimmering = state
+    
+        if state then
+            startCollectCrops()
+            Window:Notify("Auto Collect Enabled", 2)
+            if autoCollectSelectedFruitsEnabled then
+                autoCollectSelectedFruitsEnabled = false
+                config.AutoCollectSelectedFruits = false
+            end
+        else
+            Window:Notify("Auto Collect Disabled", 2)
+        end
+    
         saveConfig(config)
-    end
-end, true)
+    end, {
+        default = autoCollectGlimmeringEnabed,
+        group = "Auto_Collect"
+    })
+    
+    FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
+        submitGlimmeringEnabled = state
+        config.SubmitGlimmering = state
+    
+        if state then
+            startAutoSubmitGlimmering()
+            Window:Notify("Auto Submit Enabled", 2)
+            if submitAllGlimmeringEnabled then
+                submitAllGlimmeringEnabled = false
+                config.SubmitAllGlimmering = false
+            end            
+        else
+            Window:Notify("Auto Submit Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = submitGlimmeringEnabled,
+        group = "Fairy_Fountain_Submit"
+    })
+    
+    FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
+        submitAllGlimmeringEnabled = state
+        config.SubmitAllGlimmering = state
+    
+        if state then
+            startAutoSubmitGlimmering()
+            Window:Notify("Auto Submit All Enabled", 2)
+            if submitGlimmeringEnabled then
+                submitGlimmeringEnabled = false
+                config.SubmitGlimmering = false
+            end   
+        else
+            Window:Notify("Auto Submit All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = submitAllGlimmeringEnabled,
+        group = "Fairy_Fountain_Submit"
+    })
+    
+    FairyEventSection:Dropdown("Select Rewards:", FairyWishRewards, selectedFairyWishRewards, function(selected)
+        if selected then
+            selectedFairyWishRewards = selected
+            config.SelectedRewards = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    FairyEventSection:Toggle("Auto Make a Wish", function(state)
+        autoMakeAWishEnabled = state
+        config.MakeAWish = state
+    
+        if state then
+            startAutoMakeAWish()
+            Window:Notify("Auto Make A Wish Enabled", 2)
+        else
+            Window:Notify("Auto Make A Wish Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+    	default = autoMakeAWishEnabled
+    })
+    
+    FairyEventSection:Toggle("Auto Restart Wish", function(state)
+        autoRestartWishEnabled = state
+        config.RestartWish = state
+    
+        if state then
+            startAutoRestartWish()
+            Window:Notify("Auto Restart Wish Enabled", 2)
+        else
+            Window:Notify("Auto Restart Wish Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = autoRestartWishEnabled
+    }) ]]
 
-FairyEventSection:Toggle("Auto Make a Wish", function(state)
-    autoMakeAWishEnabled = state
-    config.MakeAWish = state
+    -- Fall Market Event
+    local FallEventSection = EventTab:Section("Fall Market Event")
 
-    if state then
-        startAutoMakeAWish()
-        Window:Notify("Auto Make A Wish Enabled", 2)
-    else
-        Window:Notify("Auto Make A Wish Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-	default = autoMakeAWishEnabled
-})
-
-FairyEventSection:Toggle("Auto Restart Wish", function(state)
-    autoRestartWishEnabled = state
-    config.RestartWish = state
-
-    if state then
-        startAutoRestartWish()
-        Window:Notify("Auto Restart Wish Enabled", 2)
-    else
-        Window:Notify("Auto Restart Wish Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoRestartWishEnabled
-})
+    FallEventSection:Toggle("Auto Collect Requested", function(state)
+        autoCollectRequestedEnabed = state
+        config.CollectRequested = state
+    
+        if state then
+            startCollectCrops()
+            Window:Notify("Auto Collect Enabled", 2)
+            if autoCollectSelectedFruitsEnabled then
+                autoCollectSelectedFruitsEnabled = false
+                config.AutoCollectSelectedFruits = false
+            end
+        else
+            Window:Notify("Auto Collect Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = autoCollectRequestedEnabed,
+        group = "Auto_Collect"
+    })
+    
+    FallEventSection:Toggle("Auto Feed Requested", function(state)
+        feedRequestedEnabled = state
+        config.FeedRequested = state
+    
+        if state then
+            startAutoFeedRequested()
+            Window:Notify("Auto Feed Enabled", 2)
+            if feedAllRequestedEnabled then
+                feedAllRequestedEnabled = false
+                config.FeedAllRequested = false
+            end            
+        else
+            Window:Notify("Auto Feed Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = feedRequestedEnabled,
+        group = "Feed"
+    })
+    
+    FallEventSection:Toggle("Auto Feed All Requested", function(state)
+        feedAllRequestedEnabled = state
+        config.FeedAllRequested = state
+    
+        if state then
+            startAutoFeedRequested()
+            Window:Notify("Auto Feed All Enabled", 2)
+            if feedRequestedEnabled then
+                feedRequestedEnabled = false
+                config.FeedRequested = false
+            end   
+        else
+            Window:Notify("Auto Feed All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = feedAllRequestedEnabled,
+        group = "Feed"
+    })
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
@@ -1768,7 +1901,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.776")
+AboutSection:Label("Version: 1.2.786")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
