@@ -563,7 +563,7 @@ end
                                         GameEvents.Crops.Collect:FireServer({fruit})
                                     end
                         })
-                        task.wait(0.5)
+                        task.wait(0.1)
                     else
                         task.wait(5)
                     end
@@ -578,7 +578,7 @@ end
                                     GameEvents.Crops.Collect:FireServer({fruit})
                                 end
                     })
-                    task.wait(0.5)
+                    task.wait(0.1)
         		else
         			task.wait(2)	
                 end
