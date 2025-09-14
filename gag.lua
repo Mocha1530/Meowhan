@@ -60,60 +60,6 @@ for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
     table.insert(a_s_m_list, v_a_s_m.display_name)
 end
 
-local SeedStock = {}
-local ShopSeedList = {}
-local function getSeedStock(): table
-	local SeedShop = PlayerGui.Seed_Shop
-	local Items = SeedShop:FindFirstChild("Blueberry", true).Parent
-
-	for _, Item in next, Items:GetChildren() do
-		local MainFrame = Item:FindFirstChild("Main_Frame")
-		if not MainFrame then continue end
-
-		local StockText = MainFrame.Stock_Text.Text
-		local StockCount = tonumber(StockText:match("%d+"))
-
-		SeedStock[Item.Name] = StockCount
-	end
-
-	return SeedStock
-end
-
-getSeedStock()
-
-for k_s, _ in pairs(SeedStock) do
-    if k_s then
-        table.insert(ShopSeedList, k_s)
-    end
-end
-
-local GearStock = {}
-local ShopGearList = {}
-local function getGearStock(): table
-    local GearShop = PlayerGui.Gear_Shop
-    local Items = GearShop:FindFirstChild("Watering Can", true).Parent
-    
-    for _, Item in next, Items:GetChildren() do
-		local MainFrame = Item:FindFirstChild("Main_Frame")
-		if not MainFrame then continue end
-
-		local StockText = MainFrame.Stock_Text.Text
-		local StockCount = tonumber(StockText:match("%d+"))
-
-		GearStock[Item.Name] = StockCount
-	end
-
-	return GearStock
-end
-
-getGearStock()
-
-for k_g, _ in pairs(GearStock) do
-    if k_g then
-        table.insert(ShopGearList, k_g)
-    end
-end
-
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -178,6 +124,7 @@ local Running = {
     autoRestartWish = true,
     autoFeedRequested = true,
     showMutationTimer = true,
+    autoBuyStocks = true,
     autoBuySeeds = true,
     autoBuyGears = true,
     infiniteJump = true
@@ -291,15 +238,16 @@ local InfoTab = Window:Tab("Info")
         local feedAllRequestedEnabled = config.FeedAllRequested
         local requestedPlant = nil
 
-    -- Seed Shop Vars
-    local selectedShopSeeds = config.SelectedSeeds or {}
-    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
-    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
-
-    -- Gear Shop Vars
-    local selectedShopGears = config.SelectedGears or {}
-    local autoBuySelectedGearsEnabled = config.BuySelectedGears
-    local autoBuyAllGearsEnabled = config.BuyAllGears
+    -- Shop Vars
+        -- Seed Shop Vars
+        local selectedShopSeeds = config.SelectedSeeds or {}
+        local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
+        local autoBuyAllSeedsEnabled = config.BuyAllSeeds
+    
+        -- Gear Shop Vars
+        local selectedShopGears = config.SelectedGears or {}
+        local autoBuySelectedGearsEnabled = config.BuySelectedGears
+        local autoBuyAllGearsEnabled = config.BuyAllGears
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -933,6 +881,119 @@ end
     
     if feedRequestedEnabled or feedAllRequestedEnabled then
         startAutoFeedRequested()
+    end
+
+    -- Shop Tab
+    local ShopControllers = {}
+
+    local function getShopStock(shopGui, defaultItemName)
+        local stock = {}
+        local items = shopGui:FindFirstChild(defaultItemName, true).Parent
+        
+        for _, item in next, items:GetChildren() do
+            local mainFrame = item:FindFirstChild("Main_Frame")
+            if not mainFrame then continue end
+    
+            local stockText = mainFrame.Stock_Text.Text
+            local stockCount = tonumber(stockText:match("%d+"))
+            
+            if stockCount and stockCount > 0 then
+                stock[item.Name] = stockCount
+            end
+        end
+        
+        return stock
+    end
+    
+    local function createShopController(shopType, shopGui, defaultItemName, fireEvent, tier)
+        local controller = {}
+        controller.stock = {}
+        controller.itemList = {}
+        controller.selectedItems = config["Selected" .. shopType] or {}
+        controller.autoBuySelected = config["BuySelected" .. shopType]
+        controller.autoBuyAll = config["BuyAll" .. shopType]
+        
+        controller.updateStock = function()
+            controller.stock = getShopStock(shopGui, defaultItemName)
+            
+            controller.itemList = {}
+            for itemName, _ in pairs(controller.stock) do
+                table.insert(controller.itemList, itemName)
+            end
+            
+            return controller.stock
+        end
+        
+        controller.updateStock()
+        
+        controller.startBuying = function()
+            spawn(function()
+                while Running.autoBuyStocks and (controller.autoBuySelected or controller.autoBuyAll) do
+                    controller.updateStock()
+                    
+                    local itemsToBuy = {}
+                    
+                    if controller.autoBuySelected and #controller.selectedItems > 0 then
+                        for _, itemName in ipairs(controller.selectedItems) do
+                            if controller.stock[itemName] and controller.stock[itemName] > 0 then
+                                table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                            end
+                        end
+                    elseif controller.autoBuyAll then
+                        for itemName, count in pairs(controller.stock) do
+                            if count > 0 then
+                                table.insert(itemsToBuy, {name = itemName, count = count})
+                            end
+                        end
+                    end
+                    
+                    for _, item in ipairs(itemsToBuy) do
+                        if tier then
+                            for i = 1, item.count do
+                                fireEvent(tier, item.name)
+                                task.wait(0.05)
+                            end
+                        else
+                            for i = 1, item.count do
+                                fireEvent(item.name)
+                                task.wait(0.05)
+                            end
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+        
+        ShopControllers[shopType] = controller
+        return controller
+    end
+    
+    local seedController = createShopController(
+        "Seeds", 
+        PlayerGui.Seed_Shop, 
+        "Blueberry", 
+        function(tier, itemName) 
+            GameEvents.BuySeedStock:FireServer(tier, itemName) 
+        end,
+        "Tier 1",
+    )
+    
+    local gearController = createShopController(
+        "Gears", 
+        PlayerGui.Gear_Shop, 
+        "Watering Can", 
+        function(itemName) 
+            GameEvents.BuyGearStock:FireServer(itemName) 
+        end
+    )
+
+    if config.BuySelectedSeeds or config.BuyAllSeeds then
+        seedController.startBuying()
+    end
+        
+    if config.BuySelectedGears or config.BuyAllGears then
+        gearController.startBuying()
     end
 
 -- Seeds teleport button UI
@@ -1617,170 +1678,105 @@ end, {
 local SeedShopSection = ShopTab:Section("Seed Shop")
 local GearShopSection = ShopTab:Section("Gear Shop")
 
-SeedShopSection:Label("Tier 1")
-
-local function startBuySeeds()
-    spawn(function()
-        while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
-            local stocks = getSeedStock()
-            
-            if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
-                for _, v_select in ipairs(selectedShopSeeds) do
-                    if stocks[v_select] and stocks[v_select] > 0 then
-                        for i = 1, stocks[v_select] do
-                            GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            elseif autoBuyAllSeedsEnabled then
-                for i_all, v_all in pairs(stocks) do
-                    if v_all > 0 then
-                        for i = 1, v_all do
-                            GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-    		end
-    		task.wait(5)
+    -- Seed Shop
+    SeedShopSection:Label("Tier 1")
+    
+    SeedShopSection:Dropdown("Select Seeds: ", seedController.itemList, seedController.selectedItems, function(selected)
+        if selected then
+            seedController.selectedItems = selected
+            config.SelectedSeeds = selected
+            saveConfig(config)
         end
-    end)
-end
-
-if autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled then
-    startBuySeeds()
-end
-
--- Select seeds
-SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedShopSeeds, function(selected)
-    if selected then
-        selectedShopSeeds = selected
-        config.SelectedSeeds = selected
+    end, true)
+    
+    SeedShopSection:Toggle("Auto Buy Selected", function(state)
+        seedController.autoBuySelected = state
+        config.BuySelectedSeeds = state
+    
+        if state then
+            seedController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if seedController.autoBuyAll then
+                seedController.autoBuyAll = false
+                config.BuyAllSeeds = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
         saveConfig(config)
-    end
-end, true)
-
-SeedShopSection:Toggle("Auto Buy Selected", function(state)
-    autoBuySelectedSeedsEnabled = state
-    config.BuySelectedSeeds = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy Selected Enabled", 2)
-        if autoBuyAllSeedsEnabled then
-            autoBuyAllSeedsEnabled = false
-            config.BuyAllSeeds = false
+    end, {
+        default = seedController.autoBuySelected,
+        group = "Buy_Shop_Seeds"
+    })
+    
+    SeedShopSection:Toggle("Auto Buy All", function(state)
+        seedController.autoBuyAll = state
+        config.BuyAllSeeds = state
+    
+        if state then
+            seedController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if seedController.autoBuySelected then
+                seedController.autoBuySelected = false
+                config.BuySelectedSeeds = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
         end
-    else
-        Window:Notify("Auto Buy Selected Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuySelectedSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
-
-SeedShopSection:Toggle("Auto Buy All", function(state)
-    autoBuyAllSeedsEnabled = state
-    config.BuyAllSeeds = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy All Enabled", 2)
-        if autoBuySelectedSeedsEnabled then
-            autoBuySelectedSeedsEnabled = false
-            config.BuySelectedSeeds = false
-        end
-    else
-        Window:Notify("Auto Buy All Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuyAllSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
-
-local function startBuyGears()
-    spawn(function()
-        while Running.autoBuyGears and (autoBuySelectedGearsEnabled or autoBuyAllGearsEnabled) do
-            local stocks = getGearStock()
-            
-            if autoBuySelectedGearsEnabled and #selectedShopGears > 0 then
-                for _, v_select in ipairs(selectedShopGears) do
-                    if stocks[v_select] and stocks[v_select] > 0 then
-                        for i = 1, stocks[v_select] do
-                            GameEvents.BuyGearStock:FireServer(v_select)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            elseif autoBuyAllGearsEnabled then
-                for i_all, v_all in pairs(stocks) do
-                    if v_all > 0 then
-                        for i = 1, v_all do
-                            GameEvents.BuyGearStock:FireServer(i_all)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-    		end
-    		task.wait(5)
-        end
-    end)
-end
-
-if autoBuySelectedGearsEnabled or autoBuyAllGearsEnabled then
-    startBuyGears()
-end
-
-GearShopSection:Dropdown("Select Gears: ", ShopGearList, selectedShopGears, function(selected)
-    if selected then
-        selectedShopGears = selected
-        config.SelectedGears = selected
         saveConfig(config)
-    end
-end, true)
+    end, {
+        default = seedController.autoBuyAll,
+        group = "Buy_Shop_Seeds"
+    })
 
-GearShopSection:Toggle("Auto Buy Selected", function(state)
-    autoBuySelectedGearsEnabled = state
-    config.BuySelectedGears = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy Selected Enabled", 2)
-        if autoBuyAllGearsEnabled then
-            autoBuyAllGearsEnabled = false
-            config.BuyAllGears = false
+    -- Gear Shop
+    GearShopSection:Dropdown("Select Gears: ", gearController.itemList, gearController.selectedItems, function(selected)
+        if selected then
+            gearController.selectedItems = selected
+            config.SelectedGears = selected
+            saveConfig(config)
         end
-    else
-        Window:Notify("Auto Buy Selected Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuySelectedGearsEnabled,
-    group = "Buy_Shop_Gear"
-})
-
-GearShopSection:Toggle("Auto Buy All", function(state)
-    autoBuyAllGearsEnabled = state
-    config.BuyAllGears = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy All Enabled", 2)
-        if autoBuySelectedGearsEnabled then
-            autoBuySelectedGearsEnabled = false
-            config.BuySelectedGears = false
+    end, true)
+    
+    GearShopSection:Toggle("Auto Buy Selected", function(state)
+        gearController.autoBuySelected = state
+        config.BuySelectedGears = state
+    
+        if state then
+            gearController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if gearController.autoBuyAll then
+                gearController.autoBuyAll = false
+                config.BuyAllGears = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
         end
-    else
-        Window:Notify("Auto Buy All Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuyAllGearsEnabled,
-    group = "Buy_Shop_Gears"
-})
+        saveConfig(config)
+    end, {
+        default = gearController.autoBuySelected,
+        group = "Buy_Shop_Gear"
+    })
+    
+    GearShopSection:Toggle("Auto Buy All", function(state)
+        gearController.autoBuyAll = state
+        config.BuyAllGears = state
+    
+        if state then
+            gearController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if gearController.autoBuySelected then
+                gearController.autoBuySelected = false
+                config.BuySelectedGears = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = gearController.autoBuyAll,
+        group = "Buy_Shop_Gears"
+    })
 
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
@@ -2190,7 +2186,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.886")
+AboutSection:Label("Version: 1.2.887")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
