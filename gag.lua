@@ -442,7 +442,7 @@ local function findItem(filters)
 end
 
 -- Main filtering function (Farm)
-local function findFruit(filters)
+--[[local function findFruit(filters)
     local nameFilter = filters.name or "None"
     local typeFilter = filters.type
     local mutationFilter = filters.mutation or "None"
@@ -547,11 +547,128 @@ local function findFruit(filters)
     end
 
     return false
+end]]
+
+local function findFruit(filters)
+    local nameFilter = filters.name or "None"
+    local typeFilter = filters.type
+    local mutationFilter = filters.mutation or "None"
+    local weightFilter = filters.weight or 0
+    local weightMode = filters.weightMode or "None"
+    local action = filters.action
+    local plants = PlayerFarm.Important:FindFirstChild("Plants_Physical")
+    
+    if not typeFilter or not action then
+        warn("Type and action are required parameters")
+        return false
+    end
+
+    if not plants then
+        warn("PlayerFarm not found")
+        return false
+    end
+
+    local nameSet = {}
+    if nameFilter ~= "None" and #nameFilter > 0 then
+        if type(nameFilter) == "table" then
+            for _, name in ipairs(nameFilter) do
+                nameSet[name] = true
+            end
+        else
+            nameSet[nameFilter] = true
+        end
+    end
+
+    local mutationSet = {}
+    if mutationFilter ~= "None" and #mutationFilter > 0 then
+        if type(mutationFilter) == "table" then
+            for _, mutation in ipairs(mutationFilter) do
+                mutationSet[mutation] = true
+            end
+        else
+            mutationSet[mutationFilter] = true
+        end
+    end
+
+    local function checkFruit(fruit)
+        if fruit:GetAttribute("Favorited") then
+            return false
+        end
+
+        if next(nameSet) then
+            if not nameSet[fruit.Name] then
+                return false
+            end
+        end
+
+        if next(mutationSet) then
+            local hasMutation = false
+            
+            for mutation, _ in pairs(mutationSet) do
+                if fruit:GetAttribute(mutation) then
+                    hasMutation = true
+                    break
+                end
+            end
+            
+            if not hasMutation then
+                local variant = fruit:FindFirstChild("Variant")
+                if variant then
+                    hasMutation = mutationSet[variant.Value]
+                end
+            end
+            
+            if not hasMutation then
+                return false
+            end
+        end
+
+        if weightMode ~= "None" then
+            local weight = fruit:FindFirstChild("Weight")
+            if not weight then
+                return false
+            else
+                local weightValue = tonumber(weight.Value)
+                if not weightValue then
+                    return false
+                end
+                
+                if weightMode == "Below" and weightValue > weightFilter then
+                    return false
+                elseif weightMode == "Above" and weightValue < weightFilter then
+                    return false
+                end
+            end
+        end
+
+        return true
+    end
+
+    local foundFruits = {}
+    
+    for _, child in ipairs(plants:GetChildren()) do
+        if child:IsA("Model") then
+            local fruitsFolder = child:FindFirstChild("Fruits")
+            if fruitsFolder then
+                for _, fruit in ipairs(fruitsFolder:GetChildren()) do
+                    if fruit:IsA("Model") and fruit.Parent and checkFruit(fruit) then
+                        table.insert(foundFruits, fruit)
+                    end
+                end
+            else
+                if child.Parent and checkFruit(child) then
+                    table.insert(foundFruits, child)
+                end
+            end
+        end
+    end
+
+    return foundFruits
 end
 
 -- Tab Functions
     -- Auto Collect
-    local function startCollectCrops()
+    --[[local function startCollectCrops()
         spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 if autoCollectRequestedEnabed then
@@ -581,6 +698,55 @@ end
                     task.wait(0.1)
         		else
         			task.wait(2)	
+                end
+            end
+        end)
+    end]]
+
+    local function startCollectCrops()
+        spawn(function()
+            while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
+                local fruitsToCollect = {}
+                if autoCollectRequestedEnabed then
+                    if PlantTraits[requestedPlant] then
+                        fruitsToCollect = findFruit({
+                            name = PlantTraits[requestedPlant],
+                            type = "Fruit",
+                            action = function(fruit) end
+                        })
+                    else
+                        task.wait(5)
+                    end
+                elseif autoCollectSelectedFruitsEnabled then
+                    fruitsToCollect = findFruit({
+                        name = selectedFruitsToCollect,
+                        type = "Fruit",
+                        mutation = selectedFruitMutations,
+                        weight = selectedFruitWeight,
+                        weightMode = selectedWeightMode,
+                        action = function(fruit) end
+                    })
+                else
+                    task.wait(2)
+                end
+                
+                if #fruitsToCollect > 0 then
+                    for _, fruit in ipairs(fruitsToCollect) do
+                        if fruit.Parent then
+                            local success, err = pcall(function()
+                                GameEvents.Crops.Collect:FireServer({fruit})
+                            end)
+                            
+                            if not success then
+                                warn("Failed to collect fruit: " .. err)
+                            end
+                            
+                            task.wait(0.1)
+                        end
+                    end
+                    task.wait(0.1)
+                else
+                    task.wait(1)
                 end
             end
         end)
