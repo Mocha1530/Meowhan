@@ -462,7 +462,7 @@ local function findFruit(filters)
     end
 
     local function checkFruit(fruit)
-        if fruit:GetAttribute("Favorited") == true then
+        if fruit:GetAttribute("Favorited") then
             return false
         end
 
@@ -472,13 +472,13 @@ local function findFruit(filters)
             local nameMatch = false
             if type(nameFilter) == "table" then
                 for _, name in ipairs(nameFilter) do
-                    if fruit.Name:find(name, 1, true) then
+                    if fruit.Name == name then
                         nameMatch = true
                         break
                     end
                 end
             else
-                nameMatch = fruit.Name:find(nameFilter, 1, true)
+                nameMatch = fruit.Name == name
             end
             matchesAllFilters = nameMatch
         end
@@ -701,7 +701,7 @@ end
     local function startAutoFeedRequested()
         spawn(function()
             while Running.autoFeedRequested and (feedRequestedEnabled or feedAllRequestedEnabled) do
-                if not extractItem(OaklayProgress.Text, "%b(Cooldown)", true) then
+                if not OaklayProgress.Text:find("Cooldown", 1, true) then
                     if feedRequestedEnabled then
                         if PlantTraits[requestedPlant] then
                             findItem({
