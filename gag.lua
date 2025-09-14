@@ -87,6 +87,33 @@ for k_s, _ in pairs(SeedStock) do
     end
 end
 
+local GearStock = {}
+local ShopGearList = {}
+local function getGearStock(): table
+    local GearShop = PlayerGui.Gear_Shop
+    local Items = GearShop:FindFirstChild("Watering Can", true).Parent
+    
+    for _, Item in next, Items:GetChildren() do
+		local MainFrame = Item:FindFirstChild("Main_Frame")
+		if not MainFrame then continue end
+
+		local StockText = MainFrame.Stock_Text.Text
+		local StockCount = tonumber(StockText:match("%d+"))
+
+		GearStock[Item.Name] = StockCount
+	end
+
+	return GearStock
+end
+
+getGearStock()
+
+for k_g, _ in pairs(GearStock) do
+    if k_g then
+        table.insert(ShopGearList, k_g)
+    end
+end
+
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -123,6 +150,11 @@ local DEFAULT_CONFIG = {
     SelectedSeeds = {},
     BuySelectedSeeds = false,
     BuyAllSeeds = false,
+
+    -- Gear Shop
+    SelectedGears = {},
+    BuySelectedGears = false,
+    BuyAllGears = false,
     
     -- ESP
     ShowMutationTimer = true,
@@ -147,6 +179,7 @@ local Running = {
     autoFeedRequested = true,
     showMutationTimer = true,
     autoBuySeeds = true,
+    autoBuyGears = true,
     infiniteJump = true
 }
 local MachineMutations = {
@@ -262,6 +295,11 @@ local InfoTab = Window:Tab("Info")
     local selectedShopSeeds = config.SelectedSeeds or {}
     local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
     local autoBuyAllSeedsEnabled = config.BuyAllSeeds
+
+    -- Gear Shop Vars
+    local selectedShopGears = config.SelectedGears or {}
+    local autoBuySelectedGearsEnabled = config.BuySelectedGears
+    local autoBuyAllGearsEnabled = config.BuyAllGears
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -1577,6 +1615,7 @@ end, {
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+local GearShopSection = ShopTab:Section("Gear Shop")
 
 SeedShopSection:Label("Tier 1")
 
@@ -1660,6 +1699,87 @@ SeedShopSection:Toggle("Auto Buy All", function(state)
 end, {
     default = autoBuyAllSeedsEnabled,
     group = "Buy_Shop_Seeds"
+})
+
+local function startBuyGears()
+    spawn(function()
+        while Running.autoBuyGears and (autoBuySelectedGearsEnabled or autoBuyAllGearsEnabled) do
+            local stocks = getGearStock()
+            
+            if autoBuySelectedGearsEnabled and #selectedShopGears > 0 then
+                for _, v_select in ipairs(selectedShopGears) do
+                    if stocks[v_select] and stocks[v_select] > 0 then
+                        for i = 1, stocks[v_select] do
+                            GameEvents.BuyGearStock:FireServer(v_select)
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            elseif autoBuyAllGearsEnabled then
+                for i_all, v_all in pairs(stocks) do
+                    if v_all > 0 then
+                        for i = 1, v_all do
+                            GameEvents.BuyGearStock:FireServer(i_all)
+                            task.wait(0.1)
+                        end
+                    end
+                end
+    		end
+    		task.wait(5)
+        end
+    end)
+end
+
+if autoBuySelectedGearsEnabled or autoBuyAllGearsEnabled then
+    startBuyGears()
+end
+
+GearShopSection:Dropdown("Select Gears: ", ShopGearList, selectedShopGears, function(selected)
+    if selected then
+        selectedShopGears = selected
+        config.SelectedGears = selected
+        saveConfig(config)
+    end
+end, true)
+
+GearShopSection:Toggle("Auto Buy Selected", function(state)
+    autoBuySelectedGearsEnabled = state
+    config.BuySelectedGears = state
+
+    if state then
+        startBuySeeds()
+        Window:Notify("Auto Buy Selected Enabled", 2)
+        if autoBuyAllGearsEnabled then
+            autoBuyAllGearsEnabled = false
+            config.BuyAllGears = false
+        end
+    else
+        Window:Notify("Auto Buy Selected Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuySelectedGearsEnabled,
+    group = "Buy_Shop_Gear"
+})
+
+GearShopSection:Toggle("Auto Buy All", function(state)
+    autoBuyAllGearsEnabled = state
+    config.BuyAllGears = state
+
+    if state then
+        startBuySeeds()
+        Window:Notify("Auto Buy All Enabled", 2)
+        if autoBuySelectedGearsEnabled then
+            autoBuySelectedGearsEnabled = false
+            config.BuySelectedGears = false
+        end
+    else
+        Window:Notify("Auto Buy All Disabled", 2)
+    end
+    saveConfig(config)
+end, {
+    default = autoBuyAllGearsEnabled,
+    group = "Buy_Shop_Gears"
 })
 
 -- Settings Tab
@@ -2070,7 +2190,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.786")
+AboutSection:Label("Version: 1.2.886")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
