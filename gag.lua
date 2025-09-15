@@ -61,7 +61,10 @@ for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
 end
 
 local a_c_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/ShopCosmetics.lua", true))()
-local a_c_list = {}
+local a_c_list = {
+    cosmetics = {},
+    crates = {}
+}
 for _, v_a_c in pairs(a_c_data["Cosmetic Items"]) do
     table.insert(a_c_list.cosmetics, v_a_c)
 end
@@ -2416,7 +2419,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.902")
+AboutSection:Label("Version: 1.2.903")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
