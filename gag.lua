@@ -898,9 +898,7 @@ end
             local stockText = mainFrame.Stock_Text.Text
             local stockCount = tonumber(stockText:match("%d+"))
             
-            if stockCount and stockCount > 0 then
-                stock[item.Name] = stockCount
-            end
+            stock[item.Name] = stockCount
         end
         
         return stock
@@ -2187,7 +2185,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.887")
+AboutSection:Label("Version: 1.2.888")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
