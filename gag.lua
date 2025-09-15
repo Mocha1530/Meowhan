@@ -719,6 +719,10 @@ end
                 
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
+                        if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then continue
+                        else
+                            break
+                        end
                         if fruit.Parent then
                             local success, err = pcall(function()
                                 GameEvents.Crops.Collect:FireServer({fruit})
@@ -727,7 +731,6 @@ end
                             if not success then
                                 warn("Failed to collect fruit: " .. err)
                             end
-                            
                             task.wait(0.1)
                         end
                     end
@@ -2185,7 +2188,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.888")
+AboutSection:Label("Version: 1.2.889")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
