@@ -2105,7 +2105,6 @@ local function setupBillboard()
 	    billboardPart.CanCollide = false
         local billboardGui = billboardPart.BillboardGui
 		
-		billboardPart
         billboardGui.Adornee = billboardPart
         billboardGui.Size = UDim2.new(14, 0, 8, 0)
         billboardGui.MaxDistance = 10000
@@ -2180,13 +2179,13 @@ ESPSection:Toggle("Show Egg ESP", function(state)
 
     if state then
         if setupBillboard() then
-            Window:Notify("Mutation Timer Display Enabled", 2)
+            Window:Notify("Egg ESP Enabled", 2)
         else
-            Window:Notify("Could not find mutation timer", 2)
+            Window:Notify("Could not find egg", 2)
         end
     else
         restoreOriginalProperties()
-        Window:Notify("Mutation Timer Display Disabled", 2)
+        Window:Notify("Egg ESP Disabled", 2)
     end
 end, {
     default = showEggESPEnabled
