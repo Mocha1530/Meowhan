@@ -91,16 +91,17 @@ local DEFAULT_CONFIG = {
         CollectRequested = false,
         FeedRequested = false,
         FeedAllRequested = false,
-        
-    -- Seed Shop
-    SelectedSeeds = {},
-    BuySelectedSeeds = false,
-    BuyAllSeeds = false,
 
-    -- Gear Shop
-    SelectedGears = {},
-    BuySelectedGears = false,
-    BuyAllGears = false,
+    -- Shop
+        -- Seed Shop
+        SelectedSeeds = {},
+        BuySelectedSeeds = false,
+        BuyAllSeeds = false,
+    
+        -- Gear Shop
+        SelectedGears = {},
+        BuySelectedGears = false,
+        BuyAllGears = false,
     
     -- ESP
     ShowMutationTimer = true,
@@ -883,7 +884,7 @@ end
         startAutoFeedRequested()
     end
 
-    -- Shop Tab
+    -- Shop Function
     local ShopControllers = {}
 
     local function getShopStock(shopGui, defaultItemName)
@@ -976,7 +977,7 @@ end
         function(tier, itemName) 
             GameEvents.BuySeedStock:FireServer(tier, itemName) 
         end,
-        "Tier 1",
+        "Tier 1"
     )
     
     local gearController = createShopController(
