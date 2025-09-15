@@ -719,8 +719,7 @@ end
                 
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
-                        if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then continue
-                        else
+                        if not Running.collectCrops and not (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
                             break
                         end
                         if fruit.Parent then
