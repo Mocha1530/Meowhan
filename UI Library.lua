@@ -1360,7 +1360,7 @@ function Library:CreateWindow(title)
                 local ListSearch = Instance.new("TextBox")
                 ListSearch.Parent = ListScroll
                 ListSearch.BackgroundColor3 = Theme.Card
-                ListSearch.LayoutOrder = -1
+                ListSearch.LayoutOrder = -10
                 ListSearch.Position = UDim2.new(0, 4, 0, 4)
                 ListSearch.Size = UDim2.new(1, 0, 0, 24)
                 ListSearch.Font = Enum.Font.Gotham
@@ -1395,7 +1395,7 @@ function Library:CreateWindow(title)
                     OptionCorner.Parent = OptionBtn
                     
                     OptionBtn.MouseEnter:Connect(function()
-                        if option ~= selected then
+                        if multiselect and not table.find(selected, option) or option ~= selected then
                             Tween(OptionBtn, {BackgroundTransparency = 0.8})
                         end
                     end)
@@ -1431,6 +1431,7 @@ function Library:CreateWindow(title)
                             if child:IsA("TextButton") then
                                 if multiSelect then
                                     child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = table.find(selected, child.Text) and -1 or 0
                                 else
                                     child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
                                 end
