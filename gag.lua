@@ -691,15 +691,6 @@ end
     end]]
 
     local function startCollectCrops()
-        local function waitCollect(seconds)
-            local interval = seconds * 100
-            for i = 1, interval do
-                if not Running.collectCrops and not (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
-                    break
-                end
-                task.wait(0.01)
-            end
-        end
         spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 local fruitsToCollect = {}
@@ -711,7 +702,7 @@ end
                             action = function(fruit) end
                         })
                     else
-                        waitCollect(5)
+                        task.wait(5)
                     end
                 elseif autoCollectSelectedFruitsEnabled then
                     fruitsToCollect = findFruit({
@@ -723,7 +714,7 @@ end
                         action = function(fruit) end
                     })
                 else
-                    waitCollect(2)
+                    task.wait(2)
                 end
                 
                 if #fruitsToCollect > 0 then
@@ -737,15 +728,15 @@ end
                                 if not success then
                                     warn("Failed to collect fruit: " .. err)
                                 end
-                                waitCollect(0.1)
+                                task.wait(0.1)
                             end
                         else
                             break
                         end
                     end
-                    waitCollect(0.1)
+                    task.wait(0.1)
                 else
-                    waitCollect(1)
+                    task.wait(1)
                 end
             end
         end)
@@ -2197,7 +2188,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.890")
+AboutSection:Label("Version: 1.2.892")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
