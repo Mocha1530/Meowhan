@@ -1899,7 +1899,7 @@ local CosmeticSection = ShopTab:Section("Cosmetic Shop")
     
     PetShopSection:Toggle("Auto Buy All", function(state)
         eggController.autoBuyAll = state
-        config.BuyAllSEggs = state
+        config.BuyAllEggs = state
     
         if state then
             eggController.startBuying()
@@ -2422,7 +2422,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.908")
+AboutSection:Label("Version: 1.2.909")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
