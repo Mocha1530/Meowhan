@@ -131,6 +131,7 @@ local DEFAULT_CONFIG = {
     
     -- ESP
     ShowMutationTimer = true,
+	ShowEggESP = false,
 
     -- Player
     WalkSpeed = 20,
@@ -278,6 +279,7 @@ local InfoTab = Window:Tab("Info")
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
+	local showEggESPEnabled = config.ShowEggESP
     local originalBillboardPosition = nil
     local billboardGui = nil
     local scalingLoop = nil
@@ -2088,146 +2090,44 @@ local LocalPlayerSection = SettingsTab:Section("Player")
 local RejoinSection = SettingsTab:Section("Rejoin Config")
 
 -- Function to find and store the BillboardGui reference
-local function findBillboardGui()
-    local model2 = Workspace:FindFirstChild("NPCS")
-
-    if model2 then
-        model2 = model2:FindFirstChild("PetMutationMachine")
-        if model2 then
-            model2 = model2:FindFirstChild("Model")
-            if model2 then
-                for _, child in ipairs(model2:GetChildren()) do
-                    if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
-                        local billboardPart = child.BillboardPart
-
-                        if not originalBillboardPosition then
-                            originalBillboardPosition = billboardPart.Position
-                        end
-
-                        local currentPosition = billboardPart.Position
-                        billboardPart.Position = Vector3.new(
-                            currentPosition.X,
-                            15,               
-                            currentPosition.Z
-                        )
-
-                        billboardPart.CanCollide = false
-
-                        billboardGui = billboardPart:FindFirstChild("BillboardGui")
-                        if billboardGui then
-                            billboardGui.MaxDistance = 10000
-                            return true
-                        end
-                    end
-                end
-            end
-        end
+local function setupBillboard()
+    local billboardPart = workspace.NPCS.PetMutationMachine.Model:FindFirstChild("BillboardPart", true)
+    if billboardPart and billboardPart:FindFirstChild("BillboardGui") then
+		if not originalBillboardPosition then
+	        originalBillboardPosition = billboardPart.Position
+	    end
+		local currentPosition = billboardPart.Position
+	        billboardPart.Position = Vector3.new(
+	            currentPosition.X,
+	            15,               
+	            currentPosition.Z
+	    )
+	    billboardPart.CanCollide = false
+        local billboardGui = billboardPart.BillboardGui
+		
+		billboardPart
+        billboardGui.Adornee = billboardPart
+        billboardGui.Size = UDim2.new(14, 0, 8, 0)
+        billboardGui.MaxDistance = 10000
+        
+        return true
     end
-
     return false
-end
-
-local function startScalingLoop()
-    if scalingLoop then
-        scalingLoop:Disconnect()
-        scalingLoop = nil
-    end
-
-    scalingLoop = RunService.RenderStepped:Connect(function()
-        if not Running.showMutationTimer or not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
-            if scalingLoop then
-                scalingLoop:Disconnect()
-                scalingLoop = nil
-            end
-            return
-        end
-
-        local localPlayer = Players.LocalPlayer
-
-        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local playerPos = localPlayer.Character.HumanoidRootPart.Position
-            local billboardPos = billboardGui.Parent.Parent.Position
-            local distance = (playerPos - billboardPos).Magnitude
-
-            -- Size parameters
-            local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
-            local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
-
-            -- Distance parameters
-            local minDistance = 60  -- Distance where size is minimum
-            local maxDistance = 200 -- Distance where size is maximum
-
-            -- Calculate scale factor (0 to 1)
-            local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
-
-            -- Interpolate between min and max size
-            local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
-            local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
-
-            billboardGui.Size = UDim2.new(newX, 0, newY, 0)
-        end
-    end)
 end
 
 -- Function to restore the original position and properties
 local function restoreOriginalProperties()
     if originalBillboardPosition then
-        local model3 = Workspace:FindFirstChild("NPCS")
+    	local billboardPart = workspace.NPCS.PetMutationMachine.Model:FindFirstChild("BillboardPart", true)
+        billboardPart.Position = originalBillboardPosition
+        billboardPart.CanCollide = true
 
-        if model3 then
-            model3 = model3:FindFirstChild("PetMutationMachine")
-            if model3 then
-                model3 = model3:FindFirstChild("Model")
-                if model3 then
-                    for _, child in ipairs(model3:GetChildren()) do
-                        if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
-                            local billboardPart = child.BillboardPart
-                            billboardPart.Position = originalBillboardPosition
-                            billboardPart.CanCollide = true  -- Restore collision
-
-                            -- Restore the BillboardGui properties
-                            local gui = billboardPart:FindFirstChild("BillboardGui")
-                            if gui then
-                                gui.MaxDistance = 60
-                                gui.Size = UDim2.new(7, 0, 4, 0)
-                            end
-                        end
-                    end
-                end 
-            end
+        local gui = billboardPart:FindFirstChild("BillboardGui")
+        if gui then
+			gui.Adornee = nil
+            gui.MaxDistance = 60
+            gui.Size = UDim2.new(7, 0, 4, 0)
         end
-    end
-
-    if scalingLoop then
-        scalingLoop:Disconnect()
-        scalingLoop = nil
-    end
-
-    billboardGui = nil
-end
-
-local function showMutationTimerDisplay()
-    if not mutationTimerEnabled then
-        restoreOriginalProperties()
-        return false
-    end
-
-    local success = findBillboardGui()
-
-    if success and billboardGui then
-        startScalingLoop()
-        return true
-    else
-        task.spawn(function()
-            task.wait(2)
-            if mutationTimerEnabled then
-                local success = findBillboardGui()
-                if success and billboardGui then
-                    startScalingLoop()
-                end
-            end
-        end)
-        return false
     end
 end
 
@@ -2256,7 +2156,7 @@ ESPSection:Toggle("Show Mutation Timer", function(state)
     saveConfig(config)
 
     if state then
-        if showMutationTimerDisplay() then
+        if setupBillboard() then
             Window:Notify("Mutation Timer Display Enabled", 2)
         else
             Window:Notify("Could not find mutation timer", 2)
@@ -2270,8 +2170,27 @@ end, {
 })
 
 if mutationTimerEnabled then
-    showMutationTimerDisplay()
+    setupBillboard()
 end
+
+ESPSection:Toggle("Show Egg ESP", function(state)
+    showEggESPEnabled = state
+    config.ShowEggESP = state
+    saveConfig(config)
+
+    if state then
+        if setupBillboard() then
+            Window:Notify("Mutation Timer Display Enabled", 2)
+        else
+            Window:Notify("Could not find mutation timer", 2)
+        end
+    else
+        restoreOriginalProperties()
+        Window:Notify("Mutation Timer Display Disabled", 2)
+    end
+end, {
+    default = showEggESPEnabled
+})
 
 -- Set walkspeed slider
 local function setWalkSpeed(speed)
@@ -2490,7 +2409,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.009")
+AboutSection:Label("Version: 1.3.011")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
