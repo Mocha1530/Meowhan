@@ -3,21 +3,24 @@
 ]]
 
 -- All Variables
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GuiService = game:GetService("GuiService")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
+local UpdateItems = Workspace.Interaction.UpdateItems
 local placeId = game.PlaceId
+local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
@@ -58,31 +61,16 @@ for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
     table.insert(a_s_m_list, v_a_s_m.display_name)
 end
 
-local SeedStock = {}
-local ShopSeedList = {}
-local function getSeedStock(): table
-	local SeedShop = PlayerGui.Seed_Shop
-	local Items = SeedShop:FindFirstChild("Blueberry", true).Parent
-
-	for _, Item in next, Items:GetChildren() do
-		local MainFrame = Item:FindFirstChild("Main_Frame")
-		if not MainFrame then continue end
-
-		local StockText = MainFrame.Stock_Text.Text
-		local StockCount = tonumber(StockText:match("%d+"))
-
-		SeedStock[Item.Name] = StockCount
-	end
-
-	return SeedStock
+local a_c_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/ShopCosmetics.lua", true))()
+local a_c_list = {
+    cosmetics = {},
+    crates = {}
+}
+for k_a_c, _ in pairs(a_c_data["Cosmetic Items"]) do
+    table.insert(a_c_list.cosmetics, k_a_c)
 end
-
-getSeedStock()
-
-for k_s, _ in pairs(SeedStock) do
-    if k_s then
-        table.insert(ShopSeedList, k_s)
-    end
+for k_a_c, _ in pairs(a_c_data["Cosmetic Crates"]) do
+    table.insert(a_c_list.crates, k_a_c)
 end
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
@@ -103,15 +91,43 @@ local DEFAULT_CONFIG = {
     AutoClaimMutatedPet = false,
 
     -- Event
-    CollectGlimmering = false,
-    SubmitGlimmering = false,
-    SubmitAllGlimmering = false,
-    ShowGlimmerCounter = false,
+        --[[ Fairy Event
+        CollectGlimmering = false,
+        SubmitGlimmering = false,
+        SubmitAllGlimmering = false,
+        ShowGlimmerCounter = false,
+        SelectedRewards = {},
+        MakeAWish = false,
+        RestartWish = false, ]]
 
-    -- Seed Shop
-    SelectedSeeds = {},
-    BuySelectedSeeds = false,
-    BuyAllSeeds = false,
+        -- Fall Market Event
+        CollectRequested = false,
+        FeedRequested = false,
+        FeedAllRequested = false,
+
+    -- Shop
+        -- Seed Shop
+        SelectedSeeds = {},
+        BuySelectedSeeds = false,
+        BuyAllSeeds = false,
+    
+        -- Gear Shop
+        SelectedGears = {},
+        BuySelectedGears = false,
+        BuyAllGears = false,
+
+        -- Pet Egg Shop
+        SelectedEggs = {},
+        BuySelectedEggs = false,
+        BuyAllEggs = false,
+
+        -- Cosmetic Shop
+        SelectedCosmetics = {},
+        BuySelectedCosmetics = false,
+        BuyAllCosmetics = false,
+        SelectedCrates = {},
+        BuySelectedCrates = false,
+        BuyAllCrates = false,
     
     -- ESP
     ShowMutationTimer = true,
@@ -131,13 +147,22 @@ local Running = {
     autoClaimPet = true,
     collectCrops = true,
     autoSubmitGlimmering = true,
+    autoMakeAWish = true,
+    autoRestartWish = true,
+    autoFeedRequested = true,
     showMutationTimer = true,
+    autoBuyStocks = true,
     autoBuySeeds = true,
+    autoBuyGears = true,
     infiniteJump = true
 }
 local MachineMutations = {
     "Ascended", "Frozen", "Golden", "Inverted", "IronSkin", "Mega", "Radiant", "Rainbow", "Shiny", "Shocked", "Tiny", "Windy"
 }
+local FairyWishRewards = {
+    "Aurora Vine", "Enchanted Crate", "Enchanted Egg", "Enchanted Seed Pack", "FairyPoints", "Fairy Targeter", "Glimmering Radar", "Mutation Spray Glimmering", "Pet Shard Glimmering"
+}
+local PlantTraits = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/PlantTraits.lua", true))()
 
 -- Create folder structure
 local function ensureFolderStructure()
@@ -226,14 +251,30 @@ local InfoTab = Window:Tab("Info")
     local MutationMachine = GameEvents.PetMutationMachineService_RE
 
     -- Event vars
-    local autoCollectGlimmeringEnabed = config.CollectGlimmering
-    local submitGlimmeringEnabled = config.SubmitGlimmering
-    local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+        --[[ Fairy Event
+        local autoCollectGlimmeringEnabed = config.CollectGlimmering
+        local submitGlimmeringEnabled = config.SubmitGlimmering
+        local submitAllGlimmeringEnabled = config.SubmitAllGlimmering
+        local selectedFairyWishRewards = config.SelectedRewards or {}
+        local autoMakeAWishEnabled = config.MakeAWish
+        local autoRestartWishEnabled = config.RestartWish]]
 
-    -- Seed Shop Vars
-    local selectedShopSeeds = config.SelectedSeeds or {}
-    local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
-    local autoBuyAllSeedsEnabled = config.BuyAllSeeds
+        -- Fall Market Event
+        local autoCollectRequestedEnabed = config.CollectRequested
+        local feedRequestedEnabled = config.FeedRequested
+        local feedAllRequestedEnabled = config.FeedAllRequested
+        local requestedPlant = nil
+
+    -- Shop Vars
+        -- Seed Shop Vars
+        local selectedShopSeeds = config.SelectedSeeds or {}
+        local autoBuySelectedSeedsEnabled = config.BuySelectedSeeds
+        local autoBuyAllSeedsEnabled = config.BuyAllSeeds
+    
+        -- Gear Shop Vars
+        local selectedShopGears = config.SelectedGears or {}
+        local autoBuySelectedGearsEnabled = config.BuySelectedGears
+        local autoBuyAllGearsEnabled = config.BuyAllGears
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -433,131 +474,682 @@ local function findFruit(filters)
         return false
     end
 
+    local nameSet = {}
+    if nameFilter ~= "None" and #nameFilter > 0 then
+        if type(nameFilter) == "table" then
+            for _, name in ipairs(nameFilter) do
+                nameSet[name] = true
+            end
+        else
+            nameSet[nameFilter] = true
+        end
+    end
+
+    local mutationSet = {}
+    if mutationFilter ~= "None" and #mutationFilter > 0 then
+        if type(mutationFilter) == "table" then
+            for _, mutation in ipairs(mutationFilter) do
+                mutationSet[mutation] = true
+            end
+        else
+            mutationSet[mutationFilter] = true
+        end
+    end
+
     local function checkFruit(fruit)
-        if fruit:GetAttribute("Favorited") == true then
+        if fruit:GetAttribute("Favorited") then
             return false
         end
 
-        local matchesAllFilters = true
-        
-        if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
-            local nameMatch = false
-            if type(nameFilter) == "table" then
-                for _, name in ipairs(nameFilter) do
-                    if fruit.Name:find(name, 1, true) then
-                        nameMatch = true
-                        break
-                    end
-                end
-            else
-                nameMatch = fruit.Name:find(nameFilter, 1, true)
+        if next(nameSet) then
+            if not nameSet[fruit.Name] then
+                return false
             end
-            matchesAllFilters = nameMatch
         end
 
-        if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
-            local mutationMatch = false
-            if type(mutationFilter) == "table" then
-                for _, mutation in ipairs(mutationFilter) do
-                    local attributeValue = fruit:GetAttribute(mutation)
-                    if attributeValue then
-                        mutationMatch = true
-                        break
-                    end
-                    local variant = fruit:FindFirstChild("Variant")
-                    if variant and variant.Value == mutation then
-                        mutationMatch = true
-                        break
-                    end
-                end
-            else
-                local attributeValue = fruit:GetAttribute(mutationFilter)
-                if attributeValue then
-                    mutationMatch = true
-                else
-                    local variant = fruit:FindFirstChild("Variant")
-                    mutationMatch = variant and variant.Value == mutationFilter
+        if next(mutationSet) then
+            local hasMutation = false
+            
+            for mutation, _ in pairs(mutationSet) do
+                if fruit:GetAttribute(mutation) then
+                    hasMutation = true
+                    break
                 end
             end
-            matchesAllFilters = mutationMatch
+            
+            if not hasMutation then
+                local variant = fruit:FindFirstChild("Variant")
+                if variant then
+                    hasMutation = mutationSet[variant.Value]
+                end
+            end
+            
+            if not hasMutation then
+                return false
+            end
         end
 
-        if matchesAllFilters and weightMode ~= "None" then
+        if weightMode ~= "None" then
             local weight = fruit:FindFirstChild("Weight")
             if not weight then
-                matchesAllFilters = false
+                return false
             else
-                weight = tonumber(weight.Value)
-                if weightMode == "Below" and weight > weightFilter then
-                    matchesAllFilters = false
-                elseif weightMode == "Above" and weight < weightFilter then
-                    matchesAllFilters = false
+                local weightValue = tonumber(weight.Value)
+                if not weightValue then
+                    return false
+                end
+                
+                if weightMode == "Below" and weightValue > weightFilter then
+                    return false
+                elseif weightMode == "Above" and weightValue < weightFilter then
+                    return false
                 end
             end
         end
 
-        return matchesAllFilters
+        return true
     end
 
+    local foundFruits = {}
+    
     for _, child in ipairs(plants:GetChildren()) do
         if child:IsA("Model") then
             local fruitsFolder = child:FindFirstChild("Fruits")
             if fruitsFolder then
                 for _, fruit in ipairs(fruitsFolder:GetChildren()) do
-                    if fruit:IsA("Model") and checkFruit(fruit) then
-                        action(fruit)
-                        return true
+                    if fruit:IsA("Model") and fruit.Parent and checkFruit(fruit) then
+                        table.insert(foundFruits, fruit)
                     end
                 end
             else
-                if checkFruit(child) then
-                    action(child)
-                    return true
+                if child.Parent and checkFruit(child) then
+                    table.insert(foundFruits, child)
                 end
             end
         end
     end
 
-    return false
+    return foundFruits
 end
 
 -- Tab Functions
     -- Auto Collect
     local function startCollectCrops()
         spawn(function()
-            while Running.collectCrops and (autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled) do
-                if autoCollectGlimmeringEnabed then
-                    findFruit({
-                                type = "Fruit",
-                                mutation = "Glimmering",
-                                action = function(fruit)
-                                    GameEvents.Crops.Collect:FireServer({fruit})
-                                end
-                    })
-                    task.wait(0.5)
+            while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
+                local fruitsToCollect = {}
+                if autoCollectRequestedEnabed then
+                    if PlantTraits[requestedPlant] then
+                        fruitsToCollect = findFruit({
+                            name = PlantTraits[requestedPlant],
+                            type = "Fruit",
+                            action = function(fruit) end
+                        })
+                    else
+                        task.wait(5)
+                    end
                 elseif autoCollectSelectedFruitsEnabled then
-        			findFruit({
-        						name = selectedFruitsToCollect,
-                                type = "Fruit",
-                                mutation = selectedFruitMutations,
-        						weight = selectedFruitWeight,
-        						weightMode = selectedWeightMode,
-                                action = function(fruit)
-                                    GameEvents.Crops.Collect:FireServer({fruit})
-                                end
+                    fruitsToCollect = findFruit({
+                        name = selectedFruitsToCollect,
+                        type = "Fruit",
+                        mutation = selectedFruitMutations,
+                        weight = selectedFruitWeight,
+                        weightMode = selectedWeightMode,
+                        action = function(fruit) end
                     })
-                    task.wait(0.5)
-        		else
-        			task.wait(2)	
+                else
+                    task.wait(2)
+                end
+                
+                if #fruitsToCollect > 0 then
+                    for _, fruit in ipairs(fruitsToCollect) do
+                        if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
+                            if fruit.Parent then
+                                local success, err = pcall(function()
+                                    GameEvents.Crops.Collect:FireServer({fruit})
+                                end)
+                            
+                                if not success then
+                                    warn("Failed to collect fruit: " .. err)
+                                end
+                                task.wait(0.1)
+                            end
+                        else
+                            break
+                        end
+                    end
+                    task.wait(0.1)
+                else
+                    task.wait(1)
                 end
             end
         end)
     end
     
-    if autoCollectGlimmeringEnabed or autoCollectSelectedFruitsEnabled then
+    if autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled then
         startCollectCrops()
     end
 
+    -- Auto Make a Wish
+    --[[ local Wish = Workspace:FindFirstChild("FairyEvent") 
+                    and Workspace.FairyEvent:FindFirstChild("WishFountain") 
+                    and Workspace.FairyEvent.WishFountain:FindFirstChild("WishingWellGUI") 
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI:FindFirstChild("ProgressBilboard")
+                    and Workspace.FairyEvent.WishFountain.WishingWellGUI.ProgressBilboard:FindFirstChild("TextLabel")
+
+    local function selectButton()
+        local ChooseRewards = PlayerGui:FindFirstChild("ChooseFairyRewards_UI")
+        if not ChooseRewards then return end
+        local Items = ChooseRewards:FindFirstChild("Frame")
+                        and ChooseRewards.Frame:FindFirstChild("Main")
+                        and ChooseRewards.Frame.Main:FindFirstChild("Items")
+        local selected = {}
+        local left = {}
+
+		for _, button in ipairs(Items:GetChildren()) do
+            if button.Name == "Template" and button:IsA("ImageButton") and button.Selectable and button.Visible then
+                table.insert(left, button)
+            end
+        end
+	
+        for _, prio in ipairs(selectedFairyWishRewards) do
+            for _, button in ipairs(left) do
+                local title = button:FindFirstChild("Title") or button:FindFirstChildWhichIsA("TextLabel")
+                if title and title.Text == prio then
+                    table.insert(selected, title.Text)
+                    GuiService.SelectedObject = button
+                    if GuiService.SelectedObject then
+                        pcall(function()
+                            for _, connection in pairs(getconnections(GuiService.SelectedObject.Activated)) do
+                                pcall(connection.Function)
+                            end
+                        end)
+                    end
+                    return
+                end
+            end
+        end
+        
+        if #left > 0 then
+            local randSelect = left[math.random(#left)]
+            GuiService.SelectedObject = randSelect
+            if GuiService.SelectedObject then
+                pcall(function()
+                    for _, connection in pairs(getconnections(GuiService.SelectedObject.Activated)) do
+                        pcall(connection.Function)
+                    end
+                end)
+            end
+        else
+            warn("No selectable buttons found.")
+        end
+    end
+    
+    local function startAutoMakeAWish()
+        spawn(function()
+            while Running.autoMakeAWish and autoMakeAWishEnabled do
+                if Wish and Wish.Text == "Claim your wish!" then
+                    GameEvents.FairyService.MakeFairyWish:FireServer()
+                    task.wait(2)
+                    selectButton()
+                end
+                task.wait(3)
+            end
+        end)
+    end
+    
+    if autoMakeAWishEnabled then
+        startAutoMakeAWish()
+    end
+
+    local function startAutoRestartWish()
+        spawn(function()
+            while Running.autoRestartWish and autoRestartWishEnabled do
+                local Progress = Wish.Parent:FindFirstChild("UpgradeBar") 
+                                and Wish.Parent.UpgradeBar:FindFirstChild("ProgressionLabel")
+                if Progress and Progress.Text == "Out of Wishes" then
+                    GameEvents.FairyService.RestartFairyTrack:FireServer()
+                end
+                task.wait(10)
+            end
+        end)
+    end
+
+    if autoRestartWishEnabled then
+        startAutoRestartWish()
+    end]]
+
+    -- Auto Feed Requested
+    local OaklayProgress = nil
+    local OaklayTrait = nil
+    for _, v_e in ipairs(UpdateItems:GetDescendants()) do
+        if v_e:IsA("TextLabel") then
+            if v_e.Name == "TraitTextLabel" then
+                OaklayTrait = v_e
+                requestedPlant = extractItem(v_e.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+            elseif v_e.Name == "ProgressionLabel" then
+                OaklayProgress = v_e
+            end
+        end
+        if OaklayProgress and OaklayTrait then break end
+    end
+    
+    OaklayTrait:GetPropertyChangedSignal("Text"):Connect(function()
+        requestedPlant = extractItem(OaklayTrait.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+    end)
+
+    local function startAutoFeedRequested()
+        spawn(function()
+            while Running.autoFeedRequested and (feedRequestedEnabled or feedAllRequestedEnabled) do
+                if not OaklayProgress.Text:find("Cooldown", 1, true) then
+                    if feedRequestedEnabled then
+                        if PlantTraits[requestedPlant] then
+                            findItem({
+                                name = PlantTraits[requestedPlant],
+                                type = "j",
+                                action = function()
+                                            GameEvents.FallMarketEvent.SubmitHeldPlant:FireServer()
+                                        end
+                            })
+                            task.wait(0.5)
+                        else
+                            warn("Plant Trait '" .. requestedPlant .. "' Not Found")
+                            task.wait(5)
+                        end
+                    elseif feedAllRequestedEnabled then
+                        GameEvents.FallMarketEvent.SubmitAllPlants:FireServer()
+                        task.wait(5)
+                    end
+                else
+                    task.wait(10)
+                end
+            end
+        end)
+    end
+    
+    if feedRequestedEnabled or feedAllRequestedEnabled then
+        startAutoFeedRequested()
+    end
+
+    -- Shop Function
+    local ShopControllers = {}
+
+    local function getShopStock(shopGui, shopType, defaultItemName)
+        local stock = {}
+        if shopType == "Cosmetics" or shopType == "Crates" then
+            local topItems = shopGui:FindFirstChild("TopSegment", true)
+            local bottomItems = shopGui:FindFirstChild("BottomSegment", true)
+            local table = string.lower(shopType)
+        
+            for _, items in ipairs(a_c_list[table]) do
+                local item = topItems:FindFirstChild(items, true) or bottomItems:FindFirstChild(items, true)
+                if not item then continue end
+            
+                if item:IsDescendantOf(topItems) or item:IsDescendantOf(bottomItems) then
+                    local main = item:FindFirstChild("Main").Stock
+                    if not main then continue end
+                
+                    local stockText = main.STOCK_TEXT.Text
+                    local stockCount = tonumber(stockText:match("%d+"))
+                
+                    stock[item.Name] = stockCount
+                end
+            end
+        else
+            local items = shopGui:FindFirstChild(defaultItemName, true).Parent
+        
+            for _, item in next, items:GetChildren() do
+                local mainFrame = item:FindFirstChild("Main_Frame")
+                if not mainFrame then continue end
+        
+                local stockText = mainFrame.Stock_Text.Text
+                local stockCount = tonumber(stockText:match("%d+"))
+                
+                stock[item.Name] = stockCount
+            end
+        end
+        return stock
+    end
+    
+    local function createShopController(shopType, shopGui, defaultItemName, fireEvent, tier)
+        local controller = {}
+        controller.stock = {}
+        controller.itemList = {}
+        controller.selectedItems = config["Selected" .. shopType] or {}
+        controller.autoBuySelected = config["BuySelected" .. shopType]
+        controller.autoBuyAll = config["BuyAll" .. shopType]
+        
+        controller.updateStock = function()
+            controller.stock = getShopStock(shopGui, shopType, defaultItemName)
+            
+            controller.itemList = {}
+            for itemName, _ in pairs(controller.stock) do
+                table.insert(controller.itemList, itemName)
+            end
+            
+            return controller.stock
+        end
+        
+        controller.updateStock()
+        
+        controller.startBuying = function()
+            spawn(function()
+                while Running.autoBuyStocks and (controller.autoBuySelected or controller.autoBuyAll) do
+                    controller.updateStock()
+                    
+                    local itemsToBuy = {}
+                    
+                    if controller.autoBuySelected and #controller.selectedItems > 0 then
+                        for _, itemName in ipairs(controller.selectedItems) do
+                            if controller.stock[itemName] and controller.stock[itemName] > 0 then
+                                table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                            end
+                        end
+                    elseif controller.autoBuyAll then
+                        for itemName, count in pairs(controller.stock) do
+                            if count > 0 then
+                                table.insert(itemsToBuy, {name = itemName, count = count})
+                            end
+                        end
+                    end
+                    
+                    for _, item in ipairs(itemsToBuy) do
+                        if tier then
+                            for i = 1, item.count do
+                                fireEvent(tier, item.name)
+                                task.wait(0.05)
+                            end
+                        else
+                            for i = 1, item.count do
+                                fireEvent(item.name)
+                                task.wait(0.05)
+                            end
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+        
+        ShopControllers[shopType] = controller
+        return controller
+    end
+    
+    local seedController = createShopController(
+        "Seeds", 
+        PlayerGui.Seed_Shop, 
+        "Blueberry", 
+        function(tier, itemName) 
+            GameEvents.BuySeedStock:FireServer(tier, itemName) 
+        end,
+        "Tier 1"
+    )
+    
+    local gearController = createShopController(
+        "Gears", 
+        PlayerGui.Gear_Shop, 
+        "Watering Can", 
+        function(itemName) 
+            GameEvents.BuyGearStock:FireServer(itemName) 
+        end
+    )
+
+    local eggController = createShopController(
+        "Eggs", 
+        PlayerGui.PetShop_UI, 
+        "Common Egg", 
+        function(itemName) 
+            GameEvents.BuyPetEgg:FireServer(itemName) 
+        end
+    )
+
+    local cosmeticController = createShopController(
+        "Cosmetics", 
+        PlayerGui.CosmeticShop_UI, 
+        "Placeholder", 
+        function(itemName) 
+            GameEvents.BuyCosmeticItem:FireServer(itemName) 
+        end
+    )
+
+    local crateController = createShopController(
+        "Crates", 
+        PlayerGui.CosmeticShop_UI, 
+        "Placeholder", 
+        function(itemName) 
+            GameEvents.BuyCosmeticCrate:FireServer(itemName) 
+        end
+    )
+
+    if config.BuySelectedSeeds or config.BuyAllSeeds then
+        seedController.startBuying()
+    end
+        
+    if config.BuySelectedGears or config.BuyAllGears then
+        gearController.startBuying()
+    end
+
+    if config.BuySelectedEggs or config.BuyAllEggs then
+        eggController.startBuying()
+    end
+
+    if config.BuySelectedCosmetics or config.BuyAllCosmetics then
+        cosmeticController.startBuying()
+    end
+
+    if config.BuySelectedCrates or config.BuyAllCrates then
+        crateController.startBuying()
+    end
+
+    -- Egg ESP
+    local DataClient = {}
+    function DataClient.GetSaved_Data()
+        local ds = DataService
+        if not ds or not ds.GetData then return nil end
+        local ok, data = pcall(function() return ds:GetData() end)
+        if not ok or not data then return nil end
+        local saveSlots = data.SaveSlots
+        if not saveSlots then return nil end
+        local selected = saveSlots.SelectedSlot
+        if not selected then return nil end
+        local all = saveSlots.AllSlots
+        if not all or not all[selected] then return nil end
+        return all[selected].SavedObjects
+    end
+    local Calculator = {}
+    do
+        local function CalculateWeight(Y, w)
+            return Y + Y * 0.1 * w
+        end
+        function Calculator.CurrentWeight(Y, w)
+            local Q = CalculateWeight(Y, w) * 100
+            local Yround = math.round(Q) / 100
+            return Yround
+        end
+    end
+    
+    local ESP = {}
+    do
+        function ESP.CreateESP(target, opts)
+            if not target or not opts then return end
+            if target:FindFirstChild("ESP") then return end
+    
+            local adornee = nil
+            if target:IsA("Model") then
+                adornee = target.PrimaryPart or target:FindFirstChildWhichIsA("BasePart")
+            elseif target:IsA("BasePart") then
+                adornee = target
+            end
+            if not adornee then return end
+    
+            local folder = Instance.new("Folder")
+            folder.Name = "ESP"
+            folder.Parent = target
+    
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "ESP"
+            box.Size = Vector3.new(1, 0, 1)
+            box.Transparency = 1
+            box.AlwaysOnTop = false
+            box.ZIndex = 0
+            box.Adornee = adornee
+            box.Parent = folder
+    
+            local billboard = Instance.new("BillboardGui")
+            billboard.Adornee = adornee
+            billboard.Size = UDim2.new(0, 100, 0, 150)
+            billboard.StudsOffset = Vector3.new(0, 1, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = box
+    
+            local label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Position = UDim2.new(0, 0, 0, -50.0)
+            label.Size = UDim2.new(0, 100, 0, 100)
+            label.TextSize = 10
+            label.TextColor3 = opts.Color or Color3.fromRGB(255, 255, 255)
+            label.TextStrokeTransparency = 0
+            label.TextYAlignment = Enum.TextYAlignment.Bottom
+            label.RichText = true
+            label.Text = opts.Text or ""
+            label.ZIndex = 15
+            label.Parent = billboard
+    
+            return {
+                Folder = folder,
+                Adornee = adornee,
+                Box = box,
+                Gui = billboard,
+                Label = label
+            }
+        end
+    
+        function ESP.Removes(target)
+            if not target then return end
+            task.spawn(function()
+                local f = target:FindFirstChild("ESP")
+                if f then f:Destroy() end
+            end)
+        end
+    end
+
+    local function EggIsVisibleForLocal(egg)
+        if not egg then return false end
+        if egg:GetAttribute("OWNER") ~= LocalPlayer.Name then
+            return false
+        end
+        local readFlag = egg:GetAttribute("READY")
+        if not readFlag then
+            return false
+        end
+        local tth = tonumber(egg:GetAttribute("TimeToHatch")) or 0
+        if tth > 0 then
+            return false
+        end
+        return true
+    end
+
+    local function AttachOrUpdateEggESP(eggModel)
+        if not eggModel then return end
+        if not EggIsVisibleForLocal(eggModel) then
+            ESP.Removes(eggModel)
+            return
+        end
+        local uuid = eggModel:GetAttribute("OBJECT_UUID")
+        if not uuid then
+            ESP.Removes(eggModel)
+            return
+        end
+        local saved = DataClient.GetSaved_Data()
+        if not saved then
+            ESP.Removes(eggModel)
+            return
+        end
+        local entry = saved[uuid]
+        if not entry or type(entry) ~= "table" or not entry.Data then
+            ESP.Removes(eggModel)
+            return
+        end
+    
+        local data = entry.Data
+        local eggName   = data.EggName or eggModel:GetAttribute("EggName") or "Egg"
+        local eggType   = data.Type or "Unknown"
+        local baseWeight= data.BaseWeight or 1
+        local scale     = data.Scale or 1
+    
+        local ok, weightValue = pcall(function()
+            return Calculator.CurrentWeight(baseWeight, scale)
+        end)
+        if not ok or not weightValue then weightValue = baseWeight end
+    
+        local tier =
+            (weightValue > 9 and "Titanic")
+            or (weightValue >= 6 and weightValue <= 9 and "Semi Titanic")
+            or (weightValue > 3 and "Huge")
+            or "Small"
+    
+        local labelText = string.format(
+            "<font color='rgb(3,211,252)'>%s</font>\n<font color='rgb(255,215,0)'>%s</font>\n<font color='rgb(100,255,100)'>%s</font>",
+            tostring(eggName),
+            tostring(eggType),
+            tostring(weightValue) .. " KG " .. tier
+        )
+    
+        ESP.Removes(eggModel)
+        ESP.CreateESP(eggModel, { Color = Color3.fromRGB(255, 255, 255), Text = labelText })
+    end
+
+    local function ScanAllEggs()
+        local farm = PlayerFarm.Important.Objects_Physical
+        if not farm then return end
+        local saved = DataClient.GetSaved_Data()
+        if not saved then return end
+    
+        for _, inst in ipairs(farm:GetChildren()) do
+            pcall(function()
+                AttachOrUpdateEggESP(inst)
+            end)
+        end
+    end
+    
+    local function StartEggESPLoop()
+        ScanAllEggs()
+    
+        local farm = PlayerFarm.Important.Objects_Physical
+        if farm then
+            farm.ChildAdded:Connect(function(obj)
+                task.wait(0.12)
+                pcall(function() AttachOrUpdateEggESP(obj) end)
+            end)
+        end
+    
+        task.spawn(function()
+            while task.wait(1) do
+                pcall(ScanAllEggs)
+            end
+        end)
+    
+        pcall(function()
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage
+            local ev = remotes:FindFirstChild("EggReadyToHatch") or remotes:FindFirstChild("EggReadyToHatch_RE")
+            if ev and ev:IsA("RemoteEvent") then
+                ev.OnClientEvent:Connect(function(uuid)
+                    task.wait(0.08)
+                    local farm2 = GetObjectsPhysical()
+                    if not farm2 then return end
+                    for _, inst in ipairs(farm2:GetChildren()) do
+                        if inst:GetAttribute("OBJECT_UUID") == uuid then
+                            pcall(function() AttachOrUpdateEggESP(inst) end)
+                            break
+                        end
+                    end
+                end)
+            end
+        end)
+    end
+    
+    StartEggESPLoop()
+    
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
 if seedButton then
@@ -849,7 +1441,6 @@ local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
 CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
-        startCollectCrops()
         selectedFruitsToCollect = selected
         config.FruitsToCollect = selected
         saveConfig(config)
@@ -882,10 +1473,11 @@ CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
     config.AutoCollectSelectedFruits = state
 
     if state then
+		startCollectCrops()
         Window:Notify("Auto Collect Enabled", 2)
-        if autoCollectGlimmeringEnabed then
-            autoCollectGlimmeringEnabed = false
-            config.CollectGlimmering = false
+        if autoCollectRequestedEnabed then
+            autoCollectRequestedEnabed = false
+            config.CollectRequested = false
         end
     else
         Window:Notify("Auto Collect Disabled", 2)
@@ -1003,11 +1595,11 @@ end)
 
   -- Select mutation
 MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
-    if selected then
+	if selected then
         selectedPetMutations = selected
         config.PetMutations = selected
         saveConfig(config)
-    end
+	end
 end, true)
 
   -- Auto claim toggle
@@ -1027,200 +1619,468 @@ end, {
 })
 
 -- Event Tab
-local FairyEventSection = EventTab:Section("Fairy Event")
-
---[[ Ex use of findItem(table)
-
-findItem({
-    name = "Apple",          -- Optional: looks for names containing "Apple"
-    type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
-    mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
-    weight = 5,              -- Optional: weight threshold
-    weightMode = "Below",     -- Optional: "Below", "Above", or "None"
-    age = 10,                -- Optional: age threshold
-    ageMode = "Greater",     -- Optional: "Below", "Above", or "None"
-    action = function()      -- Required: function to execute if item is found
-        -- action to perform
-        game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
-    end
-})
-
-]]
-
--- Auto submit glimmering
-local function startAutoSubmitGlimmering()
-    spawn(function()
-        while Running.autoSubmitGlimmering and (submitGlimmeringEnabled or submitAllGlimmeringEnabled) do
-            if submitGlimmeringEnabled then
-                findItem({
-                    type = "j",
-                    mutation = "Glimmering",
-                    action = function()
-                                GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
-                            end
-                })
-                task.wait(0.5)
-            elseif submitAllGlimmeringEnabled then
-                GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
-                task.wait(5)
+    --[[ Fairy Event
+    local FairyEventSection = EventTab:Section("Fairy Event")
+    
+     Ex use of findItem(table)
+    
+    findItem({
+        name = "Apple",          -- Optional: looks for names containing "Apple"
+        type = "l",              -- Required: checks if type equals "l" (Pet) or "j" (Fruit)
+        mutation = "Glimmering", -- Optional: checks if attribute "Glimmering"
+        weight = 5,              -- Optional: weight threshold
+        weightMode = "Below",     -- Optional: "Below", "Above", or "None"
+        age = 10,                -- Optional: age threshold
+        ageMode = "Greater",     -- Optional: "Below", "Above", or "None"
+        action = function()      -- Required: function to execute if item is found
+            -- action to perform
+            game:GetService("ReplicatedStorage").PetMutationMachineService_RE:FireServer()
+        end
+    })
+    
+    -- Auto submit glimmering
+    local function startAutoSubmitGlimmering()
+        spawn(function()
+            while Running.autoSubmitGlimmering and (submitGlimmeringEnabled or submitAllGlimmeringEnabled) do
+                if submitGlimmeringEnabled then
+                    findItem({
+                        type = "j",
+                        mutation = "Glimmering",
+                        action = function()
+                                    GameEvents.FairyService.SubmitFairyFountainHeldPlant:FireServer()
+                                end
+                    })
+                    task.wait(0.5)
+                elseif submitAllGlimmeringEnabled then
+                    GameEvents.FairyService.SubmitFairyFountainAllPlants:FireServer()
+                    task.wait(5)
+                end
             end
-        end
-    end)
-end
-
-if submitGlimmeringEnabled or submitAllGlimmeringEnabled then
-    startAutoSubmitGlimmering()
-end
-
-FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
-    autoCollectGlimmeringEnabed = state
-    config.CollectGlimmering = state
-
-    if state then
-        startCollectCrops()
-        Window:Notify("Auto Collect Enabled", 2)
-        if autoCollectSelectedFruitsEnabled then
-            autoCollectSelectedFruitsEnabled = false
-            config.AutoCollectSelectedFruits = false
-        end
-    else
-        Window:Notify("Auto Collect Disabled", 2)
+        end)
     end
-
-    saveConfig(config)
-end, {
-    default = autoCollectGlimmeringEnabed,
-    group = "Auto_Collect"
-})
-
-FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
-    submitGlimmeringEnabled = state
-    config.SubmitGlimmering = state
-
-    if state then
+    
+    if submitGlimmeringEnabled or submitAllGlimmeringEnabled then
         startAutoSubmitGlimmering()
-        Window:Notify("Auto Submit Enabled", 2)
-        if submitAllGlimmeringEnabled then
-            submitAllGlimmeringEnabled = false
-            config.SubmitAllGlimmering = false
-        end            
-    else
-        Window:Notify("Auto Submit Disabled", 2)
     end
+    
+    FairyEventSection:Toggle("Auto Collect Glimmering", function(state)
+        autoCollectGlimmeringEnabed = state
+        config.CollectGlimmering = state
+    
+        if state then
+            startCollectCrops()
+            Window:Notify("Auto Collect Enabled", 2)
+            if autoCollectSelectedFruitsEnabled then
+                autoCollectSelectedFruitsEnabled = false
+                config.AutoCollectSelectedFruits = false
+            end
+        else
+            Window:Notify("Auto Collect Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = autoCollectGlimmeringEnabed,
+        group = "Auto_Collect"
+    })
+    
+    FairyEventSection:Toggle("Auto Submit Glimmering", function(state)
+        submitGlimmeringEnabled = state
+        config.SubmitGlimmering = state
+    
+        if state then
+            startAutoSubmitGlimmering()
+            Window:Notify("Auto Submit Enabled", 2)
+            if submitAllGlimmeringEnabled then
+                submitAllGlimmeringEnabled = false
+                config.SubmitAllGlimmering = false
+            end            
+        else
+            Window:Notify("Auto Submit Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = submitGlimmeringEnabled,
+        group = "Fairy_Fountain_Submit"
+    })
+    
+    FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
+        submitAllGlimmeringEnabled = state
+        config.SubmitAllGlimmering = state
+    
+        if state then
+            startAutoSubmitGlimmering()
+            Window:Notify("Auto Submit All Enabled", 2)
+            if submitGlimmeringEnabled then
+                submitGlimmeringEnabled = false
+                config.SubmitGlimmering = false
+            end   
+        else
+            Window:Notify("Auto Submit All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = submitAllGlimmeringEnabled,
+        group = "Fairy_Fountain_Submit"
+    })
+    
+    FairyEventSection:Dropdown("Select Rewards:", FairyWishRewards, selectedFairyWishRewards, function(selected)
+        if selected then
+            selectedFairyWishRewards = selected
+            config.SelectedRewards = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    FairyEventSection:Toggle("Auto Make a Wish", function(state)
+        autoMakeAWishEnabled = state
+        config.MakeAWish = state
+    
+        if state then
+            startAutoMakeAWish()
+            Window:Notify("Auto Make A Wish Enabled", 2)
+        else
+            Window:Notify("Auto Make A Wish Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+    	default = autoMakeAWishEnabled
+    })
+    
+    FairyEventSection:Toggle("Auto Restart Wish", function(state)
+        autoRestartWishEnabled = state
+        config.RestartWish = state
+    
+        if state then
+            startAutoRestartWish()
+            Window:Notify("Auto Restart Wish Enabled", 2)
+        else
+            Window:Notify("Auto Restart Wish Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = autoRestartWishEnabled
+    }) ]]
 
-    saveConfig(config)
-end, {
-    default = submitGlimmeringEnabled,
-    group = "Fairy_Fountain_Submit"
-})
+    -- Fall Market Event
+    local FallEventSection = EventTab:Section("Fall Market Event")
 
-FairyEventSection:Toggle("Auto Submit All Glimmering", function(state)
-    submitAllGlimmeringEnabled = state
-    config.SubmitAllGlimmering = state
-
-    if state then
-        startAutoSubmitGlimmering()
-        Window:Notify("Auto Submit All Enabled", 2)
-        if submitGlimmeringEnabled then
-            submitGlimmeringEnabled = false
-            config.SubmitGlimmering = false
-        end   
-    else
-        Window:Notify("Auto Submit All Disabled", 2)
-    end
-
-    saveConfig(config)
-end, {
-    default = submitAllGlimmeringEnabled,
-    group = "Fairy_Fountain_Submit"
-})
+    FallEventSection:Toggle("Auto Collect Requested", function(state)
+        autoCollectRequestedEnabed = state
+        config.CollectRequested = state
+    
+        if state then
+            startCollectCrops()
+            Window:Notify("Auto Collect Enabled", 2)
+            if autoCollectSelectedFruitsEnabled then
+                autoCollectSelectedFruitsEnabled = false
+                config.AutoCollectSelectedFruits = false
+            end
+        else
+            Window:Notify("Auto Collect Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = autoCollectRequestedEnabed,
+        group = "Auto_Collect"
+    })
+    
+    FallEventSection:Toggle("Auto Feed Requested", function(state)
+        feedRequestedEnabled = state
+        config.FeedRequested = state
+    
+        if state then
+            startAutoFeedRequested()
+            Window:Notify("Auto Feed Enabled", 2)
+            if feedAllRequestedEnabled then
+                feedAllRequestedEnabled = false
+                config.FeedAllRequested = false
+            end            
+        else
+            Window:Notify("Auto Feed Disabled", 2)
+        end
+    
+        saveConfig(config)
+    end, {
+        default = feedRequestedEnabled,
+        group = "Feed"
+    })
+    
+    FallEventSection:Toggle("Auto Feed All Requested", function(state)
+        feedAllRequestedEnabled = state
+        config.FeedAllRequested = state
+    
+        if state then
+            startAutoFeedRequested()
+            Window:Notify("Auto Feed All Enabled", 2)
+            if feedRequestedEnabled then
+                feedRequestedEnabled = false
+                config.FeedRequested = false
+            end   
+        else
+            Window:Notify("Auto Feed All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = feedAllRequestedEnabled,
+        group = "Feed"
+    })
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
+local GearShopSection = ShopTab:Section("Gear Shop")
+local PetShopSection = ShopTab:Section("Pet Egg Shop")
+local CosmeticSection = ShopTab:Section("Cosmetic Shop")
 
-SeedShopSection:Label("Tier 1")
-
-local function startBuySeeds()
-    spawn(function()
-        while Running.autoBuySeeds and (autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled) do
-            local stocks = getSeedStock()
-            
-            if autoBuySelectedSeedsEnabled and #selectedShopSeeds > 0 then
-                for _, v_select in ipairs(selectedShopSeeds) do
-                    if stocks[v_select] and stocks[v_select] > 0 then
-                        for i = 1, stocks[v_select] do
-                            GameEvents.BuySeedStock:FireServer("Tier 1", v_select)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            elseif autoBuyAllSeedsEnabled then
-                for i_all, v_all in pairs(stocks) do
-                    if v_all > 0 then
-                        for i = 1, v_all do
-                            GameEvents.BuySeedStock:FireServer("Tier 1", i_all)
-                            task.wait(0.1)
-                        end
-                    end
-                end
-    		end
-    		task.wait(5)
+    -- Seed Shop
+    SeedShopSection:Label("Tier 1")
+    
+    SeedShopSection:Dropdown("Select Seeds: ", seedController.itemList, seedController.selectedItems, function(selected)
+        if selected then
+            seedController.selectedItems = selected
+            config.SelectedSeeds = selected
+            saveConfig(config)
         end
-    end)
-end
-
-if autoBuySelectedSeedsEnabled or autoBuyAllSeedsEnabled then
-    startBuySeeds()
-end
-
--- Select seeds
-SeedShopSection:Dropdown("Select Seeds: ", ShopSeedList, selectedShopSeeds, function(selected)
-    if selected then
-        selectedShopSeeds = selected
-        config.SelectedSeeds = selected
+    end, true)
+    
+    SeedShopSection:Toggle("Auto Buy Selected", function(state)
+        seedController.autoBuySelected = state
+        config.BuySelectedSeeds = state
+    
+        if state then
+            seedController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if seedController.autoBuyAll then
+                seedController.autoBuyAll = false
+                config.BuyAllSeeds = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
         saveConfig(config)
-    end
-end, true)
-
-SeedShopSection:Toggle("Auto Buy Selected", function(state)
-    autoBuySelectedSeedsEnabled = state
-    config.BuySelectedSeeds = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy Selected Enabled", 2)
-        if autoBuyAllSeedsEnabled then
-            autoBuyAllSeedsEnabled = false
-            config.BuyAllSeeds = false
+    end, {
+        default = seedController.autoBuySelected,
+        group = "Buy_Shop_Seeds"
+    })
+    
+    SeedShopSection:Toggle("Auto Buy All", function(state)
+        seedController.autoBuyAll = state
+        config.BuyAllSeeds = state
+    
+        if state then
+            seedController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if seedController.autoBuySelected then
+                seedController.autoBuySelected = false
+                config.BuySelectedSeeds = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
         end
-    else
-        Window:Notify("Auto Buy Selected Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuySelectedSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
+        saveConfig(config)
+    end, {
+        default = seedController.autoBuyAll,
+        group = "Buy_Shop_Seeds"
+    })
 
-SeedShopSection:Toggle("Auto Buy All", function(state)
-    autoBuyAllSeedsEnabled = state
-    config.BuyAllSeeds = state
-
-    if state then
-        startBuySeeds()
-        Window:Notify("Auto Buy All Enabled", 2)
-        if autoBuySelectedSeedsEnabled then
-            autoBuySelectedSeedsEnabled = false
-            config.BuySelectedSeeds = false
+    -- Gear Shop
+    GearShopSection:Dropdown("Select Gears: ", gearController.itemList, gearController.selectedItems, function(selected)
+        if selected then
+            gearController.selectedItems = selected
+            config.SelectedGears = selected
+            saveConfig(config)
         end
-    else
-        Window:Notify("Auto Buy All Disabled", 2)
-    end
-    saveConfig(config)
-end, {
-    default = autoBuyAllSeedsEnabled,
-    group = "Buy_Shop_Seeds"
-})
+    end, true)
+    
+    GearShopSection:Toggle("Auto Buy Selected", function(state)
+        gearController.autoBuySelected = state
+        config.BuySelectedGears = state
+    
+        if state then
+            gearController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if gearController.autoBuyAll then
+                gearController.autoBuyAll = false
+                config.BuyAllGears = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = gearController.autoBuySelected,
+        group = "Buy_Shop_Gears"
+    })
+    
+    GearShopSection:Toggle("Auto Buy All", function(state)
+        gearController.autoBuyAll = state
+        config.BuyAllGears = state
+    
+        if state then
+            gearController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if gearController.autoBuySelected then
+                gearController.autoBuySelected = false
+                config.BuySelectedGears = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = gearController.autoBuyAll,
+        group = "Buy_Shop_Gears"
+    })
+
+    -- Pet Egg Shop
+    PetShopSection:Label("Tier 1")
+    
+    PetShopSection:Dropdown("Select Eggs: ", eggController.itemList, eggController.selectedItems, function(selected)
+        if selected then
+            eggController.selectedItems = selected
+            config.SelectedEggs = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    PetShopSection:Toggle("Auto Buy Selected", function(state)
+        eggController.autoBuySelected = state
+        config.BuySelectedEggs = state
+    
+        if state then
+            eggController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if eggController.autoBuyAll then
+                eggController.autoBuyAll = false
+                config.BuyAllEggs = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eggController.autoBuySelected,
+        group = "Buy_Shop_Eggs"
+    })
+    
+    PetShopSection:Toggle("Auto Buy All", function(state)
+        eggController.autoBuyAll = state
+        config.BuyAllEggs = state
+    
+        if state then
+            eggController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if eggController.autoBuySelected then
+                eggController.autoBuySelected = false
+                config.BuySelectedEggs = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eggController.autoBuyAll,
+        group = "Buy_Shop_Eggs"
+    })
+
+    -- Cosmetic Shop
+    CosmeticSection:Dropdown("Select Crates: ", a_c_list.crates, crateController.selectedItems, function(selected)
+        if selected then
+            crateController.selectedItems = selected
+            config.SelectedCrates = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    CosmeticSection:Toggle("Auto Buy Selected", function(state)
+        crateController.autoBuySelected = state
+        config.BuySelectedCrates = state
+    
+        if state then
+            crateController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if crateController.autoBuyAll then
+                crateController.autoBuyAll = false
+                config.BuyAllCrates = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = crateController.autoBuySelected,
+        group = "Buy_Shop_Crates"
+    })
+    
+    CosmeticSection:Toggle("Auto Buy All", function(state)
+        crateController.autoBuyAll = state
+        config.BuyAllCrates = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if crateController.autoBuySelected then
+                crateController.autoBuySelected = false
+                config.BuySelectedCrates = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = crateController.autoBuyAll,
+        group = "Buy_Shop_Crates"
+    })
+
+    CosmeticSection:Dropdown("Select Cosmetics: ", a_c_list.cosmetics, cosmeticController.selectedItems, function(selected)
+        if selected then
+            gearController.selectedItems = selected
+            config.SelectedGears = selected
+            saveConfig(config)
+        end
+    end, true)
+
+    CosmeticSection:Toggle("Auto Buy Selected", function(state)
+        cosmeticController.autoBuySelected = state
+        config.BuySelectedCosmetics = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if cosmeticController.autoBuyAll then
+                cosmeticController.autoBuyAll = false
+                config.BuyAllCosmetics = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = cosmeticController.autoBuySelected,
+        group = "Buy_Shop_Cosmetics"
+    })
+    
+    CosmeticSection:Toggle("Auto Buy All", function(state)
+        cosmeticController.autoBuyAll = state
+        config.BuyAllCosmetics = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if cosmeticController.autoBuySelected then
+                cosmeticController.autoBuySelected = false
+                config.BuySelectedCosmetics = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = cosmeticController.autoBuyAll,
+        group = "Buy_Shop_Cosmetics"
+    })
 
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
@@ -1630,7 +2490,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.760")
+AboutSection:Label("Version: 1.3.009")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
