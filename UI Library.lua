@@ -1395,7 +1395,7 @@ function Library:CreateWindow(title)
                     OptionCorner.Parent = OptionBtn
                     
                     OptionBtn.MouseEnter:Connect(function()
-                        if multiselect and not table.find(selected, option) or option ~= selected then
+                        if multiSelect and not table.find(selected, option) or option ~= selected then
                             Tween(OptionBtn, {BackgroundTransparency = 0.8})
                         end
                     end)
