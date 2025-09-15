@@ -66,10 +66,10 @@ local a_c_list = {
     crates = {}
 }
 for k_a_c, _ in pairs(a_c_data["Cosmetic Items"]) do
-    table.insert(a_c_list.cosmetics, v_a_c)
+    table.insert(a_c_list.cosmetics, k_a_c)
 end
 for k_a_c, _ in pairs(a_c_data["Cosmetic Crates"]) do
-    table.insert(a_c_list.crates, v_a_c)
+    table.insert(a_c_list.crates, k_a_c)
 end
 
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
