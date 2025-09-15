@@ -922,7 +922,8 @@ end
             local bottomItems = shopGui:FindFirstChild("BottomSegment")
             local table = a_c_list[string.lower(shopType)] or {}
         
-            for _, item in next, table do
+            for _, items in next, table do
+                local item = topItems:FindFirstChild(items) or bottomItems:FindFirstChild(items)
                 if item:IsDescendantOf(topItems) or item:IsDescendantOf(bottomItems) then
                     local main = item:FindFirstChild("Main").Stock
                     if not main then continue end
@@ -2419,7 +2420,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.903")
+AboutSection:Label("Version: 1.2.905")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
