@@ -691,6 +691,15 @@ end
     end]]
 
     local function startCollectCrops()
+        local function waitCollect(seconds)
+            local interval = seconds * 100
+            for i = 1, interval do
+                if not Running.collectCrops and not (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
+                    break
+                end
+                task.wait(0.01)
+            end
+        end
         spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 local fruitsToCollect = {}
@@ -702,7 +711,7 @@ end
                             action = function(fruit) end
                         })
                     else
-                        task.wait(5)
+                        waitCollect(5)
                     end
                 elseif autoCollectSelectedFruitsEnabled then
                     fruitsToCollect = findFruit({
@@ -714,7 +723,7 @@ end
                         action = function(fruit) end
                     })
                 else
-                    task.wait(2)
+                    waitCollect(2)
                 end
                 
                 if #fruitsToCollect > 0 then
@@ -730,12 +739,12 @@ end
                             if not success then
                                 warn("Failed to collect fruit: " .. err)
                             end
-                            task.wait(0.1)
+                            waitCollect(0.1)
                         end
                     end
-                    task.wait(0.1)
+                    waitCollect(0.1)
                 else
-                    task.wait(1)
+                    waitCollect(1)
                 end
             end
         end)
@@ -2187,7 +2196,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.889")
+AboutSection:Label("Version: 1.2.890")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
