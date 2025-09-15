@@ -922,7 +922,7 @@ end
             local bottomItems = shopGui:FindFirstChild("BottomSegment")
             local table = a_c_list[string.lower(shopType)] or {}
         
-            for _, item in next, a_c_list[shopType] do
+            for _, item in next, table do
                 if item:IsDescendantOf(topItems) or item:IsDescendantOf(bottomItems) then
                     local main = item:FindFirstChild("Main").Stock
                     if not main then continue end
