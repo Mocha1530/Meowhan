@@ -2104,10 +2104,12 @@ local function setupBillboard()
 	    )
 	    billboardPart.CanCollide = false
         local billboardGui = billboardPart.BillboardGui
-		
+		local TimerTextLabel = billboardGui.TimerTextLabel
         billboardGui.Adornee = billboardPart
-        billboardGui.Size = UDim2.new(14, 0, 8, 0)
+        billboardGui.Size = UDim2.new(7, 0, 4, 0)
         billboardGui.MaxDistance = 10000
+		TimerTextLabel.Position = UDim2.new(0.5, -15, 0, 0)
+		TimerTextLabel.Size = UDim2.new(0, 30, 0, 14)
         
         return true
     end
