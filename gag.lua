@@ -2125,9 +2125,12 @@ local function restoreOriginalProperties()
 
         local gui = billboardPart:FindFirstChild("BillboardGui")
         if gui then
+			local label = gui.TextTimerLabel
 			gui.Adornee = nil
             gui.MaxDistance = 60
             gui.Size = UDim2.new(7, 0, 4, 0)
+			label.Position = UDim2.new(0, 0, 0, 0)
+			label.Size = UDim2.new(1, 0, 0.3, 0)
         end
     end
 end
