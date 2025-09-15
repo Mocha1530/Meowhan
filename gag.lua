@@ -65,10 +65,10 @@ local a_c_list = {
     cosmetics = {},
     crates = {}
 }
-for _, v_a_c in pairs(a_c_data["Cosmetic Items"]) do
+for k_a_c, _ in pairs(a_c_data["Cosmetic Items"]) do
     table.insert(a_c_list.cosmetics, v_a_c)
 end
-for _, v_a_c in pairs(a_c_data["Cosmetic Crates"]) do
+for k_a_c, _ in pairs(a_c_data["Cosmetic Crates"]) do
     table.insert(a_c_list.crates, v_a_c)
 end
 
@@ -922,7 +922,7 @@ end
             local bottomItems = shopGui:FindFirstChild("BottomSegment", true)
             local table = string.lower(shopType)
         
-            for _, items in next, a_c_list[table] do
+            for _, items in ipairs(a_c_list[table]) do
                 local item = topItems:FindFirstChild(items, true) or bottomItems:FindFirstChild(items, true)
                 if not item then continue end
             
@@ -2422,7 +2422,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.907")
+AboutSection:Label("Version: 1.2.908")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
