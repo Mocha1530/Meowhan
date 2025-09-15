@@ -728,18 +728,19 @@ end
                 
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
-                        if not Running.collectCrops and not (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
-                            break
-                        end
-                        if fruit.Parent then
-                            local success, err = pcall(function()
-                                GameEvents.Crops.Collect:FireServer({fruit})
-                            end)
+                        if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
+                            if fruit.Parent then
+                                local success, err = pcall(function()
+                                    GameEvents.Crops.Collect:FireServer({fruit})
+                                end)
                             
-                            if not success then
-                                warn("Failed to collect fruit: " .. err)
+                                if not success then
+                                    warn("Failed to collect fruit: " .. err)
+                                end
+                                waitCollect(0.1)
                             end
-                            waitCollect(0.1)
+                        else
+                            break
                         end
                     end
                     waitCollect(0.1)
