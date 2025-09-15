@@ -918,8 +918,8 @@ end
     local function getShopStock(shopGui, shopType, defaultItemName)
         local stock = {}
         if shopType == "Cosmetics" or shopType == "Crates" then
-            local topItems = shopGui:FindFirstChild("TopSegment")
-            local bottomItems = shopGui:FindFirstChild("BottomSegment")
+            local topItems = shopGui:FindFirstChild("TopSegment", true)
+            local bottomItems = shopGui:FindFirstChild("BottomSegment", true)
             local table = string.lower(shopType)
         
             for _, items in next, a_c_list[table] do
@@ -2422,7 +2422,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.906")
+AboutSection:Label("Version: 1.2.907")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
