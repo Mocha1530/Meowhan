@@ -60,6 +60,15 @@ for _, v_a_s_m in ipairs(a_s_m_data.mutations) do
     table.insert(a_s_m_list, v_a_s_m.display_name)
 end
 
+local a_c_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/ShopCosmetics.lua", true))()
+local a_c_list = {}
+for _, v_a_c in pairs(a_c_data["Cosmetic Items"]) do
+    table.insert(a_c_list.cosmetics, v_a_c)
+end
+for _, v_a_c in pairs(a_c_data["Cosmetic Crates"]) do
+    table.insert(a_c_list.crates, v_a_c)
+end
+
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -102,6 +111,19 @@ local DEFAULT_CONFIG = {
         SelectedGears = {},
         BuySelectedGears = false,
         BuyAllGears = false,
+
+        -- Pet Egg Shop
+        SelectedEggs = {},
+        BuySelectedEggs = false,
+        BuyAllEggs = false,
+
+        -- Cosmetic Shop
+        SelectedCosmetics = {},
+        BuySelectedCosmetics = false,
+        BuyAllCosmetics = false,
+        SelectedCrates = {},
+        BuySelectedCrates = false,
+        BuyAllCrates = false,
     
     -- ESP
     ShowMutationTimer = true,
@@ -890,20 +912,37 @@ end
     -- Shop Function
     local ShopControllers = {}
 
-    local function getShopStock(shopGui, defaultItemName)
+    local function getShopStock(shopGui, shopType, defaultItemName)
         local stock = {}
-        local items = shopGui:FindFirstChild(defaultItemName, true).Parent
+        if shopType == "Cosmetics" or shopType == "Crates" then
+            local topItems = shopGui:FindFirstChild("TopSegment")
+            local bottomItems = shopGui:FindFirstChild("BottomSegment")
+            local table = a_c_list[string.lower(shopType)] or {}
         
-        for _, item in next, items:GetChildren() do
-            local mainFrame = item:FindFirstChild("Main_Frame")
-            if not mainFrame then continue end
-    
-            local stockText = mainFrame.Stock_Text.Text
-            local stockCount = tonumber(stockText:match("%d+"))
-            
-            stock[item.Name] = stockCount
+            for _, item in next, a_c_list[shopType] do
+                if item:IsDescendantOf(topItems) or item:IsDescendantOf(bottomItems) then
+                    local main = item:FindFirstChild("Main").Stock
+                    if not main then continue end
+        
+                    local stockText = main.STOCK_TEXT.Text
+                    local stockCount = tonumber(stockText:match("%d+"))
+        
+                    stock[item.Name] = stockCount
+                end
+            end
+        else
+            local items = shopGui:FindFirstChild(defaultItemName, true).Parent
+        
+            for _, item in next, items:GetChildren() do
+                local mainFrame = item:FindFirstChild("Main_Frame")
+                if not mainFrame then continue end
+        
+                local stockText = mainFrame.Stock_Text.Text
+                local stockCount = tonumber(stockText:match("%d+"))
+                
+                stock[item.Name] = stockCount
+            end
         end
-        
         return stock
     end
     
@@ -916,7 +955,7 @@ end
         controller.autoBuyAll = config["BuyAll" .. shopType]
         
         controller.updateStock = function()
-            controller.stock = getShopStock(shopGui, defaultItemName)
+            controller.stock = getShopStock(shopGui, shopType, defaultItemName)
             
             controller.itemList = {}
             for itemName, _ in pairs(controller.stock) do
@@ -990,6 +1029,33 @@ end
         end
     )
 
+    local eggController = createShopController(
+        "Eggs", 
+        PlayerGui.PetShop_UI, 
+        "Common Egg", 
+        function(itemName) 
+            GameEvents.BuyPetEgg:FireServer(itemName) 
+        end
+    )
+
+    local cosmeticController = createShopController(
+        "Cosmetics", 
+        PlayerGui.CosmeticShop_UI, 
+        "Placeholder", 
+        function(itemName) 
+            GameEvents.BuyCosmeticItem:FireServer(itemName) 
+        end
+    )
+
+    local crateController = createShopController(
+        "Crates", 
+        PlayerGui.CosmeticShop_UI, 
+        "Placeholder", 
+        function(itemName) 
+            GameEvents.BuyCosmeticCrate:FireServer(itemName) 
+        end
+    )
+
     if config.BuySelectedSeeds or config.BuyAllSeeds then
         seedController.startBuying()
     end
@@ -998,6 +1064,18 @@ end
         gearController.startBuying()
     end
 
+    if config.BuySelectedEggs or config.BuyAllEggs then
+        eggController.startBuying()
+    end
+
+    if config.BuySelectedCosmetics or config.BuyAllCosmetics then
+        cosmeticController.startBuying()
+    end
+
+    if config.BuySelectedCrates or config.BuyAllCrates then
+        crateController.startBuying()
+    end
+    
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
 if seedButton then
@@ -1679,6 +1757,8 @@ end, {
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
 local GearShopSection = ShopTab:Section("Gear Shop")
+local PetShopSection = ShopTab:Section("Pet Egg Shop")
+local CosmeticSection = ShopTab:Section("Cosmetic Shop")
 
     -- Seed Shop
     SeedShopSection:Label("Tier 1")
@@ -1757,7 +1837,7 @@ local GearShopSection = ShopTab:Section("Gear Shop")
         saveConfig(config)
     end, {
         default = gearController.autoBuySelected,
-        group = "Buy_Shop_Gear"
+        group = "Buy_Shop_Gears"
     })
     
     GearShopSection:Toggle("Auto Buy All", function(state)
@@ -1778,6 +1858,154 @@ local GearShopSection = ShopTab:Section("Gear Shop")
     end, {
         default = gearController.autoBuyAll,
         group = "Buy_Shop_Gears"
+    })
+
+    -- Pet Egg Shop
+    PetShopSection:Label("Tier 1")
+    
+    PetShopSection:Dropdown("Select Eggs: ", eggController.itemList, eggController.selectedItems, function(selected)
+        if selected then
+            eggController.selectedItems = selected
+            config.SelectedEggs = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    PetShopSection:Toggle("Auto Buy Selected", function(state)
+        eggController.autoBuySelected = state
+        config.BuySelectedEggs = state
+    
+        if state then
+            eggController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if eggController.autoBuyAll then
+                eggController.autoBuyAll = false
+                config.BuyAllEggs = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eggController.autoBuySelected,
+        group = "Buy_Shop_Eggs"
+    })
+    
+    PetShopSection:Toggle("Auto Buy All", function(state)
+        eggController.autoBuyAll = state
+        config.BuyAllSEggs = state
+    
+        if state then
+            eggController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if eggController.autoBuySelected then
+                eggController.autoBuySelected = false
+                config.BuySelectedEggs = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eggController.autoBuyAll,
+        group = "Buy_Shop_Eggs"
+    })
+
+    -- Cosmetic Shop
+    CosmeticSection:Dropdown("Select Crates: ", a_c_list.crates, crateController.selectedItems, function(selected)
+        if selected then
+            crateController.selectedItems = selected
+            config.SelectedCrates = selected
+            saveConfig(config)
+        end
+    end, true)
+    
+    CosmeticSection:Toggle("Auto Buy Selected", function(state)
+        crateController.autoBuySelected = state
+        config.BuySelectedCrates = state
+    
+        if state then
+            crateController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if crateController.autoBuyAll then
+                crateController.autoBuyAll = false
+                config.BuyAllCrates = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = crateController.autoBuySelected,
+        group = "Buy_Shop_Crates"
+    })
+    
+    CosmeticSection:Toggle("Auto Buy All", function(state)
+        crateController.autoBuyAll = state
+        config.BuyAllCrates = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if crateController.autoBuySelected then
+                crateController.autoBuySelected = false
+                config.BuySelectedCrates = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = crateController.autoBuyAll,
+        group = "Buy_Shop_Crates"
+    })
+
+    CosmeticSection:Dropdown("Select Cosmetics: ", a_c_list.cosmetics, cosmeticController.selectedItems, function(selected)
+        if selected then
+            gearController.selectedItems = selected
+            config.SelectedGears = selected
+            saveConfig(config)
+        end
+    end, true)
+
+    CosmeticSection:Toggle("Auto Buy Selected", function(state)
+        cosmeticController.autoBuySelected = state
+        config.BuySelectedCosmetics = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if cosmeticController.autoBuyAll then
+                cosmeticController.autoBuyAll = false
+                config.BuyAllCosmetics = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = cosmeticController.autoBuySelected,
+        group = "Buy_Shop_Cosmetics"
+    })
+    
+    CosmeticSection:Toggle("Auto Buy All", function(state)
+        cosmeticController.autoBuyAll = state
+        config.BuyAllCosmetics = state
+    
+        if state then
+            cosmeticController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if cosmeticController.autoBuySelected then
+                cosmeticController.autoBuySelected = false
+                config.BuySelectedCosmetics = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = cosmeticController.autoBuyAll,
+        group = "Buy_Shop_Cosmetics"
     })
 
 -- Settings Tab
@@ -2188,7 +2416,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.892")
+AboutSection:Label("Version: 1.2.902")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
