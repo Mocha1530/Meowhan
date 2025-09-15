@@ -2126,7 +2126,7 @@ local function restoreOriginalProperties()
         local gui = billboardPart:FindFirstChild("BillboardGui")
         if gui then
 			local label = gui.TextTimerLabel
-			gui.Adornee = nil
+			gui.Adornee = ""
             gui.MaxDistance = 60
             gui.Size = UDim2.new(7, 0, 4, 0)
 			label.Position = UDim2.new(0, 0, 0, 0)
@@ -2413,7 +2413,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.011")
+AboutSection:Label("Version: 1.3.013")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
