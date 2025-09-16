@@ -861,6 +861,9 @@ end
                 for itemName, _ in pairs(controller.stock) do
                     table.insert(controller.itemList, itemName)
                 end
+            else
+                controller.stock = a_e_s_data
+                end
             end        
             return controller.stock
         end
@@ -881,6 +884,13 @@ end
                                     table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
                                 end
                             end
+                        else
+                            for shop, _ in pairs(controller.selectedItems) do
+                                for _, itemName in ipairs(shop) do
+                                    local item = controller.stock[itemName]
+                                    table.insert(itemsToBuy, {name = itemName, count = item.StockAmount, shopIndex = item.ShopIndex})
+                                end
+                            end
                         end
                     elseif controller.autoBuyAll then
                         for itemName, count in pairs(controller.stock) do
@@ -888,6 +898,8 @@ end
                                 if count > 0 then
                                     table.insert(itemsToBuy, {name = itemName, count = count})
                                 end
+                            else
+                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount, shopIndex = count.ShopIndex})
                             end
                         end
                     end
@@ -904,6 +916,11 @@ end
                                     fireEvent(item.name)
                                     task.wait(0.05)
                                 end
+                            end
+                        else
+                            for i = 1, item.count do
+                                fireEvent(item.name, item.shop)
+                                task.wait(0.05)
                             end
                         end
                     end
@@ -962,6 +979,15 @@ end
         end
     )
 
+    local eventController = createShopController(
+        "Events", 
+        "Placeholder", 
+        "Placeholder", 
+        function(itemName, shop) 
+            GameEvents.BuyEventShopStock:FireServer(itemName, shop) 
+        end
+    )
+
     if config.BuySelectedSeeds or config.BuyAllSeeds then
         seedController.startBuying()
     end
@@ -980,6 +1006,10 @@ end
 
     if config.BuySelectedCrates or config.BuyAllCrates then
         crateController.startBuying()
+    end
+
+    if config.BuySelectedEvents or config.BuyAllEvents then
+        eventController.startBuying()
     end
 
     -- Egg ESP
@@ -2132,17 +2162,21 @@ local EventShopSection = ShopTab:Section("Event Shop")
     -- Event Shop
     EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents.seed, function(selected)
         if selected then
+            eventController.selectedItems.seed = selected
             config.SelectedEvents.seed = selected
             saveConfig(config)
         end
     end, true)
 
     EventShopSection:Toggle("Auto Buy Selected", function(state)
+        eventController.autoBuySelected = state
         config.BuySelectedEvents = state
     
         if state then
+            eventController.startBuying()
             Window:Notify("Auto Buy Selected Enabled", 2)
-            if config.BuyAllEvents then
+            if eventController.autoBuyAll then
+                eventController.autoBuyAll = false
                 config.BuyAllEvents = false
             end
         else
@@ -2150,16 +2184,19 @@ local EventShopSection = ShopTab:Section("Event Shop")
         end
         saveConfig(config)
     end, {
-        default = config.BuySelectedEvents,
+        default = eventController.autoBuySelected,
         group = "Buy_Shop_Events"
     })
     
     EventShopSection:Toggle("Auto Buy All", function(state)
+        eventController.autoBuyAll = state
         config.BuyAllEvents = state
     
         if state then
+            eventController.startBuying()
             Window:Notify("Auto Buy All Enabled", 2)
-            if config.BuySelectedEvents then
+            if eventController.autoBuySelected then
+                eventController.autoBuySelected = false
                 config.BuySelectedEvents = false
             end
         else
@@ -2167,7 +2204,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         end
         saveConfig(config)
     end, {
-        default = config.BuyAllEvents,
+        default = eventController.autoBuyAll,
         group = "Buy_Shop_Events"
     })
 
