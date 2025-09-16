@@ -2166,10 +2166,51 @@ local EventShopSection = ShopTab:Section("Event Shop")
 
     EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, selectedEventSeeds, function(selected)
         if selected then
-            config.SelectedEvents.seed = selected
+            eventController.selectedItems.seed = table.sort(selected)
+            config.SelectedEvents.seed = table.sort(selected)
             saveConfig(config)
         end
     end, true)
+
+    EventShopSection:Toggle("Auto Buy Selected", function(state)
+        eventController.autoBuySelected = state
+        config.BuySelectedEvents = state
+    
+        if state then
+            eventController.startBuying()
+            Window:Notify("Auto Buy Selected Enabled", 2)
+            if eventController.autoBuyAll then
+                eventController.autoBuyAll = false
+                config.BuyAllEvents = false
+            end
+        else
+            Window:Notify("Auto Buy Selected Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eventController.autoBuySelected,
+        group = "Buy_Shop_Events"
+    })
+
+    EventShopSection:Toggle("Auto Buy All", function(state)
+        eventController.autoBuyAll = state
+        config.BuyAllEvents = state
+    
+        if state then
+            eventController.startBuying()
+            Window:Notify("Auto Buy All Enabled", 2)
+            if eventController.autoBuySelected then
+                eventController.autoBuySelected = false
+                config.BuySelectedEvents = false
+            end
+        else
+            Window:Notify("Auto Buy All Disabled", 2)
+        end
+        saveConfig(config)
+    end, {
+        default = eventController.autoBuyAll,
+        group = "Buy_Shop_Events"
+    })
 
 -- Settings Tab
 local ESPSection = SettingsTab:Section("ESP")
