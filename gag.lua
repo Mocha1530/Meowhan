@@ -279,10 +279,11 @@ local InfoTab = Window:Tab("Info")
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
-	local showEggESPEnabled = config.ShowEggESP
     local originalBillboardPosition = nil
     local billboardGui = nil
     local scalingLoop = nil
+    local showEggESPEnabled = config.ShowEggESP
+    local eggHatch = nil
     local Humanoid = Character:WaitForChild("Humanoid")
     local walkSpeedValue = config.WalkSpeed
     local jumpPowerValue = config.JumpPower
@@ -1101,43 +1102,29 @@ end
         ESP.CreateESP(eggModel, { Color = Color3.fromRGB(255, 255, 255), Text = labelText })
     end
 
-    local function ScanAllEggs()
+    local function ScanAllEggs(action)
         local farm = PlayerFarm.Important.Objects_Physical
         if not farm then return end
         local saved = DataClient.GetSaved_Data()
         if not saved then return end
     
         for _, inst in ipairs(farm:GetChildren()) do
-            pcall(function()
-                AttachOrUpdateEggESP(inst)
-            end)
+            action(inst)
         end
     end
     
-    local function StartEggESPLoop()
-        ScanAllEggs()
-    
-        local farm = PlayerFarm.Important.Objects_Physical
-        if farm then
-            farm.ChildAdded:Connect(function(obj)
-                task.wait(0.12)
-                pcall(function() AttachOrUpdateEggESP(obj) end)
-            end)
-        end
-    
-        task.spawn(function()
-            while task.wait(1) do
-                pcall(ScanAllEggs)
-            end
-        end)
+    local function startEggESP()
+        ScanAllEggs(pcall(function()
+            AttachOrUpdateEggESP(inst)
+        end))
     
         pcall(function()
-            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage
+            local remotes = GameEvents
             local ev = remotes:FindFirstChild("EggReadyToHatch") or remotes:FindFirstChild("EggReadyToHatch_RE")
             if ev and ev:IsA("RemoteEvent") then
-                ev.OnClientEvent:Connect(function(uuid)
+                eggHatch = ev.OnClientEvent:Connect(function(petName, uuid)
                     task.wait(0.08)
-                    local farm2 = GetObjectsPhysical()
+                    local farm2 = PlayerFarm.Important.Objects_Physical
                     if not farm2 then return end
                     for _, inst in ipairs(farm2:GetChildren()) do
                         if inst:GetAttribute("OBJECT_UUID") == uuid then
@@ -1146,11 +1133,24 @@ end
                         end
                     end
                 end)
+                UILib:TrackProcess("connections", eggHatch, "EggHatch")
             end
         end)
     end
-    
-    StartEggESPLoop()
+
+    local function stopEggESP()
+        scanAllEggs(pcall(function()
+            ESP.Removes(inst)
+        end))
+
+        if eggHatch then
+            eggHatch:Disconnect()
+        end
+    end
+        
+    if showEggESPEnabled then 
+        startEggESP()
+    end
     
 -- Seeds teleport button UI
 local seedButton = frame:FindFirstChild("Seeds")
@@ -2183,13 +2183,13 @@ ESPSection:Toggle("Show Egg ESP", function(state)
     saveConfig(config)
 
     if state then
-        if setupBillboard() then
+        if startEggESP() then
             Window:Notify("Egg ESP Enabled", 2)
         else
             Window:Notify("Could not find egg", 2)
         end
     else
-        restoreOriginalProperties()
+        stopEggESP()
         Window:Notify("Egg ESP Disabled", 2)
     end
 end, {
@@ -2413,7 +2413,7 @@ local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.013")
+AboutSection:Label("Version: 1.3.015")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
