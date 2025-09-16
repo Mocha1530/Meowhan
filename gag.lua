@@ -2,7 +2,6 @@
 	Grow A Garden automation and more by Mocha1530
 ]]
 
-local meow, meowsult = pcall(function()
 -- All Variables
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
@@ -1910,7 +1909,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 local GearShopSection = ShopTab:Section("Gear Shop")
 local PetShopSection = ShopTab:Section("Pet Egg Shop")
 local CosmeticSection = ShopTab:Section("Cosmetic Shop")
-local EventShopSection = ShopTab:Section("Event Sop")
+local EventShopSection = ShopTab:Section("Event Shop")
 
     -- Seed Shop
     SeedShopSection:Label("Tier 1")
@@ -2161,10 +2160,10 @@ local EventShopSection = ShopTab:Section("Event Sop")
     })
 
     -- Event Shop
-    EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents["seed"], function(selected)
+    EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents.seed, function(selected)
         if selected then
-            eventController.selectedItems["seed"] = selected
-            config.SelectedEvents["seed"] = selected
+            eventController.selectedItems.seed = selected
+            config.SelectedEvents.seed = selected
             saveConfig(config)
         end
     end, true)
@@ -2555,7 +2554,4 @@ StatsSection:Label("Current Place ID: " .. game.PlaceId)
 StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
-end) 
 end)
-
-return meowsult
