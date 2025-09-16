@@ -308,6 +308,9 @@ local InfoTab = Window:Tab("Info")
         local autoBuySelectedGearsEnabled = config.BuySelectedGears
         local autoBuyAllGearsEnabled = config.BuyAllGears
 
+        -- Event Shop Vars
+        local selectedEventSeeds = config.SelectedEvents.seed or {}
+
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
     local originalBillboardPosition = nil
@@ -1872,6 +1875,7 @@ local SeedShopSection = ShopTab:Section("Seed Shop")
 local GearShopSection = ShopTab:Section("Gear Shop")
 local PetShopSection = ShopTab:Section("Pet Egg Shop")
 local CosmeticSection = ShopTab:Section("Cosmetic Shop")
+local EventShopSection = ShopTab:Section("Event Shop")
 
     -- Seed Shop
     SeedShopSection:Label("Tier 1")
@@ -2121,7 +2125,7 @@ local CosmeticSection = ShopTab:Section("Cosmetic Shop")
         group = "Buy_Shop_Cosmetics"
     })
 
-    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, {}, function(selected)
+    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, selectedEventSeeds, function(selected)
         if selected then
             config.SelectedEvents.seed = selected
             saveConfig(config)
