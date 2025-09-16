@@ -2160,10 +2160,10 @@ local EventShopSection = ShopTab:Section("Event Sop")
     })
 
     -- Event Shop
-    EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents[seed], function(selected)
+    EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents["seed"], function(selected)
         if selected then
-            eventController.selectedItems[seed] = selected
-            config.SelectedEvents[seed] = selected
+            eventController.selectedItems["seed"] = selected
+            config.SelectedEvents["seed"] = selected
             saveConfig(config)
         end
     end, true)
