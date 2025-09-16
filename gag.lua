@@ -309,7 +309,7 @@ local InfoTab = Window:Tab("Info")
         local autoBuyAllGearsEnabled = config.BuyAllGears
 
         -- Event Shop Vars
-        local selectedEventSeeds = config.SelectedEvents.seed or {}
+        local selectedEventSeeds = config.SelectedEvents["seed"] or {}
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
