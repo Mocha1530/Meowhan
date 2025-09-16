@@ -887,7 +887,8 @@ end
                         else
                             for shop, _ in pairs(controller.selectedItems) do
                                 for _, itemName in ipairs(shop) do
-                                    table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName].StockAmount, shop = controller.stock[itemName].ShopIndex})
+                                    local item = controller.stock[itemName]
+                                    table.insert(itemsToBuy, {name = itemName, count = item.StockAmount, shopIndex = item.ShopIndex})
                                 end
                             end
                         end
@@ -898,7 +899,7 @@ end
                                     table.insert(itemsToBuy, {name = itemName, count = count})
                                 end
                             else
-                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount, shop = count.ShopIndex})
+                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount, shopIndex = count.ShopIndex})
                             end
                         end
                     end
@@ -2158,6 +2159,7 @@ local EventShopSection = ShopTab:Section("Event Sop")
         group = "Buy_Shop_Cosmetics"
     })
 
+    -- Event Shop
     EventShopSection:Dropdown("Select Seeds: ", a_e_s_list.seed, config.SelectedEvents[seed], function(selected)
         if selected then
             eventController.selectedItems[seed] = selected
