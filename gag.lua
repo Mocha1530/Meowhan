@@ -2152,6 +2152,7 @@ local function connectDestroyEvent()
                 restoreOriginalProperties()
             end
             if showEggESPEnabled then
+                showEggESPEnabled = false
                 StopEggESP()
             end
         end)
