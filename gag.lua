@@ -310,6 +310,9 @@ local InfoTab = Window:Tab("Info")
 
         -- Event Shop Vars
         local selectedEventSeeds = config.SelectedEvents["seed"] or {}
+        local selectedEventGears = config.SelectedEvents["gear"] or {}
+        local selectedEventPets = config.SelectedEvents["pet"] or {}
+        local selectedEventCosmetics = config.SelectedEvents["cosmetic"] or {}
 
     -- Settings Vars
     local mutationTimerEnabled = config.ShowMutationTimer
@@ -857,16 +860,20 @@ end
         controller.autoBuyAll = config["BuyAll" .. shopType]
         
         controller.updateStock = function()
-            controller.stock = getShopStock(shopGui, shopType, defaultItemName)
-            
-            controller.itemList = {}
-            for itemName, _ in pairs(controller.stock) do
-                table.insert(controller.itemList, itemName)
-            end
-            
+            if shopType ~= "Events" then
+                controller.stock = getShopStock(shopGui, shopType, defaultItemName)
+                    
+                controller.itemList = {}
+                for itemName, _ in pairs(controller.stock) do
+                    table.insert(controller.itemList, itemName)
+                end
+            else
+                controller.stock = a_e_s_data
+                end
+            end        
             return controller.stock
         end
-        
+            
         controller.updateStock()
         
         controller.startBuying = function()
@@ -877,28 +884,48 @@ end
                     local itemsToBuy = {}
                     
                     if controller.autoBuySelected and #controller.selectedItems > 0 then
-                        for _, itemName in ipairs(controller.selectedItems) do
-                            if controller.stock[itemName] and controller.stock[itemName] > 0 then
-                                table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                        if shopType ~= "Events" then
+                            for _, itemName in ipairs(controller.selectedItems) do
+                                if controller.stock[itemName] and controller.stock[itemName] > 0 then
+                                    table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                                end
+                            end
+                        else
+                            for shop, _ in pairs(controller.selectedItems) do
+                                for _, itemName in ipairs(shop) do
+                                    local item = controller.stock[itemName]
+                                    table.insert(itemsToBuy, {name = itemName, count = item.StockAmount, shopIndex = item.ShopIndex})
+                                end
                             end
                         end
                     elseif controller.autoBuyAll then
                         for itemName, count in pairs(controller.stock) do
-                            if count > 0 then
-                                table.insert(itemsToBuy, {name = itemName, count = count})
+                            if shopType ~= "Events" then
+                                if count > 0 then
+                                    table.insert(itemsToBuy, {name = itemName, count = count})
+                                end
+                            else
+                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount, shopIndex = count.ShopIndex})
                             end
                         end
                     end
                     
                     for _, item in ipairs(itemsToBuy) do
-                        if tier then
-                            for i = 1, item.count do
-                                fireEvent(tier, item.name)
-                                task.wait(0.05)
+                        if shopType ~= "Events" then
+                            if tier then
+                                for i = 1, item.count do
+                                    fireEvent(tier, item.name)
+                                    task.wait(0.05)
+                                end
+                            else
+                                for i = 1, item.count do
+                                    fireEvent(item.name)
+                                    task.wait(0.05)
+                                end
                             end
                         else
                             for i = 1, item.count do
-                                fireEvent(item.name)
+                                fireEvent(item.name, item.shopIndex)
                                 task.wait(0.05)
                             end
                         end
@@ -958,6 +985,15 @@ end
         end
     )
 
+    local eventController = createShopController(
+        "Events", 
+        "Placeholder", 
+        "Placeholder", 
+        function(itemName, shopIndex) 
+            GameEvents.BuyCosmeticCrate:FireServer(itemName, shopIndex) 
+        end
+    )
+
     if config.BuySelectedSeeds or config.BuyAllSeeds then
         seedController.startBuying()
     end
@@ -976,6 +1012,10 @@ end
 
     if config.BuySelectedCrates or config.BuyAllCrates then
         crateController.startBuying()
+    end
+
+    if config.BuySelectedEvents or config.BuyAllEvents then
+        eventController.startBuying()
     end
 
     -- Egg ESP
