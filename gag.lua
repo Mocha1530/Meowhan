@@ -1114,9 +1114,9 @@ end
     end
     
     local function startEggESP()
-        ScanAllEggs(pcall(function()
+        ScanAllEggs(function()
             AttachOrUpdateEggESP(inst)
-        end))
+        end)
     
         pcall(function()
             local remotes = GameEvents
@@ -1139,9 +1139,9 @@ end
     end
 
     local function stopEggESP()
-        scanAllEggs(pcall(function()
+        scanAllEggs(function()
             ESP.Removes(inst)
-        end))
+        end)
 
         if eggHatch then
             eggHatch:Disconnect()
@@ -2146,6 +2146,9 @@ local function connectDestroyEvent()
             if restoreOriginalProperties then
                 restoreOriginalProperties()
             end
+            if showEggESPEnabled then
+                stopEggESP()
+            end
         end)
     else
         warn("ScreenGui not found in CoreGui or PlayerGui")
@@ -2427,3 +2430,4 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
+
