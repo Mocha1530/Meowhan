@@ -890,8 +890,8 @@ end
                                 end
                             end
                         else
-                            for shop, _ in pairs(controller.selectedItems) do
-                                for _, itemName in ipairs(shop) do
+                            for shop, items in pairs(controller.selectedItems) do
+                                for _, itemName in ipairs(items) do
                                     local item = controller.stock[itemName]
                                     table.insert(itemsToBuy, {name = itemName, count = item.StockAmount, shopIndex = item.ShopIndex})
                                 end
@@ -2164,6 +2164,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         group = "Buy_Shop_Cosmetics"
     })
 
+    -- Event Shop
     EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, selectedEventSeeds, function(selected)
         if selected then
             eventController.selectedItems.seed = selected
@@ -2568,7 +2569,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.124")
+AboutSection:Label("Version: 1.3.125")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
