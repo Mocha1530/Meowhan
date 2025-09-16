@@ -73,7 +73,27 @@ for k_a_c, _ in pairs(a_c_data["Cosmetic Crates"]) do
     table.insert(a_c_list.crates, k_a_c)
 end
 
-local a_e_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/EventShopData.lua", true))()
+local a_e_s_data = {
+    ["Golden Acorn"] = {
+    SeedName = "Golden Acorn";
+    SeedRarity = "Prismatic";
+    StockChance = 40;
+    StockAmount = 1;
+    Price = 10000000000;
+    PurchaseID = 3401536371;
+    DisplayInShop = true;
+    ShowOdds = true;
+    LayoutOrder = 100;
+    LockedInShop = true;
+    UnlockText = "Contribute to Fall Bloom 17 Times";
+    CanBuy = true;
+    ItemType = "Gear";
+    Description = "";
+    ShopIndex = 2;
+    Stack = 1;
+    FallbackPrice = 239;
+    }
+}
 local a_e_s_list = {
     seed = {},
     gear = {},
