@@ -989,7 +989,7 @@ end
         "Placeholder", 
         "Placeholder", 
         function(itemName, shopIndex) 
-            GameEvents.BuyCosmeticCrate:FireServer(itemName, shopIndex) 
+            GameEvents.BuyEventShopStock:FireServer(itemName, shopIndex) 
         end
     )
 
@@ -2568,7 +2568,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.123")
+AboutSection:Label("Version: 1.3.124")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
