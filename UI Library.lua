@@ -1375,7 +1375,7 @@ function Library:CreateWindow(title)
                 SearchCorner.Parent = ListSearch                
                 
                 -- Create option buttons
-                for _, option in ipairs(options) do
+                for index, option in ipairs(options) do
                     local OptionBtn = Instance.new("TextButton")
                     OptionBtn.Parent = ListScroll
                     OptionBtn.BackgroundColor3 = Theme.Card
@@ -1385,8 +1385,10 @@ function Library:CreateWindow(title)
                     OptionBtn.Text = option
                     if multiSelect then
                         OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = table.find(selected, option) and -1 or index
                     else
                         OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = option == selected and -1 or index
                     end
                     OptionBtn.TextSize = IsMobile and 11 or 12
 
@@ -1427,13 +1429,14 @@ function Library:CreateWindow(title)
                         end
                         
                         -- Update colors
-                        for _, child in ipairs(ListScroll:GetChildren()) do
+                        for index, child in ipairs(ListScroll:GetChildren()) do
                             if child:IsA("TextButton") then
                                 if multiSelect then
                                     child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
-                                    child.LayoutOrder = table.find(selected, child.Text) and -1 or 0
+                                    child.LayoutOrder = table.find(selected, child.Text) and -1 or index
                                 else
                                     child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = child.Text == selected and -1 or index
                                 end
                             end
                         end
