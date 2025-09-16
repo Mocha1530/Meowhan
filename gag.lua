@@ -1126,7 +1126,7 @@ end
     
         pcall(function()
             local remotes = GameEvents
-            local ev = remotes:FindFirstChild("EggReadyToHatch") or remotes:FindFirstChild("EggReadyToHatch_RE")
+            local ev = remotes:FindFirstChild("EggReadyToHatch_RE")
             if ev and ev:IsA("RemoteEvent") then
                 eggHatch = ev.OnClientEvent:Connect(function(petName, uuid)
                     task.wait(0.08)
@@ -1145,7 +1145,7 @@ end
     end
 
     local function stopEggESP()
-        scanAllEggs()
+        ScanAllEggs()
     
         if eggHatch then
             eggHatch:Disconnect()
@@ -2419,7 +2419,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.016")
+AboutSection:Label("Version: 1.3.017")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
