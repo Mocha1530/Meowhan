@@ -1102,21 +1102,27 @@ end
         ESP.CreateESP(eggModel, { Color = Color3.fromRGB(255, 255, 255), Text = labelText })
     end
 
-    local function ScanAllEggs(action)
+    local function ScanAllEggs()
         local farm = PlayerFarm.Important.Objects_Physical
         if not farm then return end
         local saved = DataClient.GetSaved_Data()
         if not saved then return end
     
         for _, inst in ipairs(farm:GetChildren()) do
-            action(inst)
+            if showEggESPEnabled then
+                pcall(function()
+                    AttachOrUpdateEggESP(inst)
+                end)
+            else
+                pcall(function()
+                    ESP.Removes(inst)
+                end)
+            end
         end
     end
     
     local function startEggESP()
-        ScanAllEggs(function()
-            AttachOrUpdateEggESP(inst)
-        end)
+        ScanAllEggs()
     
         pcall(function()
             local remotes = GameEvents
@@ -1139,10 +1145,8 @@ end
     end
 
     local function stopEggESP()
-        scanAllEggs(function()
-            ESP.Removes(inst)
-        end)
-
+        scanAllEggs()
+    
         if eggHatch then
             eggHatch:Disconnect()
         end
@@ -2126,7 +2130,7 @@ local function restoreOriginalProperties()
         local gui = billboardPart:FindFirstChild("BillboardGui")
         if gui then
 			local label = gui.TimerTextLabel
-			gui.Adornee = ""
+			gui.Adornee = nil
             gui.MaxDistance = 60
             gui.Size = UDim2.new(7, 0, 4, 0)
 			label.Position = UDim2.new(0, 0, 0, 0)
@@ -2415,7 +2419,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.015")
+AboutSection:Label("Version: 1.3.016")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
@@ -2430,4 +2434,3 @@ StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
 end)
-
