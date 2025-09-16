@@ -869,7 +869,6 @@ end
                 end
             else
                 controller.stock = a_e_s_data
-                end
             end        
             return controller.stock
         end
