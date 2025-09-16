@@ -2152,7 +2152,7 @@ local function connectDestroyEvent()
                 restoreOriginalProperties()
             end
             if showEggESPEnabled then
-                stopEggESP()
+                StopEggESP()
             end
         end)
     else
@@ -2420,7 +2420,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.018")
+AboutSection:Label("Version: 1.3.019")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
