@@ -2164,10 +2164,34 @@ local EventShopSection = ShopTab:Section("Event Shop")
         group = "Buy_Shop_Cosmetics"
     })
 
-    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, selectedEventSeeds, function(selected)
+    EventShopSection:Dropdown("Select Seed:", table.sort(a_e_s_list.seed), selectedEventSeeds, function(selected)
         if selected then
-            eventController.selectedItems.seed = table.sort(selected)
-            config.SelectedEvents.seed = table.sort(selected)
+            eventController.selectedItems.seed = selected
+            config.SelectedEvents.seed = selected
+            saveConfig(config)
+        end
+    end, true)
+
+    EventShopSection:Dropdown("Select Gear:", table.sort(a_e_s_list.gear), selectedEventGears, function(selected)
+        if selected then
+            eventController.selectedItems.gear = selected
+            config.SelectedEvents.gear = selected
+            saveConfig(config)
+        end
+    end, true)
+
+    EventShopSection:Dropdown("Select Pet:", table.sort(a_e_s_list.pet), selectedEventPets, function(selected)
+        if selected then
+            eventController.selectedItems.pet = selected
+            config.SelectedEvents.pet = selected
+            saveConfig(config)
+        end
+    end, true)
+
+    EventShopSection:Dropdown("Select Cosmetic:", table.sort(a_e_s_list.cosmetic), selectedEventCosmetics, function(selected)
+        if selected then
+            eventController.selectedItems.cosmetic = selected
+            config.SelectedEvents.cosmetic = selected
             saveConfig(config)
         end
     end, true)
@@ -2544,7 +2568,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.121")
+AboutSection:Label("Version: 1.3.122")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
