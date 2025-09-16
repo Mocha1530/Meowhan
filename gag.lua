@@ -2125,7 +2125,7 @@ local function restoreOriginalProperties()
 
         local gui = billboardPart:FindFirstChild("BillboardGui")
         if gui then
-			local label = gui.TextTimerLabel
+			local label = gui.TimerTextLabel
 			gui.Adornee = ""
             gui.MaxDistance = 60
             gui.Size = UDim2.new(7, 0, 4, 0)
@@ -2409,7 +2409,6 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
-local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
