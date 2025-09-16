@@ -91,8 +91,6 @@ for k_a_e_s, in pairs(a_e_s_data) do
         table.insert(a_e_s_list.pet, k_a_e_s)
     elseif ShopIndex == 4 then
         table.insert(a_e_s_list.cosmetic, k_a_e_s)
-    else
-        continue
     end
 end
 
@@ -856,7 +854,7 @@ end
         controller.autoBuyAll = config["BuyAll" .. shopType]
 
         controller.updateStock = function()
-            if shopType ~= "events" then
+            if shopType ~= "Events" then
                 controller.stock = getShopStock(shopGui, shopType, defaultItemName)
                     
                 controller.itemList = {}
@@ -864,7 +862,7 @@ end
                     table.insert(controller.itemList, itemName)
                 end
             else
-                control.stock = a_e_s_data
+                controller.stock = a_e_s_data
                 end
             end        
             return controller.stock
@@ -982,7 +980,7 @@ end
 
     local eventController = createShopController(
         "Events", 
-        nil, 
+        "Placeholder", 
         "Placeholder", 
         function(itemName, shop) 
             GameEvents.BuyEventShopStock:FireServer(itemName, shop) 
