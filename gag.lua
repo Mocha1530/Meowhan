@@ -882,11 +882,13 @@ end
                     
                     local itemsToBuy = {}
                     
-                    if controller.autoBuySelected and #controller.selectedItems > 0 then
+                    if controller.autoBuySelected then
                         if shopType ~= "Events" then
-                            for _, itemName in ipairs(controller.selectedItems) do
-                                if controller.stock[itemName] and controller.stock[itemName] > 0 then
-                                    table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                            if #controller.selectedItems > 0 then
+                                for _, itemName in ipairs(controller.selectedItems) do
+                                    if controller.stock[itemName] and controller.stock[itemName] > 0 then
+                                        table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                                    end
                                 end
                             end
                         else
@@ -2569,7 +2571,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.125")
+AboutSection:Label("Version: 1.3.126")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
