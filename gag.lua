@@ -2164,7 +2164,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         group = "Buy_Shop_Cosmetics"
     })
 
-    EventShopSection:Dropdown("Select Seed:", table.sort(a_e_s_list.seed), selectedEventSeeds, function(selected)
+    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, selectedEventSeeds, function(selected)
         if selected then
             eventController.selectedItems.seed = selected
             config.SelectedEvents.seed = selected
@@ -2172,7 +2172,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         end
     end, true)
 
-    EventShopSection:Dropdown("Select Gear:", table.sort(a_e_s_list.gear), selectedEventGears, function(selected)
+    EventShopSection:Dropdown("Select Gear:", a_e_s_list.gear, selectedEventGears, function(selected)
         if selected then
             eventController.selectedItems.gear = selected
             config.SelectedEvents.gear = selected
@@ -2180,7 +2180,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         end
     end, true)
 
-    EventShopSection:Dropdown("Select Pet:", table.sort(a_e_s_list.pet), selectedEventPets, function(selected)
+    EventShopSection:Dropdown("Select Pet:", a_e_s_list.pet, selectedEventPets, function(selected)
         if selected then
             eventController.selectedItems.pet = selected
             config.SelectedEvents.pet = selected
@@ -2188,7 +2188,7 @@ local EventShopSection = ShopTab:Section("Event Shop")
         end
     end, true)
 
-    EventShopSection:Dropdown("Select Cosmetic:", table.sort(a_e_s_list.cosmetic), selectedEventCosmetics, function(selected)
+    EventShopSection:Dropdown("Select Cosmetic:", a_e_s_list.cosmetic, selectedEventCosmetics, function(selected)
         if selected then
             eventController.selectedItems.cosmetic = selected
             config.SelectedEvents.cosmetic = selected
@@ -2568,7 +2568,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.122")
+AboutSection:Label("Version: 1.3.123")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
