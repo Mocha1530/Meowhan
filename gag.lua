@@ -81,7 +81,7 @@ local a_e_s_list = {
     cosmetic = {}
     
 }
-for k_a_e_s, in pairs(a_e_s_data) do
+for k_a_e_s, _ in pairs(a_e_s_data) do
     local ShopIndex = k_a_e_s.ShopIndex
     if ShopIndex == 1 then
         table.insert(a_e_s_list.seed, k_a_e_s)
