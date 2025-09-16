@@ -2,6 +2,7 @@
 	Grow A Garden automation and more by Mocha1530
 ]]
 
+local meow, meowsult = pcall(function()
 -- All Variables
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
@@ -2554,4 +2555,7 @@ StatsSection:Label("Current Place ID: " .. game.PlaceId)
 StatsSection:Button("Copy Job ID", function()
     setclipboard(game.JobId)
     Window:Notify("Job ID copied to clipboard!", 2)
+end) 
 end)
+
+return meowsult
