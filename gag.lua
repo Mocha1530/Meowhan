@@ -1124,16 +1124,16 @@ end
     local function startEggESP()
         ScanAllEggs()
     
-        pcall(function()
+        local ok, mess = pcall(function()
             local remotes = GameEvents
             local ev = remotes:FindFirstChild("EggReadyToHatch_RE")
             if ev and ev:IsA("RemoteEvent") then
-                eggHatch = ev.OnClientEvent:Connect(function(petName, uuid)
+                eggHatch = ev.OnClientEvent:Connect(function(arg1, arg2)
                     task.wait(0.08)
                     local farm2 = PlayerFarm.Important.Objects_Physical
                     if not farm2 then return end
                     for _, inst in ipairs(farm2:GetChildren()) do
-                        if inst:GetAttribute("OBJECT_UUID") == uuid then
+                        if inst:GetAttribute("OBJECT_UUID") == arg2 then
                             pcall(function() AttachOrUpdateEggESP(inst) end)
                             break
                         end
@@ -1142,6 +1142,7 @@ end
                 UILib:TrackProcess("connections", eggHatch, "EggHatch")
             end
         end)
+        print("Connection: " .. tostring(ok) .. " " .. tostring(mess))
     end
 
     local function stopEggESP()
@@ -2419,7 +2420,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.017")
+AboutSection:Label("Version: 1.3.018")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
