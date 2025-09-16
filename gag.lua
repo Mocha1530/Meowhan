@@ -1,4 +1,3 @@
-
 --[[
 	Grow A Garden automation and more by Mocha1530
 ]]
@@ -2122,7 +2121,7 @@ local CosmeticSection = ShopTab:Section("Cosmetic Shop")
         group = "Buy_Shop_Cosmetics"
     })
 
-    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, config.SelectedEvents.seed or {}, function(selected)
+    EventShopSection:Dropdown("Select Seed:", a_e_s_list.seed, {}, function(selected)
         if selected then
             config.SelectedEvents.seed = selected
             saveConfig(config)
