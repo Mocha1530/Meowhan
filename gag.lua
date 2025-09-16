@@ -1129,13 +1129,14 @@ end
             local ev = remotes:FindFirstChild("EggReadyToHatch_RE")
             if ev and ev:IsA("RemoteEvent") then
                 eggHatch = ev.OnClientEvent:Connect(function(arg1, arg2)
-                    task.wait(0.08)
+                    task.wait(1)
                     local farm2 = PlayerFarm.Important.Objects_Physical
                     if not farm2 then print("Farm not found") return end
                     for _, inst in ipairs(farm2:GetChildren()) do
                         if inst:GetAttribute("OBJECT_UUID") == arg2 then
                             local ok, er = pcall(function() AttachOrUpdateEggESP(inst) end)
                             print("Result: " .. tostring(ok) .. " " .. tostring(er))
+                            print("Egg Hatched: " .. tostring(arg1))
                             break
                         end
                     end
