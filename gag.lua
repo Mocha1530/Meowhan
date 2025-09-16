@@ -20,6 +20,7 @@ local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local UpdateItems = Workspace.Interaction.UpdateItems
 local placeId = game.PlaceId
+local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
@@ -130,6 +131,7 @@ local DEFAULT_CONFIG = {
     
     -- ESP
     ShowMutationTimer = true,
+	ShowEggESP = false,
 
     -- Player
     WalkSpeed = 20,
@@ -280,6 +282,8 @@ local InfoTab = Window:Tab("Info")
     local originalBillboardPosition = nil
     local billboardGui = nil
     local scalingLoop = nil
+    local showEggESPEnabled = config.ShowEggESP
+    local eggHatch = nil
     local Humanoid = Character:WaitForChild("Humanoid")
     local walkSpeedValue = config.WalkSpeed
     local jumpPowerValue = config.JumpPower
@@ -454,113 +458,6 @@ local function findItem(filters)
 end
 
 -- Main filtering function (Farm)
---[[local function findFruit(filters)
-    local nameFilter = filters.name or "None"
-    local typeFilter = filters.type
-    local mutationFilter = filters.mutation or "None"
-    local weightFilter = filters.weight or 0
-    local weightMode = filters.weightMode or "None"
-    local action = filters.action
-    local plants = PlayerFarm.Important:FindFirstChild("Plants_Physical")
-    
-    if not typeFilter or not action then
-        warn("Type and action are required parameters")
-        return false
-    end
-
-    if not plants then
-        warn("PlayerFarm not found")
-        return false
-    end
-
-    local function checkFruit(fruit)
-        if fruit:GetAttribute("Favorited") then
-            return false
-        end
-
-        local matchesAllFilters = true
-        
-        if matchesAllFilters and (nameFilter ~= "None" and #nameFilter > 0) then
-            local nameMatch = false
-            if type(nameFilter) == "table" then
-                for _, name in ipairs(nameFilter) do
-                    if fruit.Name == name then
-                        nameMatch = true
-                        break
-                    end
-                end
-            else
-                nameMatch = fruit.Name == name
-            end
-            matchesAllFilters = nameMatch
-        end
-
-        if matchesAllFilters and (mutationFilter ~= "None" and #mutationFilter > 0) then
-            local mutationMatch = false
-            if type(mutationFilter) == "table" then
-                for _, mutation in ipairs(mutationFilter) do
-                    local attributeValue = fruit:GetAttribute(mutation)
-                    if attributeValue then
-                        mutationMatch = true
-                        break
-                    end
-                    local variant = fruit:FindFirstChild("Variant")
-                    if variant and variant.Value == mutation then
-                        mutationMatch = true
-                        break
-                    end
-                end
-            else
-                local attributeValue = fruit:GetAttribute(mutationFilter)
-                if attributeValue then
-                    mutationMatch = true
-                else
-                    local variant = fruit:FindFirstChild("Variant")
-                    mutationMatch = variant and variant.Value == mutationFilter
-                end
-            end
-            matchesAllFilters = mutationMatch
-        end
-
-        if matchesAllFilters and weightMode ~= "None" then
-            local weight = fruit:FindFirstChild("Weight")
-            if not weight then
-                matchesAllFilters = false
-            else
-                weight = tonumber(weight.Value)
-                if weightMode == "Below" and weight > weightFilter then
-                    matchesAllFilters = false
-                elseif weightMode == "Above" and weight < weightFilter then
-                    matchesAllFilters = false
-                end
-            end
-        end
-
-        return matchesAllFilters
-    end
-
-    for _, child in ipairs(plants:GetChildren()) do
-        if child:IsA("Model") then
-            local fruitsFolder = child:FindFirstChild("Fruits")
-            if fruitsFolder then
-                for _, fruit in ipairs(fruitsFolder:GetChildren()) do
-                    if fruit:IsA("Model") and checkFruit(fruit) then
-                        action(fruit)
-                        return true
-                    end
-                end
-            else
-                if checkFruit(child) then
-                    action(child)
-                    return true
-                end
-            end
-        end
-    end
-
-    return false
-end]]
-
 local function findFruit(filters)
     local nameFilter = filters.name or "None"
     local typeFilter = filters.type
@@ -680,41 +577,6 @@ end
 
 -- Tab Functions
     -- Auto Collect
-    --[[local function startCollectCrops()
-        spawn(function()
-            while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
-                if autoCollectRequestedEnabed then
-                    if PlantTraits[requestedPlant] then
-                        findFruit({
-                                    name = PlantTraits[requestedPlant],
-                                    type = "Fruit",
-                                    action = function(fruit)
-                                        GameEvents.Crops.Collect:FireServer({fruit})
-                                    end
-                        })
-                        task.wait(0.1)
-                    else
-                        task.wait(5)
-                    end
-                elseif autoCollectSelectedFruitsEnabled then
-        			findFruit({
-        						name = selectedFruitsToCollect,
-                                type = "Fruit",
-                                mutation = selectedFruitMutations,
-        						weight = selectedFruitWeight,
-        						weightMode = selectedWeightMode,
-                                action = function(fruit)
-                                    GameEvents.Crops.Collect:FireServer({fruit})
-                                end
-                    })
-                    task.wait(0.1)
-        		else
-        			task.wait(2)	
-                end
-            end
-        end)
-    end]]
-
     local function startCollectCrops()
         spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
@@ -1080,6 +942,220 @@ end
 
     if config.BuySelectedCrates or config.BuyAllCrates then
         crateController.startBuying()
+    end
+
+    -- Egg ESP
+    local DataClient = {}
+    function DataClient.GetSaved_Data()
+        local ds = DataService
+        if not ds or not ds.GetData then return nil end
+        local ok, data = pcall(function() return ds:GetData() end)
+        if not ok or not data then return nil end
+        local saveSlots = data.SaveSlots
+        if not saveSlots then return nil end
+        local selected = saveSlots.SelectedSlot
+        if not selected then return nil end
+        local all = saveSlots.AllSlots
+        if not all or not all[selected] then return nil end
+        return all[selected].SavedObjects
+    end
+    local Calculator = {}
+    do
+        local function CalculateWeight(Y, w)
+            return Y + Y * 0.1 * w
+        end
+        function Calculator.CurrentWeight(Y, w)
+            local Q = CalculateWeight(Y, w) * 100
+            local Yround = math.round(Q) / 100
+            return Yround
+        end
+    end
+    
+    local ESP = {}
+    do
+        function ESP.CreateESP(target, opts)
+            if not target or not opts then return end
+            if target:FindFirstChild("ESP") then return end
+    
+            local adornee = nil
+            if target:IsA("Model") then
+                adornee = target.PrimaryPart or target:FindFirstChildWhichIsA("BasePart")
+            elseif target:IsA("BasePart") then
+                adornee = target
+            end
+            if not adornee then return end
+    
+            local folder = Instance.new("Folder")
+            folder.Name = "ESP"
+            folder.Parent = target
+    
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "ESP"
+            box.Size = Vector3.new(1, 0, 1)
+            box.Transparency = 1
+            box.AlwaysOnTop = false
+            box.ZIndex = 0
+            box.Adornee = adornee
+            box.Parent = folder
+    
+            local billboard = Instance.new("BillboardGui")
+            billboard.Adornee = adornee
+            billboard.Size = UDim2.new(0, 100, 0, 150)
+            billboard.StudsOffset = Vector3.new(0, 1, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = box
+    
+            local label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Position = UDim2.new(0, 0, 0, -50.0)
+            label.Size = UDim2.new(0, 100, 0, 100)
+            label.TextSize = 10
+            label.TextColor3 = opts.Color or Color3.fromRGB(255, 255, 255)
+            label.TextStrokeTransparency = 0
+            label.TextYAlignment = Enum.TextYAlignment.Bottom
+            label.RichText = true
+            label.Text = opts.Text or ""
+            label.ZIndex = 15
+            label.Parent = billboard
+    
+            return {
+                Folder = folder,
+                Adornee = adornee,
+                Box = box,
+                Gui = billboard,
+                Label = label
+            }
+        end
+    
+        function ESP.Removes(target)
+            if not target then return end
+            task.spawn(function()
+                local f = target:FindFirstChild("ESP")
+                if f then f:Destroy() end
+            end)
+        end
+    end
+
+    local function EggIsVisibleForLocal(egg)
+        if not egg then return false end
+        if egg:GetAttribute("OWNER") ~= LocalPlayer.Name then
+            return false
+        end
+        local readFlag = egg:GetAttribute("READY")
+        if not readFlag then
+            return false
+        end
+        local tth = tonumber(egg:GetAttribute("TimeToHatch")) or 0
+        if tth > 0 then
+            return false
+        end
+        return true
+    end
+
+    local function AttachOrUpdateEggESP(eggModel)
+        if not eggModel then return end
+        if not EggIsVisibleForLocal(eggModel) then
+            ESP.Removes(eggModel)
+            return
+        end
+        local uuid = eggModel:GetAttribute("OBJECT_UUID")
+        if not uuid then
+            ESP.Removes(eggModel)
+            return
+        end
+        local saved = DataClient.GetSaved_Data()
+        if not saved then
+            ESP.Removes(eggModel)
+            return
+        end
+        local entry = saved[uuid]
+        if not entry or type(entry) ~= "table" or not entry.Data then
+            ESP.Removes(eggModel)
+            return
+        end
+    
+        local data = entry.Data
+        local eggName   = data.EggName or eggModel:GetAttribute("EggName") or "Egg"
+        local eggType   = data.Type or "Unknown"
+        local baseWeight= data.BaseWeight or 1
+        local scale     = data.Scale or 1
+    
+        local ok, weightValue = pcall(function()
+            return Calculator.CurrentWeight(baseWeight, scale)
+        end)
+        if not ok or not weightValue then weightValue = baseWeight end
+    
+        local tier =
+            (weightValue > 9 and "Titanic")
+            or (weightValue >= 6 and weightValue <= 9 and "Semi Titanic")
+            or (weightValue > 3 and "Huge")
+            or "Small"
+    
+        local labelText = string.format(
+            "<font color='rgb(3,211,252)'>%s</font>\n<font color='rgb(255,215,0)'>%s</font>\n<font color='rgb(100,255,100)'>%s</font>",
+            tostring(eggName),
+            tostring(eggType),
+            tostring(weightValue) .. " KG " .. tier
+        )
+    
+        ESP.Removes(eggModel)
+        ESP.CreateESP(eggModel, { Color = Color3.fromRGB(255, 255, 255), Text = labelText })
+    end
+
+    local function ScanAllEggs()
+        local farm = PlayerFarm.Important.Objects_Physical
+        if not farm then return end
+        local saved = DataClient.GetSaved_Data()
+        if not saved then return end
+    
+        for _, inst in ipairs(farm:GetChildren()) do
+            if showEggESPEnabled then
+                pcall(function()
+                    AttachOrUpdateEggESP(inst)
+                end)
+            else
+                pcall(function()
+                    ESP.Removes(inst)
+                end)
+            end
+        end
+    end
+    
+    local function startEggESP()
+        ScanAllEggs()
+    
+        local ok, mess = pcall(function()
+            local remotes = GameEvents
+            local ev = remotes:FindFirstChild("EggReadyToHatch_RE")
+            if ev and ev:IsA("RemoteEvent") then
+                eggHatch = ev.OnClientEvent:Connect(function(arg1, arg2)
+                    task.wait(1)
+                    local farm2 = PlayerFarm.Important.Objects_Physical
+                    if not farm2 then print("Farm not found") return end
+                    for _, inst in ipairs(farm2:GetChildren()) do
+                        if inst:GetAttribute("OBJECT_UUID") == arg2 then
+                            local ok, er = pcall(function() AttachOrUpdateEggESP(inst) end)
+                            print("Egg Hatched: " .. tostring(arg1))
+                            break
+                        end
+                    end
+                end)
+                UILib:TrackProcess("connections", eggHatch, "EggHatch")
+            end
+        end)
+        print("Connection: " .. tostring(ok) .. " " .. tostring(mess))
+    end
+
+    local function stopEggESP()
+        ScanAllEggs()
+    
+        if eggHatch then
+            eggHatch:Disconnect()
+        end
+    end
+        
+    if showEggESPEnabled then 
+        startEggESP()
     end
     
 -- Seeds teleport button UI
@@ -2020,146 +2096,48 @@ local LocalPlayerSection = SettingsTab:Section("Player")
 local RejoinSection = SettingsTab:Section("Rejoin Config")
 
 -- Function to find and store the BillboardGui reference
-local function findBillboardGui()
-    local model2 = Workspace:FindFirstChild("NPCS")
-
-    if model2 then
-        model2 = model2:FindFirstChild("PetMutationMachine")
-        if model2 then
-            model2 = model2:FindFirstChild("Model")
-            if model2 then
-                for _, child in ipairs(model2:GetChildren()) do
-                    if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
-                        local billboardPart = child.BillboardPart
-
-                        if not originalBillboardPosition then
-                            originalBillboardPosition = billboardPart.Position
-                        end
-
-                        local currentPosition = billboardPart.Position
-                        billboardPart.Position = Vector3.new(
-                            currentPosition.X,
-                            15,               
-                            currentPosition.Z
-                        )
-
-                        billboardPart.CanCollide = false
-
-                        billboardGui = billboardPart:FindFirstChild("BillboardGui")
-                        if billboardGui then
-                            billboardGui.MaxDistance = 10000
-                            return true
-                        end
-                    end
-                end
-            end
-        end
+local function setupBillboard()
+    local billboardPart = workspace.NPCS.PetMutationMachine.Model:FindFirstChild("BillboardPart", true)
+    if billboardPart and billboardPart:FindFirstChild("BillboardGui") then
+		if not originalBillboardPosition then
+	        originalBillboardPosition = billboardPart.Position
+	    end
+		local currentPosition = billboardPart.Position
+	        billboardPart.Position = Vector3.new(
+	            currentPosition.X,
+	            15,               
+	            currentPosition.Z
+	    )
+	    billboardPart.CanCollide = false
+        local billboardGui = billboardPart.BillboardGui
+		local TimerTextLabel = billboardGui.TimerTextLabel
+        billboardGui.Adornee = billboardPart
+        billboardGui.Size = UDim2.new(7, 0, 4, 0)
+        billboardGui.MaxDistance = 10000
+		TimerTextLabel.Position = UDim2.new(0.5, -15, 0, 0)
+		TimerTextLabel.Size = UDim2.new(0, 30, 0, 14)
+        
+        return true
     end
-
     return false
-end
-
-local function startScalingLoop()
-    if scalingLoop then
-        scalingLoop:Disconnect()
-        scalingLoop = nil
-    end
-
-    scalingLoop = RunService.RenderStepped:Connect(function()
-        if not Running.showMutationTimer or not mutationTimerEnabled or not billboardGui or not billboardGui.Parent then
-            if scalingLoop then
-                scalingLoop:Disconnect()
-                scalingLoop = nil
-            end
-            return
-        end
-
-        local localPlayer = Players.LocalPlayer
-
-        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local playerPos = localPlayer.Character.HumanoidRootPart.Position
-            local billboardPos = billboardGui.Parent.Parent.Position
-            local distance = (playerPos - billboardPos).Magnitude
-
-            -- Size parameters
-            local minSize = UDim2.new(14, 0, 8, 0)   -- Minimum size (close)
-            local maxSize = UDim2.new(50, 0, 34, 0)  -- Maximum size (far)
-
-            -- Distance parameters
-            local minDistance = 60  -- Distance where size is minimum
-            local maxDistance = 200 -- Distance where size is maximum
-
-            -- Calculate scale factor (0 to 1)
-            local factor = math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
-
-            -- Interpolate between min and max size
-            local newX = minSize.X.Scale + (maxSize.X.Scale - minSize.X.Scale) * factor
-            local newY = minSize.Y.Scale + (maxSize.Y.Scale - minSize.Y.Scale) * factor
-
-            billboardGui.Size = UDim2.new(newX, 0, newY, 0)
-        end
-    end)
 end
 
 -- Function to restore the original position and properties
 local function restoreOriginalProperties()
     if originalBillboardPosition then
-        local model3 = Workspace:FindFirstChild("NPCS")
+    	local billboardPart = workspace.NPCS.PetMutationMachine.Model:FindFirstChild("BillboardPart", true)
+        billboardPart.Position = originalBillboardPosition
+        billboardPart.CanCollide = true
 
-        if model3 then
-            model3 = model3:FindFirstChild("PetMutationMachine")
-            if model3 then
-                model3 = model3:FindFirstChild("Model")
-                if model3 then
-                    for _, child in ipairs(model3:GetChildren()) do
-                        if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
-                            local billboardPart = child.BillboardPart
-                            billboardPart.Position = originalBillboardPosition
-                            billboardPart.CanCollide = true  -- Restore collision
-
-                            -- Restore the BillboardGui properties
-                            local gui = billboardPart:FindFirstChild("BillboardGui")
-                            if gui then
-                                gui.MaxDistance = 60
-                                gui.Size = UDim2.new(7, 0, 4, 0)
-                            end
-                        end
-                    end
-                end 
-            end
+        local gui = billboardPart:FindFirstChild("BillboardGui")
+        if gui then
+			local label = gui.TimerTextLabel
+			gui.Adornee = nil
+            gui.MaxDistance = 60
+            gui.Size = UDim2.new(7, 0, 4, 0)
+			label.Position = UDim2.new(0, 0, 0, 0)
+			label.Size = UDim2.new(1, 0, 0.3, 0)
         end
-    end
-
-    if scalingLoop then
-        scalingLoop:Disconnect()
-        scalingLoop = nil
-    end
-
-    billboardGui = nil
-end
-
-local function showMutationTimerDisplay()
-    if not mutationTimerEnabled then
-        restoreOriginalProperties()
-        return false
-    end
-
-    local success = findBillboardGui()
-
-    if success and billboardGui then
-        startScalingLoop()
-        return true
-    else
-        task.spawn(function()
-            task.wait(2)
-            if mutationTimerEnabled then
-                local success = findBillboardGui()
-                if success and billboardGui then
-                    startScalingLoop()
-                end
-            end
-        end)
-        return false
     end
 end
 
@@ -2173,6 +2151,10 @@ local function connectDestroyEvent()
             end
             if restoreOriginalProperties then
                 restoreOriginalProperties()
+            end
+            if showEggESPEnabled then
+                showEggESPEnabled = false
+                stopEggESP()
             end
         end)
     else
@@ -2188,7 +2170,7 @@ ESPSection:Toggle("Show Mutation Timer", function(state)
     saveConfig(config)
 
     if state then
-        if showMutationTimerDisplay() then
+        if setupBillboard() then
             Window:Notify("Mutation Timer Display Enabled", 2)
         else
             Window:Notify("Could not find mutation timer", 2)
@@ -2202,8 +2184,27 @@ end, {
 })
 
 if mutationTimerEnabled then
-    showMutationTimerDisplay()
+    setupBillboard()
 end
+
+ESPSection:Toggle("Show Egg ESP", function(state)
+    showEggESPEnabled = state
+    config.ShowEggESP = state
+    saveConfig(config)
+
+    if state then
+        if startEggESP() then
+            Window:Notify("Egg ESP Enabled", 2)
+        else
+            Window:Notify("Could not find egg", 2)
+        end
+    else
+        stopEggESP()
+        Window:Notify("Egg ESP Disabled", 2)
+    end
+end, {
+    default = showEggESPEnabled
+})
 
 -- Set walkspeed slider
 local function setWalkSpeed(speed)
@@ -2418,11 +2419,10 @@ end)
 -- Info Tab
 local AboutSection = InfoTab:Section("About Meowhan")
 local StatsSection = InfoTab:Section("Session Statistics")
-local AssetToPNGSection = InfoTab:Section("Download Asset")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.2.909")
+AboutSection:Label("Version: 1.3.021")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
