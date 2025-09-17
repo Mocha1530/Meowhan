@@ -12,18 +12,18 @@ Section1:Toggle("Infinite Jump", function(state) print("Infinite Jump:", state) 
 Section1:Toggle("Speed Hack", function(state) print("Speed Hack:", state) end, {color = Color3.fromRGB(255, 170, 0)})
 
 local Section2 = Tab1:Section("Advanced Toggles")
-Section2:Toggle({
-name = "Toggle with Keybind",
-callback = function(state) print("Keybind Toggle:", state) end,
-keybind = Enum.KeyCode.RightControl,
-tooltip = "Press Right Control to toggle this feature"
+Section2:Toggle("Toggle with Keybind", function(state) 
+    print("Keybind Toggle:", state) 
+  end, { 
+    keybind = Enum.KeyCode.RightControl,
+    tooltip = "Press Right Control to toggle this feature"
 })
 
-Section2:Toggle({
-name = "Toggle with Icon",
-callback = function(state) print("Icon Toggle:", state) end,
-icon = "★",
-color = Color3.fromRGB(255, 105, 180)
+Section2:Toggle("Toggle with Icon", function(state) 
+    print("Icon Toggle:", state) 
+  end, {
+    icon = "★",
+    color = Color3.fromRGB(255, 105, 180)
 })
 
 local Section3 = Tab1:Section("ToggleGroup")
