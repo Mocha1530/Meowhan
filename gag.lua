@@ -633,6 +633,7 @@ end
                         end
                     else
                         task.wait(5)
+                        break
                     end
                 elseif autoCollectSelectedFruitsEnabled then
                     fruitsToCollect = findFruit({
@@ -650,9 +651,6 @@ end
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
                         if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
-                            if autoCollectRequestEnabled and OaklayProgress.Text:find("Cooldown", 1, true) then
-                                break
-                            end
                             if fruit.Parent then
                                 local success, err = pcall(function()
                                     GameEvents.Crops.Collect:FireServer({fruit})
@@ -2578,7 +2576,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.127")
+AboutSection:Label("Version: 1.3.128")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
