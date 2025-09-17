@@ -1001,7 +1001,6 @@ function Library:CreateWindow(title)
             SectionFrame.BackgroundColor3 = Theme.Surface
             SectionFrame.BorderSizePixel = 0
             SectionFrame.Size = UDim2.new(1, 0, 0, 32) -- Start with just header height
-            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
             SectionFrame.ClipsDescendants = true
             
             local SectionCorner = Instance.new("UICorner")
