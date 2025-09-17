@@ -26,7 +26,8 @@ icon = "★",
 color = Color3.fromRGB(255, 105, 180)
 })
 
-Section2:ToggleGroup("Weapon Selection", {
+local Section3 = Tab1:Section("ToggleGroup")
+Section3:ToggleGroup("Weapon Selection", {
 {name = "Sword", default = true},
 {name = "Gun"},
 {name = "Bow"}
