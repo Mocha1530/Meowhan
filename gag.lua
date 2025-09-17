@@ -296,6 +296,8 @@ local InfoTab = Window:Tab("Info")
         local feedRequestedEnabled = config.FeedRequested
         local feedAllRequestedEnabled = config.FeedAllRequested
         local requestedPlant = nil
+        local OaklayProgress = nil
+        local OaklayTrait = nil
 
     -- Shop Vars
         -- Seed Shop Vars
@@ -619,12 +621,16 @@ end
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 local fruitsToCollect = {}
                 if autoCollectRequestedEnabed then
-                    if PlantTraits[requestedPlant] then
-                        fruitsToCollect = findFruit({
-                            name = PlantTraits[requestedPlant],
-                            type = "Fruit",
-                            action = function(fruit) end
-                        })
+                    if not OaklayProgress.Text:find("Cooldown", 1, true) then
+                        if PlantTraits[requestedPlant] then
+                            fruitsToCollect = findFruit({
+                                name = PlantTraits[requestedPlant],
+                                type = "Fruit",
+                                action = function(fruit) end
+                            })
+                        else
+                            task.wait(5)
+                        end
                     else
                         task.wait(5)
                     end
@@ -760,8 +766,6 @@ end
     end]]
 
     -- Auto Feed Requested
-    local OaklayProgress = nil
-    local OaklayTrait = nil
     for _, v_e in ipairs(UpdateItems:GetDescendants()) do
         if v_e:IsA("TextLabel") then
             if v_e.Name == "TraitTextLabel" then
@@ -2571,7 +2575,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.126")
+AboutSection:Label("Version: 1.3.127")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
