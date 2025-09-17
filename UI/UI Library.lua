@@ -1365,7 +1365,7 @@ function Library:CreateWindow(title)
                     local absSize = SliderBg.AbsoluteSize.X
                     local relPos = math.clamp((inputPos - absPos) / absSize, 0, 1)
 
-                    local raw = min + (max - min) + relPos
+                    local raw = min + (max - min) * relPos
                     value = snap(raw)
                     ValueLabel.Text = tostring(value)
 
