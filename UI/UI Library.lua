@@ -1,4 +1,8 @@
--- Created for pwd0kernel
+--[[
+    This is a UI lib modified and made for Meowhan script hub.
+    tiktok.com/@yohan_gdm
+    tiktok.com/@ikimasu_
+]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -14,9 +18,9 @@ local Theme = {
     Surface = Color3.fromRGB(20, 20, 23),
     Card = Color3.fromRGB(25, 25, 28),
     
-    Accent = Color3.fromRGB(120, 80, 255),
-    AccentHover = Color3.fromRGB(140, 100, 255),
-    AccentDim = Color3.fromRGB(80, 50, 180),
+    Accent = Color3.fromRGB(139, 223, 234),
+    AccentHover = Color3.fromRGB(159, 243, 234),
+    AccentDim = Color3.fromRGB(99, 193, 159),
     
     Text = Color3.fromRGB(255, 255, 255),
     TextDim = Color3.fromRGB(160, 160, 165),
@@ -34,7 +38,7 @@ local IsMobile = UserInputService.TouchEnabled and not UserInputService.Keyboard
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "0verflowMinimal"
+ScreenGui.Name = "MeowhanUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder = 999999
@@ -65,6 +69,11 @@ Library.Windows = {}
 Library.defaults = {
     sliderStep = 1,
 }
+Library.RunningProcesses = {
+    loops = {},
+    connections = {},
+    tweens = {}
+}
 
 -- Global toggle management system
 local ToggleManager = {
@@ -72,6 +81,43 @@ local ToggleManager = {
     groups = {},
     keybinds = {}
 }
+
+function Library:TrackProcess(processType, process, identifier)
+    if not self.RunningProcesses[processType] then
+        self.RunningProcesses[processType] = {}
+    end
+    self.RunningProcesses[processType][identifier or #self.RunningProcesses[processType] + 1] = process
+    return process
+end
+
+function Library:UntrackProcess(processType, identifier)
+    if self.RunningProcesses[processType] and self.RunningProcesses[processType][identifier] then
+        self.RunningProcesses[processType][identifier] = nil
+    end
+end
+
+-- Cleanup functions
+function Library:Cleanup()
+    for _, loop in pairs(self.RunningProcesses.loops) do
+        if type(loop) == "boolean" then
+            loop = false
+        end
+    end
+    
+    for _, connection in pairs(self.RunningProcesses.connections) do
+        if connection and typeof(connection) == "RBXScriptConnection" then
+            connection:Disconnect()
+        end
+    end
+    
+    for _, tween in pairs(self.RunningProcesses.tweens) do
+        if tween and tween.PlaybackState == Enum.PlaybackState.Playing then
+            tween:Cancel()
+        end
+    end
+    
+    self.RunningProcesses = {loops = {}, connections = {}, tweens = {}}
+end
 
 -- Enhanced Toggle Class
 local Toggle = {}
@@ -215,11 +261,11 @@ function Toggle:CreateUI(parent)
         tooltip.Size = UDim2.new(0, 200, 0, 30)
         tooltip.Visible = false
         tooltip.ZIndex = 1000
-
+        
         local tooltipCorner = Instance.new("UICorner")
         tooltipCorner.CornerRadius = UDim.new(0, 6)
         tooltipCorner.Parent = tooltip
-
+        
         local tooltipText = Instance.new("TextLabel")
         tooltipText.Name = "Text"
         tooltipText.Parent = tooltip
@@ -231,7 +277,7 @@ function Toggle:CreateUI(parent)
         tooltipText.TextColor3 = Theme.TextDim
         tooltipText.TextSize = 11
         tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-
+        
         self.tooltipFrame = tooltip
 
         local function showTooltip()
@@ -256,7 +302,6 @@ function Toggle:CreateUI(parent)
                 self._tooltipUpdater = nil
             end
         end
-
         table.insert(self._connections, self.button.MouseEnter:Connect(showTooltip))
         table.insert(self._connections, self.button.MouseLeave:Connect(hideTooltip))
     end
@@ -339,7 +384,7 @@ function Toggle:SetKeybind(key)
     end
     self.keybind = key
     ToggleManager.keybinds[key] = self
-
+    
     if not self.keybindLabel then
         self.keybindLabel = Instance.new("TextLabel")
         self.keybindLabel.Parent = self.frame
@@ -398,11 +443,9 @@ function Toggle:SetLabel(text)
     self.name = text
     if self.label then self.label.Text = text end
 end
-
 function Toggle:OnChange(fn)
     return self.Changed:Connect(fn)
 end
-
 function Toggle:SetColor(color)
     self.color = color
     if self.state then
@@ -410,7 +453,6 @@ function Toggle:SetColor(color)
         if self.iconLabel then self.iconLabel.TextColor3 = color end
     end
 end
-
 function Toggle:SetTooltip(text)
     self.tooltip = text
     if self.tooltipFrame and self.tooltipFrame:FindFirstChild("Text") then
@@ -427,11 +469,9 @@ function Toggle:SetTooltip(text)
     tooltip.Size = UDim2.new(0, 200, 0, 30)
     tooltip.Visible = false
     tooltip.ZIndex = 1000
-
     local tooltipCorner = Instance.new("UICorner")
     tooltipCorner.CornerRadius = UDim.new(0, 6)
     tooltipCorner.Parent = tooltip
-
     local tooltipText = Instance.new("TextLabel")
     tooltipText.Name = "Text"
     tooltipText.Parent = tooltip
@@ -443,9 +483,7 @@ function Toggle:SetTooltip(text)
     tooltipText.TextColor3 = Theme.TextDim
     tooltipText.TextSize = 11
     tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-
     self.tooltipFrame = tooltip
-
     local function showTooltip()
         tooltip.Visible = true
         if not self._tooltipUpdater then
@@ -460,7 +498,6 @@ function Toggle:SetTooltip(text)
             end)
         end
     end
-
     local function hideTooltip()
         tooltip.Visible = false
         if self._tooltipUpdater then
@@ -468,11 +505,9 @@ function Toggle:SetTooltip(text)
             self._tooltipUpdater = nil
         end
     end
-
     table.insert(self._connections, self.button.MouseEnter:Connect(showTooltip))
     table.insert(self._connections, self.button.MouseLeave:Connect(hideTooltip))
 end
-
 function Toggle:SetIcon(iconText)
     if not self.iconLabel then
         self.iconLabel = Instance.new("TextLabel")
@@ -513,8 +548,6 @@ function Library:CreateWindow(title)
     local windowWidth = IsMobile and math.min(screenSize.X - 40, 500) or 560
     local windowHeight = IsMobile and math.min(screenSize.Y - 100, 420) or 480
     
-    -- [Previous window creation code remains the same until Tab:Section function]
-    
     -- Minimal Floating Bar
     local ToggleBar = Instance.new("Frame")
     ToggleBar.Name = "ToggleBar"
@@ -522,11 +555,21 @@ function Library:CreateWindow(title)
     ToggleBar.BackgroundColor3 = Theme.Background
     ToggleBar.BackgroundTransparency = 0.1
     ToggleBar.BorderSizePixel = 0
-    ToggleBar.Position = UDim2.new(0.5, -60, 1, -50)
-    ToggleBar.Size = UDim2.new(0, 120, 0, 32)
+    ToggleBar.Position = UDim2.new(0.442449987, 0, 0, -40)
+    ToggleBar.Size = UDim2.new(0, 100, 0, 32)
     ToggleBar.Visible = false
     ToggleBar.ZIndex = 999
     ToggleBar.ClipsDescendants = true
+
+--[[ Default
+    ToggleBar.Position = UDim2.new(0.5, -60, 1, -50)
+    ToggleBar.Size = UDim2.new(0, 120, 0, 32)
+
+    Text0verflow.Position = UDim2.new(0.5, -30, 0.5, -8)
+    Text0verflow.Size = UDim2.new(0, 50, 0, 16)
+
+    TextHub.Visible = true
+]]
     
     local BarCorner = Instance.new("UICorner")
     BarCorner.CornerRadius = UDim.new(0, 16)
@@ -547,10 +590,10 @@ function Library:CreateWindow(title)
     local Text0verflow = Instance.new("TextLabel")
     Text0verflow.Parent = TextContainer
     Text0verflow.BackgroundTransparency = 1
-    Text0verflow.Position = UDim2.new(0.5, -30, 0.5, -8)
+    Text0verflow.Position = UDim2.new(0.5, -20, 0.5, -8)
     Text0verflow.Size = UDim2.new(0, 50, 0, 16)
     Text0verflow.Font = Enum.Font.GothamBold
-    Text0verflow.Text = "0verflow"
+    Text0verflow.Text = "Meowhan"
     Text0verflow.TextColor3 = Theme.Accent
     Text0verflow.TextSize = 13
     Text0verflow.TextXAlignment = Enum.TextXAlignment.Right
@@ -562,10 +605,11 @@ function Library:CreateWindow(title)
     TextHub.Position = UDim2.new(0.5, 22, 0.5, -8)
     TextHub.Size = UDim2.new(0, 25, 0, 16)
     TextHub.Font = Enum.Font.Gotham
-    TextHub.Text = "Hub"
+    TextHub.Text = " Hub"
     TextHub.TextColor3 = Theme.Text
     TextHub.TextSize = 13
     TextHub.TextXAlignment = Enum.TextXAlignment.Left
+    TextHub.Visible = false
     TextHub.ZIndex = 1000
     
     local Indicator = Instance.new("Frame")
@@ -649,6 +693,12 @@ function Library:CreateWindow(title)
     TitleContainer.Position = UDim2.new(0, 16, 0, 0)
     TitleContainer.Size = UDim2.new(0.5, 0, 1, 0)
     TitleContainer.ZIndex = 3
+
+    local TitleLayout = Instance.new("UIListLayout")
+    TitleLayout.Parent = TitleContainer
+    TitleLayout.FillDirection = Enum.FillDirection.Horizontal
+    TitleLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TitleLayout.Padding = UDim.new(0, IsMobile and 5 or 10)
     
     local Title0verflow = Instance.new("TextLabel")
     Title0verflow.Parent = TitleContainer
@@ -657,24 +707,40 @@ function Library:CreateWindow(title)
     Title0verflow.Size = UDim2.new(0, 0, 1, 0)
     Title0verflow.AutomaticSize = Enum.AutomaticSize.X
     Title0verflow.Font = Enum.Font.GothamBold
-    Title0verflow.Text = "0verflow"
+    Title0verflow.Text = "Meowhan"
     Title0verflow.TextColor3 = Theme.Accent
     Title0verflow.TextSize = IsMobile and 13 or 14
     Title0verflow.TextXAlignment = Enum.TextXAlignment.Left
     Title0verflow.ZIndex = 3
-    
+        
     local TitleHub = Instance.new("TextLabel")
     TitleHub.Parent = TitleContainer
     TitleHub.BackgroundTransparency = 1
-    TitleHub.Position = UDim2.new(0, IsMobile and 52 or 58, 0, 0)
+    TitleHub.Position = UDim2.new(0, IsMobile and 57 or 58, 0, 0)
     TitleHub.Size = UDim2.new(0, 0, 1, 0)
     TitleHub.AutomaticSize = Enum.AutomaticSize.X
     TitleHub.Font = Enum.Font.Gotham
-    TitleHub.Text = " Hub"
+    TitleHub.Text = "Hub"
     TitleHub.TextColor3 = Theme.Text
     TitleHub.TextSize = IsMobile and 13 or 14
     TitleHub.TextXAlignment = Enum.TextXAlignment.Left
     TitleHub.ZIndex = 3
+    
+    -- Window title
+    if title then
+        local WindowTitle = Instance.new("TextLabel")
+        WindowTitle.Parent = TitleContainer
+        WindowTitle.BackgroundTransparency = 1
+        WindowTitle.Position = UDim2.new(0, IsMobile and 90 or 100, 0, 0)
+        WindowTitle.Size = UDim2.new(0, 0, 1, 0)
+        WindowTitle.AutomaticSize = Enum.AutomaticSize.X
+        WindowTitle.Font = Enum.Font.Gotham
+        WindowTitle.Text = " - " .. title
+        WindowTitle.TextColor3 = Theme.TextDim
+        WindowTitle.TextSize = IsMobile and 12 or 13
+        WindowTitle.TextXAlignment = Enum.TextXAlignment.Left
+        WindowTitle.ZIndex = 3
+    end
     
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Parent = Header
@@ -696,6 +762,7 @@ function Library:CreateWindow(title)
     end)
     
     CloseBtn.MouseButton1Click:Connect(function()
+        Library:Cleanup()
         Tween(Container, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
         Tween(ToggleBar, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3)
         task.wait(0.3)
@@ -726,26 +793,39 @@ function Library:CreateWindow(title)
         Window.Minimized = true
         Tween(Container, {
             Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0.5, 0, 1, -25)
+            Position = UDim2.new(0.5, 0, 0, -20)
         }, 0.3)
         
-    task.wait(0.3)
+        task.wait(0.3)
         Container.Visible = false
         ToggleBar.Visible = true
-        
+
+--[[ Default
         ToggleBar.Position = UDim2.new(0.5, -60, 1, 0)
         Tween(ToggleBar, {
             Position = UDim2.new(0.5, -60, 1, -50)
+        }, 0.3, Enum.EasingStyle.Back)
+
+    local function Restore()
+        Window.Minimized = false
+        Tween(ToggleBar, {
+            Position = UDim2.new(0.5, -60, 1, 0)
+        }, 0.3)
+]]
+        
+        ToggleBar.Position = UDim2.new(0.442449987, 0, 0, -90)
+        Tween(ToggleBar, {
+            Position = UDim2.new(0.442449987, 0, 0, -40)
         }, 0.3, Enum.EasingStyle.Back)
     end
     
     local function Restore()
         Window.Minimized = false
         Tween(ToggleBar, {
-            Position = UDim2.new(0.5, -60, 1, 0)
+            Position = UDim2.new(0.442449987, 0, 0, -90)
         }, 0.3)
         
-    task.wait(0.3)
+        task.wait(0.3)
         ToggleBar.Visible = false
         Container.Visible = true
         
@@ -797,7 +877,7 @@ function Library:CreateWindow(title)
     Content.BackgroundTransparency = 1
     Content.Position = UDim2.new(0, 0, 0, 77)
     Content.Size = UDim2.new(1, 0, 1, -77)
-    
+
     -- Responsive: adjust to viewport changes
     local viewportConn
     local function UpdateForViewport()
@@ -910,16 +990,17 @@ function Library:CreateWindow(title)
             Window.ActiveTab = Tab
         end)
         
-        -- IMPROVED SECTION WITH BETTER TOGGLE API
+        -- Section Function with ALL COMPONENTS
         function Tab:Section(title)
             local Section = {}
             Section.toggles = {}
+            Section.expanded = false -- Track if section is expanded
             
             local SectionFrame = Instance.new("Frame")
             SectionFrame.Parent = TabContent
             SectionFrame.BackgroundColor3 = Theme.Surface
             SectionFrame.BorderSizePixel = 0
-            SectionFrame.Size = UDim2.new(1, 0, 0, 0)
+            SectionFrame.Size = UDim2.new(1, 0, 0, 32) -- Start with just header height
             SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
             SectionFrame.ClipsDescendants = true
             
@@ -927,19 +1008,39 @@ function Library:CreateWindow(title)
             SectionCorner.CornerRadius = UDim.new(0, 8)
             SectionCorner.Parent = SectionFrame
             
+            -- Make the entire header clickable to toggle expansion
+            local HeaderButton = Instance.new("TextButton")
+            HeaderButton.Parent = SectionFrame
+            HeaderButton.BackgroundTransparency = 1
+            HeaderButton.Size = UDim2.new(1, 0, 0, 32)
+            HeaderButton.Text = ""
+            
             local SectionTitle = Instance.new("TextLabel")
-            SectionTitle.Parent = SectionFrame
+            SectionTitle.Parent = HeaderButton
             SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 12, 0, 12)
-            SectionTitle.Size = UDim2.new(1, -24, 0, 14)
+            SectionTitle.Position = UDim2.new(0, 12, 0, 0)
+            SectionTitle.Size = UDim2.new(1, -40, 1, 0)
             SectionTitle.Font = Enum.Font.Gotham
             SectionTitle.Text = title
             SectionTitle.TextColor3 = Theme.TextDim
             SectionTitle.TextSize = IsMobile and 11 or 12
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             
+            -- Dropdown arrow indicator
+            local Arrow = Instance.new("TextLabel")
+            Arrow.Parent = HeaderButton
+            Arrow.BackgroundTransparency = 1
+            Arrow.Position = UDim2.new(1, -28, 0.5, -8)
+            Arrow.Size = UDim2.new(0, 16, 0, 16)
+            Arrow.Font = Enum.Font.Gotham
+            Arrow.Text = "▼"
+            Arrow.TextColor3 = Theme.TextDim
+            Arrow.TextSize = 13
+            Arrow.Rotation = -90
+            Arrow.Name = "Arrow"
+            
             local SectionAccent = Instance.new("Frame")
-            SectionAccent.Parent = SectionFrame
+            SectionAccent.Parent = HeaderButton
             SectionAccent.BackgroundColor3 = Theme.Accent
             SectionAccent.BorderSizePixel = 0
             SectionAccent.Position = UDim2.new(0, 4, 0, 14)
@@ -955,6 +1056,7 @@ function Library:CreateWindow(title)
             Elements.Position = UDim2.new(0, 12, 0, 32)
             Elements.Size = UDim2.new(1, -24, 0, 0)
             Elements.AutomaticSize = Enum.AutomaticSize.Y
+            Elements.Visible = false
             
             local ElementLayout = Instance.new("UIListLayout")
             ElementLayout.Parent = Elements
@@ -964,24 +1066,70 @@ function Library:CreateWindow(title)
             local ElementPadding = Instance.new("UIPadding")
             ElementPadding.Parent = Elements
             ElementPadding.PaddingBottom = UDim.new(0, 12)
+
+            -- SIMPLIFIED TOGGLE API - Meowhan: Toggle(name, cb, opts) or Toggle({ name=..., callback=..., ... })
             
-            -- SIMPLIFIED TOGGLE API - Overload: Toggle(name, cb, opts) or Toggle({ name=..., callback=..., ... })
-            function Section:Toggle(nameOrOptions, callback, options)
+            -- Function to calculate content height
+            local function calculateContentHeight()
+                return ElementLayout.AbsoluteContentSize.Y + 12 -- Add padding
+            end
+            
+            -- Function to toggle section visibility
+            local function toggleSection()
+                Section.expanded = not Section.expanded
+                
+                if Section.expanded then
+                    -- Expand section
+                    Elements.Visible = true
+                    Tween(Arrow, {Rotation = 0}, 0.2)
+                    
+                    -- Calculate target height
+                    local targetHeight = 32 + calculateContentHeight()
+                    Tween(SectionFrame, {
+                        Size = UDim2.new(1, 0, 0, targetHeight)
+                    }, 0.2)
+                else
+                    -- Collapse section
+                    Tween(Arrow, {Rotation = -90}, 0.2)
+                    Tween(SectionFrame, {Size = UDim2.new(1, 0, 0, 32)}, 0.2)
+                    
+                    -- Hide elements after animation completes
+                    delay(0.2, function()
+                        if not Section.expanded then
+                            Elements.Visible = false
+                        end
+                    end)
+                end
+            end
+            
+            -- Update section height when elements change (only if expanded)
+            ElementLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if Section.expanded then
+                    local targetHeight = 32 + calculateContentHeight()
+                    SectionFrame.Size = UDim2.new(1, 0, 0, targetHeight)
+                end
+            end)
+            
+            -- Toggle on header click
+            HeaderButton.MouseButton1Click:Connect(toggleSection)
+            
+            -- Toggle
+            function Section:Toggle(name, callback, options)
                 local opts
-                if typeof(nameOrOptions) == "table" then
-                    opts = nameOrOptions
+                if typeof(name) == "table" then
+                    opts = name
                 else
                     opts = options or {}
-                    opts.name = nameOrOptions
+                    opts.name = name
                     opts.callback = callback
+                    opts.parent = Elements
                 end
-                opts.parent = Elements
                 local toggle = Toggle.new(opts)
                 Section.toggles[opts.name] = toggle
                 return toggle
             end
             
-            -- Quick toggle groups
+            -- Toggle Group
             function Section:ToggleGroup(groupName, toggles, callback)
                 for _, toggleConfig in ipairs(toggles) do
                     local name = toggleConfig.name or toggleConfig[1]
@@ -1004,7 +1152,7 @@ function Library:CreateWindow(title)
                     })
                 end
             end
-            
+
             -- Bulk toggle operations
             function Section:GetAllToggles()
                 local states = {}
@@ -1013,7 +1161,7 @@ function Library:CreateWindow(title)
                 end
                 return states
             end
-            
+
             function Section:SetAllToggles(state)
                 for _, toggle in pairs(Section.toggles) do
                     toggle:Set(state)
@@ -1031,7 +1179,7 @@ function Library:CreateWindow(title)
                 return Section.toggles[name]
             end
             
-            -- Previous elements remain the same
+            -- Label
             function Section:Label(text)
                 local LabelFrame = Instance.new("Frame")
                 LabelFrame.Parent = Elements
@@ -1064,6 +1212,7 @@ function Library:CreateWindow(title)
                 }
             end
             
+            -- Button
             function Section:Button(name, callback)
                 local BtnFrame = Instance.new("TextButton")
                 BtnFrame.Parent = Elements
@@ -1086,16 +1235,17 @@ function Library:CreateWindow(title)
                 BtnFrame.MouseLeave:Connect(function()
                     Tween(BtnFrame, {BackgroundColor3 = Theme.Card})
                 end)
-                
+
                 local ClickedEvent = Instance.new("BindableEvent")
                 BtnFrame.Destroying:Connect(function()
                     ClickedEvent:Destroy()
                 end)
+                
                 BtnFrame.MouseButton1Click:Connect(function()
                     if callback then callback() end
-                    ClickedEvent:Fire()
                 end)
-
+                ClickedEvent:Fire()
+                
                 return {
                     Button = BtnFrame,
                     OnClick = function(self, fn)
@@ -1112,11 +1262,12 @@ function Library:CreateWindow(title)
                 }
             end
             
+            -- Slider
             function Section:Slider(name, min, max, default, callback)
                 local value = default or min
                 local dragging = false
                 local step = Library.defaults.sliderStep
-                -- Allow overload with options table: Slider({ name=..., min=..., max=..., default=..., step=..., callback=... })
+                -- Allow meowhan with options table: Slider({ name=..., min=..., max=..., default=..., step=..., callback=... })
                 if typeof(name) == "table" then
                     local cfg = name
                     name = cfg.name or "Slider"
@@ -1201,22 +1352,23 @@ function Library:CreateWindow(title)
                 SliderButton.Size = UDim2.new(1, 10, 1, 20)
                 SliderButton.Text = ""
                 SliderButton.ZIndex = 3
-                
+
                 local function snap(v)
                     if step and step > 0 then
                         return math.clamp(math.round(v / step) * step, min, max)
                     end
                     return v
                 end
-
+                
                 local function UpdateSlider(inputPos)
                     local absPos = SliderBg.AbsolutePosition.X
                     local absSize = SliderBg.AbsoluteSize.X
                     local relPos = math.clamp((inputPos - absPos) / absSize, 0, 1)
-                    local raw = min + (max - min) * relPos
+
+                    local raw = min + (max - min) + relPos
                     value = snap(raw)
                     ValueLabel.Text = tostring(value)
-                    
+
                     local snappedRel = (value - min) / (max - min)
                     Tween(SliderFill, {Size = UDim2.new(snappedRel, 0, 1, 0)}, 0.1)
                     Tween(SliderKnob, {Position = UDim2.new(snappedRel, -8, 0.5, -8)}, 0.1)
@@ -1253,12 +1405,12 @@ function Library:CreateWindow(title)
                     local loc = UserInputService:GetMouseLocation()
                     UpdateSlider(loc.X)
                 end)
-                
+
                 local ChangedEvent = Instance.new("BindableEvent")
                 SliderFrame.Destroying:Connect(function()
                     ChangedEvent:Destroy()
                 end)
-
+                
                 local api = {
                     Set = function(newValue)
                         newValue = snap(newValue)
@@ -1274,9 +1426,7 @@ function Library:CreateWindow(title)
                         return value
                     end,
                     OnChange = function(self, fn)
-                        -- Support both slider.OnChange(fn) and slider:OnChange(fn)
                         if typeof(self) == "function" and fn == nil then
-                            -- called as slider.OnChange(callback)
                             return ChangedEvent.Event:Connect(self)
                         else
                             return ChangedEvent.Event:Connect(fn)
@@ -1284,6 +1434,418 @@ function Library:CreateWindow(title)
                     end
                 }
                 return api
+            end
+
+            -- TextBox
+            function Section:TextBox(name, placeholder, default, callback, long)
+                long = long or false
+                local text = default or ""
+
+                local TextFrame = Instance.new("Frame")
+                TextFrame.Parent = Elements
+                TextFrame.BackgroundColor3 = Theme.Card
+                TextFrame.Size = UDim2.new(1, 0, 0, 77)
+                TextFrame.ClipsDescendants = true
+
+                local TextCorner = Instance.new("UICorner")
+                TextCorner.CornerRadius = UDim.new(0, 6)
+                TextCorner.Parent = TextFrame
+
+                local TextBoxLabel = Instance.new("TextLabel")
+                TextBoxLabel.Parent = TextFrame
+                TextBoxLabel.BackgroundTransparency = 1
+                TextBoxLabel.Position = UDim2.new(0, 10, 0, 6)
+                TextBoxLabel.Size = UDim2.new(0.5, -10, 0, 19)
+                TextBoxLabel.Font = Enum.Font.Gotham
+                TextBoxLabel.Text = name or ""
+                TextBoxLabel.TextColor3 = Theme.Text
+                TextBoxLabel.TextSize = IsMobile and 12 or 13
+                TextBoxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextBoxLabel.TextTruncate = Enum.TextTruncate.AtEnd
+
+                local TextBoxFrame = Instance.new("Frame")
+                TextBoxFrame.Parent = TextFrame
+                TextBoxFrame.BackgroundColor3 = Theme.Surface
+                TextBoxFrame.Position = UDim2.new(0, 10, 0, IsMobile and 30 or 26)
+                TextBoxFrame.Size = UDim2.new(0.9, 26, 0, 36)
+                TextBoxFrame.ClipsDescendants = true
+                TextBoxFrame.ZIndex = 10
+                TextBoxFrame.Visible = true
+
+                local TextBoxCorner = Instance.new("UICorner")
+                TextBoxCorner.CornerRadius = UDim.new(0, 6)
+                TextBoxCorner.Parent = TextBoxFrame
+
+                local TextBoxStroke = Instance.new("UIStroke")
+                TextBoxStroke.Parent = TextBoxFrame
+                TextBoxStroke.Color = Theme.Accent
+                TextBoxStroke.Thickness = 1
+                TextBoxStroke.Transparency = 0.8
+
+                local TextBox = Instance.new("TextBox")
+                TextBox.Parent = TextBoxFrame
+                TextBox.BackgroundTransparency = 1
+                TextBox.Position = UDim2.new(0, 9, 0, 0)
+                TextBox.Size = UDim2.new(0.9, 29, 1, 0)
+                TextBox.Font = Enum.Font.Gotham
+                TextBox.PlaceholderText = placeholder or ""
+                TextBox.Text = text
+                TextBox.TextColor3 = Theme.Text
+                TextBox.TextSize = IsMobile and 11 or 12
+                TextBox.ClearTextOnFocus = false
+                TextBox.TextTruncate = Enum.TextTruncate.AtEnd
+
+                TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    if text ~= TextBox.Text then
+                        text = TextBox.Text
+                        if callback then
+                            callback(text)
+                        end
+                    end
+                end)
+                
+                return {
+                    Set = function(newText)
+                        text = newText
+                    end,
+                    Get = function()
+                        return text
+                    end
+                }
+            end
+            
+            -- Dropdown (FIXED)
+            function Section:Dropdown(name, options, default, callback, multiSelect, limit)
+                multiSelect = multiSelect or false
+                limit = limit or 1
+                local selected
+                    if multiSelect then
+                        if type(default) == "table" then
+                            selected = default
+                        else 
+                            selected = {}
+                        end
+                    else 
+                        selected = default or options[1] or "" 
+                    end
+                local opened = false
+                
+                local DropdownFrame = Instance.new("Frame")
+                DropdownFrame.Parent = Elements
+                DropdownFrame.BackgroundTransparency = 1
+                DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                DropdownFrame.ClipsDescendants = false
+                
+                local DropdownBtn = Instance.new("TextButton")
+                DropdownBtn.Parent = DropdownFrame
+                DropdownBtn.BackgroundColor3 = Theme.Card
+                DropdownBtn.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                DropdownBtn.Text = ""
+                DropdownBtn.ClipsDescendants = true
+                
+                local DropdownCorner = Instance.new("UICorner")
+                DropdownCorner.CornerRadius = UDim.new(0, 6)
+                DropdownCorner.Parent = DropdownBtn
+                
+                local DropdownLabel = Instance.new("TextLabel")
+                DropdownLabel.Parent = DropdownBtn
+                DropdownLabel.BackgroundTransparency = 1
+                DropdownLabel.Position = UDim2.new(0, 10, 0, 0)
+                DropdownLabel.Size = UDim2.new(0.5, -10, 1, 0)
+                DropdownLabel.Font = Enum.Font.Gotham
+                DropdownLabel.Text = name
+                DropdownLabel.TextColor3 = Theme.Text
+                DropdownLabel.TextSize = IsMobile and 12 or 13
+                DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+                
+                local SelectedLabel = Instance.new("TextLabel")
+                SelectedLabel.Parent = DropdownBtn
+                SelectedLabel.BackgroundTransparency = 1
+                SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
+                SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
+                SelectedLabel.Font = Enum.Font.Gotham
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
+                SelectedLabel.TextColor3 = Theme.Accent
+                SelectedLabel.TextSize = IsMobile and 11 or 12
+                SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
+                SelectedLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                
+                local Arrow = Instance.new("TextLabel")
+                Arrow.Parent = DropdownBtn
+                Arrow.BackgroundTransparency = 1
+                Arrow.Position = UDim2.new(1, -25, 0.5, -8)
+                Arrow.Size = UDim2.new(0, 16, 0, 16)
+                Arrow.Font = Enum.Font.Gotham
+                Arrow.Text = "▼"
+                Arrow.TextColor3 = Theme.TextDim
+                Arrow.TextSize = 13
+                Arrow.Rotation = -90
+                
+                -- Dropdown List Container
+                local ListContainer = Instance.new("Frame")
+                ListContainer.Parent = DropdownFrame
+                ListContainer.BackgroundColor3 = Theme.Surface
+                ListContainer.Position = UDim2.new(0, 0, 0, IsMobile and 40 or 36)
+                ListContainer.Size = UDim2.new(1, 0, 0, 0)
+                ListContainer.ClipsDescendants = true
+                ListContainer.ZIndex = 10
+                ListContainer.Visible = false
+                
+                local ListCorner = Instance.new("UICorner")
+                ListCorner.CornerRadius = UDim.new(0, 6)
+                ListCorner.Parent = ListContainer
+                
+                local ListStroke = Instance.new("UIStroke")
+                ListStroke.Parent = ListContainer
+                ListStroke.Color = Theme.Accent
+                ListStroke.Thickness = 1
+                ListStroke.Transparency = 0.8
+                
+                local ListScroll = Instance.new("ScrollingFrame")
+                ListScroll.Parent = ListContainer
+                ListScroll.BackgroundTransparency = 1
+                ListScroll.BorderSizePixel = 0
+                ListScroll.Position = UDim2.new(0, 4, 0, 4)
+                ListScroll.Size = UDim2.new(1, -8, 1, -8)
+                ListScroll.ScrollBarThickness = 2
+                ListScroll.ScrollBarImageColor3 = Theme.Accent
+                ListScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+                
+                local ListLayout = Instance.new("UIListLayout")
+                ListLayout.Parent = ListScroll
+                ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                ListLayout.Padding = UDim.new(0, 2)
+
+                local ListSearch = Instance.new("TextBox")
+                ListSearch.Parent = ListScroll
+                ListSearch.BackgroundColor3 = Theme.Card
+                ListSearch.LayoutOrder = -10
+                ListSearch.Position = UDim2.new(0, 4, 0, 4)
+                ListSearch.Size = UDim2.new(1, 0, 0, 24)
+                ListSearch.Font = Enum.Font.Gotham
+                ListSearch.PlaceholderText = "Search"
+                ListSearch.Text = ""
+                ListSearch.TextColor3 = Theme.Text
+                ListSearch.TextSize = IsMobile and 11 or 12
+                ListSearch.ClearTextOnFocus = false
+
+                local SearchCorner = Instance.new("UICorner")
+                SearchCorner.CornerRadius = UDim.new(0, 6)
+                SearchCorner.Parent = ListSearch                
+                
+                -- Create option buttons
+                for index, option in ipairs(options) do
+                    local OptionBtn = Instance.new("TextButton")
+                    OptionBtn.Parent = ListScroll
+                    OptionBtn.BackgroundColor3 = Theme.Card
+                    OptionBtn.BackgroundTransparency = 1
+                    OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
+                    OptionBtn.Font = Enum.Font.Gotham
+                    OptionBtn.Text = option
+                    if multiSelect then
+                        OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = table.find(selected, option) and -1 or index
+                    else
+                        OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = option == selected and -1 or index
+                    end
+                    OptionBtn.TextSize = IsMobile and 11 or 12
+
+                    local OptionCorner = Instance.new("UICorner")
+                    OptionCorner.CornerRadius = UDim.new(0, 6)
+                    OptionCorner.Parent = OptionBtn
+                    
+                    OptionBtn.MouseEnter:Connect(function()
+                        if multiSelect and not table.find(selected, option) or option ~= selected then
+                            Tween(OptionBtn, {BackgroundTransparency = 0.8})
+                        end
+                    end)
+                    
+                    OptionBtn.MouseLeave:Connect(function()
+                        Tween(OptionBtn, {BackgroundTransparency = 1})
+                    end)
+                    
+                    OptionBtn.MouseButton1Click:Connect(function()
+                        if multiSelect then
+                            if table.find(selected, option) then
+                                table.remove(selected, table.find(selected, option))
+                            else
+                                if limit == 1 or #selected < limit then
+                                    table.insert(selected, option)
+                                else
+                                    return
+                                end
+                            end
+                            SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
+                        else
+                            if selected == option then
+                                selected = nil
+                                SelectedLabel.Text = default
+                            else
+                                selected = option
+                                SelectedLabel.Text = option
+                            end
+                        end
+                        
+                        -- Update colors
+                        for index, child in ipairs(ListScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                if multiSelect then
+                                    child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = table.find(selected, child.Text) and -1 or index
+                                else
+                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = child.Text == selected and -1 or index
+                                end
+                            end
+                        end
+                        
+                        -- Close dropdown
+                        if not multiSelect then
+                            opened = false
+                            Tween(Arrow, {Rotation = -90}, 0.2)
+                            Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                            wait(0.2)
+                            ListContainer.Visible = false
+                            DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                        end
+                        
+                        if callback then callback(selected) end
+                    end)
+                end
+                
+                -- Update canvas size
+                ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    ListScroll.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+                end)
+                
+                -- Toggle dropdown
+                DropdownBtn.MouseButton1Click:Connect(function()
+                    opened = not opened
+                    
+                    if opened then
+                        ListContainer.Visible = true
+                        local listHeight = math.min(#options * (IsMobile and 28 or 24) + 8, 150)
+                        DropdownFrame.Size = UDim2.new(1, 0, 0, (IsMobile and 36 or 32) + listHeight + 4)
+                        Tween(ListContainer, {Size = UDim2.new(1, 0, 0, listHeight)}, 0.2)
+                        Tween(Arrow, {Rotation = 0}, 0.2)
+                    else
+                        Tween(Arrow, {Rotation = -90}, 0.2)
+                        Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                        wait(0.2)
+                        ListContainer.Visible = false
+                        DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                    end
+                end)
+
+                -- Search options
+                ListSearch:GetPropertyChangedSignal("Text"):Connect(function()
+                    local search = string.lower(ListSearch.Text)
+                    for _, child in ipairs(ListScroll:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            local match = string.find(string.lower(child.Text), search, 1, true)
+                            child.Visible = match ~= nil
+                        end
+                    end
+                end)
+                
+                if callback and default then
+                    callback(selected)
+                end
+                
+                return {
+                    Set = function(option)
+                        if table.find(options, option) then
+                            selected = option
+                            SelectedLabel.Text = option
+                            for _, child in ipairs(ListScroll:GetChildren()) do
+                                if child:IsA("TextButton") then
+                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                end
+                            end
+                            if callback then callback(selected) end
+                        end
+                    end,
+                    Get = function()
+                        return selected
+                    end,
+                    Refresh = function(newOptions)
+                        options = newOptions
+                        
+                        -- Clear existing options
+                        for _, child in ipairs(ListScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child:Destroy()
+                            end
+                        end
+                        
+                        -- Add new options
+                        for _, option in ipairs(options) do
+                            local OptionBtn = Instance.new("TextButton")
+                            OptionBtn.Parent = ListScroll
+                            OptionBtn.BackgroundColor3 = Theme.Card
+                            OptionBtn.BackgroundTransparency = 1
+                            OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
+                            OptionBtn.Font = Enum.Font.Gotham
+                            OptionBtn.Text = option
+                            if multiSelect then
+                                OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
+                            else
+                                OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                            end
+                            OptionBtn.TextSize = IsMobile and 11 or 12
+
+                            local OptionCorner = Instance.new("UICorner")
+                            OptionCorner.CornerRadius = UDim.new(0, 6)
+                            OptionCorner.Parent = OptionBtn
+                            
+                            OptionBtn.MouseButton1Click:Connect(function()
+                                if multiSelect then
+                                    if table.find(selected, option) then
+                                        table.remove(selected, table.find(selected, option))
+                                    else
+                                        if limit == 1 or #selected < limit then
+                                            table.insert(selected, option)
+                                        else
+                                            return
+                                        end
+                                    end
+                                    SelectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
+                                else
+                                    if selected == option then
+                                        selected = nil
+                                        Selected.Text = default
+                                    else
+                                        selected = option
+                                        Selected.Text = option
+                                    end
+                                end
+                                
+                                for _, child in ipairs(ListScroll:GetChildren()) do
+                                    if child:IsA("TextButton") then
+                                        if multiSelect then
+                                            child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                        else
+                                            child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                        end
+                                    end
+                                end
+                                
+                                if not multiSelect then
+                                    opened = false
+                                    Tween(Arrow, {Rotation = -90}, 0.2)
+                                    Tween(ListContainer, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
+                                    wait(0.2)
+                                    ListContainer.Visible = false
+                                    DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
+                                end
+                                
+                                if callback then callback(selected) end
+                            end)
+                        end
+                    end
+                }
             end
             
             return Section
@@ -1306,6 +1868,52 @@ function Library:CreateWindow(title)
         end)
         
         return Tab
+    end
+    
+    -- Notification Function (FIXED)
+    function Window:Notify(text, duration)
+        duration = duration or 2
+        
+        local Notif = Instance.new("Frame")
+        Notif.Parent = ScreenGui
+        Notif.BackgroundColor3 = Theme.Surface
+        Notif.BorderSizePixel = 0
+        Notif.Position = UDim2.new(0.5, -100, 1, 0)
+        Notif.Size = UDim2.new(0, 200, 0, 40)
+        Notif.ZIndex = 1000
+        Notif.ClipsDescendants = true
+        
+        local NotifCorner = Instance.new("UICorner")
+        NotifCorner.CornerRadius = UDim.new(0, 8)
+        NotifCorner.Parent = Notif
+        
+        local NotifText = Instance.new("TextLabel")
+        NotifText.Parent = Notif
+        NotifText.BackgroundTransparency = 1
+        NotifText.Size = UDim2.new(1, 0, 1, 0)
+        NotifText.Font = Enum.Font.Gotham
+        NotifText.Text = text
+        NotifText.TextColor3 = Theme.Text
+        NotifText.TextSize = IsMobile and 12 or 13
+        NotifText.ZIndex = 1001
+        
+        local AccentLine = Instance.new("Frame")
+        AccentLine.Parent = Notif
+        AccentLine.BackgroundColor3 = Theme.Accent
+        AccentLine.BorderSizePixel = 0
+        AccentLine.Position = UDim2.new(0, 0, 0, 0)
+        AccentLine.Size = UDim2.new(0, 2, 1, 0)
+        AccentLine.ZIndex = 1001
+        
+        -- Position above toggle bar if minimized
+        local yPos = Window.Minimized and -100 or -60
+        Tween(Notif, {Position = UDim2.new(0.5, -100, 1, yPos)}, 0.3)
+        
+        task.wait(duration)
+        
+        Tween(Notif, {Position = UDim2.new(0.5, -100, 1, 0)}, 0.3)
+        task.wait(0.3)
+        Notif:Destroy()
     end
     
     -- Entrance animation
