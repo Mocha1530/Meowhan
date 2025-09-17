@@ -650,6 +650,9 @@ end
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
                         if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
+                            if autoCollectRequestEnabled and OaklayProgress.Text:find("Cooldown", 1, true) then
+                                break
+                            end
                             if fruit.Parent then
                                 local success, err = pcall(function()
                                     GameEvents.Crops.Collect:FireServer({fruit})
