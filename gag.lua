@@ -885,15 +885,12 @@ end
         local result = 5
         if #parts == 3 then
             result = parts[1] * 3600 + parts[2] * 60 + parts[3]
-            warn(tostring(result))
             return result
         elseif #parts == 2 then
             result = parts[1] * 60 + parts[2]
-            warn(tostring(result))
             return result
         elseif #parts == 1 then
             result = parts[1]
-            warn(tostring(result))
             return result
         else
             return 5
@@ -938,7 +935,12 @@ end
                 if timerStatus.Text == nil or timerStatus.Text == "" then
                     MutationMachine:FireServer("StartMachine")
                 end
-                task.wait(10)
+                local time = getMutTime(timerStatus.Text)
+                if time then
+                    task.wait(time)
+                else
+                    task.wait(10)
+                end
             end
         end)
     end
