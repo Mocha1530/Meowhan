@@ -1439,7 +1439,7 @@ function Library:CreateWindow(title)
             function Section:TextBox(name, placeholder, default, callback, long)
                 long = long or false
                 local text = default or ""
-
+    
                 local TextFrame = Instance.new("Frame")
                 TextFrame.Parent = Elements
                 TextFrame.BackgroundColor3 = Theme.Card
@@ -1517,6 +1517,33 @@ function Library:CreateWindow(title)
             function Section:Dropdown(name, options, default, callback, multiSelect, limit)
                 multiSelect = multiSelect or false
                 limit = limit or 1
+                local isKeyValue = false
+                local displayOptions = {}
+                local valueMap = {}
+                
+                if type(options) == "table" then
+                    local isArray = true
+                    for k, v in pairs(options) do
+                        if type(k) ~= "number" then
+                            isArray = false
+                            break
+                        end
+                    end
+                    
+                    if isArray then
+                        displayOptions = options
+                        for _, v in ipairs(options) do
+                            valueMap[v] = v 
+                        end
+                    else
+                        isKeyValue = true
+                        for k, v in pairs(options) do
+                            table.insert(displayOptions, k)
+                            valueMap[k] = v
+                        end
+                    end
+                end
+                --[[
                 local selected
                     if multiSelect then
                         if type(default) == "table" then
@@ -1527,6 +1554,47 @@ function Library:CreateWindow(title)
                     else 
                         selected = default or options[1] or "" 
                     end
+                ]]
+                local selected
+                if multiSelect then
+                    selected = {}
+                    if type(default) == "table" then
+                        if isKeyValue then
+                            for _, v in ipairs(default) do
+                                for k, val in pairs(valueMap) do
+                                    if val == v then
+                                        table.insert(selected, k)
+                                        break
+                                    end
+                                end
+                            end
+                        else
+                            selected = default
+                        end
+                    elseif default then
+                        if isKeyValue then
+                            for k, val in pairs(valueMap) do
+                                if val == default then
+                                    table.insert(selected, k)
+                                    break
+                                end
+                            end
+                        else
+                            table.insert(selected, default)
+                        end
+                    end
+                else
+                    if isKeyValue and default then
+                        for k, val in pairs(valueMap) do
+                            if val == default then
+                                selected = k
+                                break
+                            end
+                        end
+                    else
+                        selected = default or displayOptions[1] or ""
+                    end
+                end
                 local opened = false
                 
                 local DropdownFrame = Instance.new("Frame")
@@ -1563,7 +1631,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected) or ""
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1631,10 +1699,40 @@ function Library:CreateWindow(title)
 
                 local SearchCorner = Instance.new("UICorner")
                 SearchCorner.CornerRadius = UDim.new(0, 6)
-                SearchCorner.Parent = ListSearch                
+                SearchCorner.Parent = ListSearch
+
+                local function getValue(key)
+                    return isKeyValue and valueMap[key] or key
+                end
+                
+                local function updateSelectedLabel()
+                    local display = nil
+                    if multiSelect then
+                        display = table.concat(selected, ", ")
+                    else
+                        display = selected or ""
+                    end
+                    SelectedLabel.Text = display
+                end
+                
+                local function handleSelectionChange()
+                    updateSelectedLabel()
+                    
+                    if callback then
+                        if multiSelect then
+                            local values = {}
+                            for _, key in ipairs(selected) do
+                                table.insert(values, getValue(key))
+                            end
+                            callback(values)
+                        else
+                            callback(getValue(selected))
+                        end
+                    end
+                end
                 
                 -- Create option buttons
-                for index, option in ipairs(options) do
+                for index, option in ipairs(displayOptions) do
                     local OptionBtn = Instance.new("TextButton")
                     OptionBtn.Parent = ListScroll
                     OptionBtn.BackgroundColor3 = Theme.Card
@@ -1676,14 +1774,11 @@ function Library:CreateWindow(title)
                                     return
                                 end
                             end
-                            SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected)
                         else
                             if selected == option then
                                 selected = nil
-                                SelectedLabel.Text = default
                             else
                                 selected = option
-                                SelectedLabel.Text = option
                             end
                         end
                         
@@ -1709,8 +1804,20 @@ function Library:CreateWindow(title)
                             ListContainer.Visible = false
                             DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
                         end
-                        
-                        if callback then callback(selected) end
+
+                        updateSelectedLabel()
+                    
+                        if callback then
+                            if multiSelect then
+                                local values = {}
+                                for _, key in ipairs(selected) do
+                                    table.insert(values, getValue(key))
+                                end
+                                callback(values)
+                            else
+                                callback(getValue(selected))
+                            end
+                        end
                     end)
                 end
                 
@@ -1725,7 +1832,7 @@ function Library:CreateWindow(title)
                     
                     if opened then
                         ListContainer.Visible = true
-                        local listHeight = math.min(#options * (IsMobile and 28 or 24) + 8, 150)
+                        local listHeight = math.min(#displayOptions * (IsMobile and 28 or 24) + 8, 150)
                         DropdownFrame.Size = UDim2.new(1, 0, 0, (IsMobile and 36 or 32) + listHeight + 4)
                         Tween(ListContainer, {Size = UDim2.new(1, 0, 0, listHeight)}, 0.2)
                         Tween(Arrow, {Rotation = 0}, 0.2)
@@ -1748,29 +1855,116 @@ function Library:CreateWindow(title)
                         end
                     end
                 end)
-                
+
                 if callback and default then
-                    callback(selected)
+                    if multiSelect then
+                        local values = {}
+                        for _, key in ipairs(selected) do
+                            table.insert(values, getValue(key))
+                        end
+                        callback(values)
+                    else
+                        callback(getValue(selected))
+                    end
                 end
                 
                 return {
-                    Set = function(option)
-                        if table.find(options, option) then
-                            selected = option
-                            SelectedLabel.Text = option
-                            for _, child in ipairs(ListScroll:GetChildren()) do
-                                if child:IsA("TextButton") then
+                    Set = function(value)
+                        if multiSelect then
+                            if type(value) ~= "table" then
+                                value = {value}
+                            end
+                            
+                            selected = {}
+                            for _, val in ipairs(value) do
+                                if isKeyValue then
+                                    for k, v in pairs(valueMap) do
+                                        if v == val then
+                                            table.insert(selected, k)
+                                            break
+                                        end
+                                    end
+                                else
+                                    if table.find(displayOptions, val) then
+                                        table.insert(selected, val)
+                                    end
+                                end
+                            end
+                        else
+                            if isKeyValue then
+                                for k, v in pairs(valueMap) do
+                                    if v == value then
+                                        selected = k
+                                        break
+                                    end
+                                end
+                            else
+                                if table.find(displayOptions, value) then
+                                    selected = value
+                                end
+                            end
+                        end
+                        
+                        for _, child in ipairs(ListScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                if multiSelect then
+                                    child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                else
                                     child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
                                 end
                             end
-                            if callback then callback(selected) end
+                        end
+                        
+                        if callback and default then
+                            if multiSelect then
+                                local values = {}
+                                for _, key in ipairs(selected) do
+                                    table.insert(values, getValue(key))
+                                end
+                                callback(values)
+                            else
+                                callback(getValue(selected))
+                            end
                         end
                     end,
                     Get = function()
-                        return selected
+                        if multiSelect then
+                            local values = {}
+                            for _, key in ipairs(selected) do
+                                table.insert(values, getValue(key))
+                            end
+                            return values
+                        else
+                            return getValue(selected)
+                        end
                     end,
                     Refresh = function(newOptions)
                         options = newOptions
+                        if type(newOptions) == "table" then
+                            local newIsArray = true
+                            for k, v in pairs(newOptions) do
+                                if type(k) ~= "number" then
+                                    newIsArray = false
+                                    break
+                                end
+                            end
+                            
+                            if newIsArray then
+                                displayOptions = newOptions
+                                valueMap = {}
+                                for _, v in ipairs(newOptions) do
+                                    valueMap[v] = v
+                                end
+                                isKeyValue = false
+                            else
+                                isKeyValue = true
+                                displayOptions = {}
+                                valueMap = newOptions
+                                for k, v in pairs(newOptions) do
+                                    table.insert(displayOptions, k)
+                                end
+                            end
+                        end
                         
                         -- Clear existing options
                         for _, child in ipairs(ListScroll:GetChildren()) do
@@ -1780,7 +1974,7 @@ function Library:CreateWindow(title)
                         end
                         
                         -- Add new options
-                        for _, option in ipairs(options) do
+                        for index, option in ipairs(displayOptions) do
                             local OptionBtn = Instance.new("TextButton")
                             OptionBtn.Parent = ListScroll
                             OptionBtn.BackgroundColor3 = Theme.Card
@@ -1790,14 +1984,26 @@ function Library:CreateWindow(title)
                             OptionBtn.Text = option
                             if multiSelect then
                                 OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
+                                OptionBtn.LayoutOrder = table.find(selected, option) and -1 or index
                             else
                                 OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
+                                OptionBtn.LayoutOrder = option == selected and -1 or index
                             end
                             OptionBtn.TextSize = IsMobile and 11 or 12
-
+        
                             local OptionCorner = Instance.new("UICorner")
                             OptionCorner.CornerRadius = UDim.new(0, 6)
                             OptionCorner.Parent = OptionBtn
+                            
+                            OptionBtn.MouseEnter:Connect(function()
+                                if multiSelect and not table.find(selected, option) or option ~= selected then
+                                    Tween(OptionBtn, {BackgroundTransparency = 0.8})
+                                end
+                            end)
+                            
+                            OptionBtn.MouseLeave:Connect(function()
+                                Tween(OptionBtn, {BackgroundTransparency = 1})
+                            end)
                             
                             OptionBtn.MouseButton1Click:Connect(function()
                                 if multiSelect then
@@ -1810,27 +2016,28 @@ function Library:CreateWindow(title)
                                             return
                                         end
                                     end
-                                    SelectedLabel.Text = table.concat(selected, ", ") or table.concat(default, ", ") or ""
                                 else
                                     if selected == option then
                                         selected = nil
-                                        Selected.Text = default
                                     else
                                         selected = option
-                                        Selected.Text = option
                                     end
                                 end
                                 
-                                for _, child in ipairs(ListScroll:GetChildren()) do
+                                -- Update colors
+                                for index, child in ipairs(ListScroll:GetChildren()) do
                                     if child:IsA("TextButton") then
                                         if multiSelect then
                                             child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                            child.LayoutOrder = table.find(selected, child.Text) and -1 or index
                                         else
                                             child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                            child.LayoutOrder = child.Text == selected and -1 or index
                                         end
                                     end
                                 end
                                 
+                                -- Close dropdown
                                 if not multiSelect then
                                     opened = false
                                     Tween(Arrow, {Rotation = -90}, 0.2)
@@ -1839,8 +2046,20 @@ function Library:CreateWindow(title)
                                     ListContainer.Visible = false
                                     DropdownFrame.Size = UDim2.new(1, 0, 0, IsMobile and 36 or 32)
                                 end
-                                
-                                if callback then callback(selected) end
+        
+                                updateSelectedLabel()
+                            
+                                if callback then
+                                    if multiSelect then
+                                        local values = {}
+                                        for _, key in ipairs(selected) do
+                                            table.insert(values, getValue(key))
+                                        end
+                                        callback(values)
+                                    else
+                                        callback(getValue(selected))
+                                    end
+                                end
                             end)
                         end
                     end
