@@ -898,7 +898,7 @@ end
                 elseif autoMutatePetEnabled and MutationMachineModel.Mutating == "None" then
                     local Pet = findPet(selectedPetToMutate, selectedPetMutations)
                     if Pet then
-                        Character.Humanoid:EquipTool(pet)
+                        Character.Humanoid:EquipTool(Pet)
                         MutationMachine:FireServer("SubmitHeldPet")
                     end
                     task.wait(5)
@@ -2674,7 +2674,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.141")
+AboutSection:Label("Version: 1.3.142")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
