@@ -877,7 +877,7 @@ end
             if activeMut then
                 for _, petMut in ipairs(Mutation) do
                     if activeMut.Text:find(petMut, 1, true) then
-                        GameEvents.PetService:FireServer("UnequipPet", UUID)
+                        GameEvents.PetsService:FireServer("UnequipPet", UUID)
                         break
                     end
                 end
@@ -2720,7 +2720,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.146")
+AboutSection:Label("Version: 1.3.147")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
