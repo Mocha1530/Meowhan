@@ -1,4 +1,4 @@
-	--[[
+--[[
 	Grow A Garden automation and more by Mocha1530
 ]]
 
@@ -95,11 +95,27 @@ for k_a_e_s, v_a_e_s in pairs(a_e_s_data) do
 end
 
 local ownedPets = {}
-for _, pets in ipairs(Backpack:GetChildren()) do
-    if pets:GetAttribute("b") == "l" then
-        ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
+local function getOwnedPets()
+    ownedPets = {}
+    local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay")
+    for _, pets in ipairs(Backpack:GetChildren()) do
+        if pets:GetAttribute("b") == "l" then
+            ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
+        end
     end
+    for _, pets in ipairs(PetDisplay.ScrollingFrame:GetChildren()) do
+        if pets:IsA("Frame") and pets.Name ~= "PetTemplate" then
+            local nameLabel = pets:FindFirstChild("PET_TYPE", true)
+            local ageLabel = pets:FindFirstChild("PET_AGE", true)
+            local age = ageLabel.Text:match("%d+")
+            local name = nameLabel.Text .. " [Age " .. age .. "]"
+            ownedPets[name] = pets.Name
+        end
+    end
+    return ownedPets
 end
+
+getOwnedPets()
         
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
@@ -264,7 +280,7 @@ local function saveFile(folder, filename, data)
 end
 
 -- Create UI
-local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/testing/UI/Test%20Dropdown.lua'))()
+local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI/UI%20LibraryV2.lua'))()
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
@@ -837,11 +853,9 @@ end
                     for _, grandkid in ipairs(child:GetChildren()) do
                         if grandkid:IsA("Model") then
                             MutationMachineModel["Mutating"] = grandkid
-                            warn(grandkid.Name)
                             break
                         elseif not MutationMachineModel["Mutating"] then
                             MutationMachineModel["Mutating"] = "None"
-                            warn("None")
                         end
                     end
                 end
@@ -857,6 +871,18 @@ end
     local function findPet(UUID, Mutation)
         UUID = UUID or ""
         Mutation = Mutation or {}
+        local activePet = PlayerGui.ActivePetUI:FindFirstChild(UUID, true)
+        if activePet then
+            activeMut = activePet:FindFirstChild("PET_TYPE", true)
+            if activeMut then
+                for _, petMut in ipairs(Mutation) do
+                    if activeMut.Text:find(petMut, 1, true) then
+                        GameEvents.PetService:FireServer("UnequipPet", UUID)
+                        break
+                    end
+                end
+            end
+        end
         for _, pet in ipairs(Backpack:GetChildren()) do
             if pet:GetAttribute("b") == "l" then
                 if not pet:GetAttribute("d") and pet:GetAttribute("PET_UUID") == UUID then
@@ -881,7 +907,7 @@ end
         for part in Text:gmatch("[^:]+") do
             table.insert(parts, tonumber(part))
         end
-        
+
         local result = 5
         if #parts == 3 then
             result = parts[1] * 3600 + parts[2] * 60 + parts[3]
@@ -1934,7 +1960,7 @@ end, {
 local MutationMachineSection = MachineTab:Section("Mutation Machine")
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
+local petSelection = MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
     if selected then
         selectedPetToMutate = selected
         config.PetToMutate = selected
@@ -1951,6 +1977,12 @@ MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedP
         saveConfig(config)
 	end
 end, true)
+
+MutationMachineSection:Button("Refresh Pet Selection", function()
+    if getOwnedPets() then
+        petSelection:Refresh(ownedPets)
+    end
+end)
 
 MutationMachineSection:Toggle("Auto Mutate Pet", function(state)
     local starMut = false
@@ -2688,7 +2720,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.143")
+AboutSection:Label("Version: 1.3.146")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
