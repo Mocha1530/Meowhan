@@ -97,7 +97,7 @@ end
 local ownedPets = {}
 local function getOwnedPets()
     ownedPets = {}
-    local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay")
+    local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay", true)
     for _, pets in ipairs(Backpack:GetChildren()) do
         if pets:GetAttribute("b") == "l" then
             ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
