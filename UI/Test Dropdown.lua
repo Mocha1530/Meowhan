@@ -1732,7 +1732,7 @@ function Library:CreateWindow(title)
                 end
                 
                 -- Create option buttons
-                for index, option in ipairs(options) do
+                for index, option in ipairs(displayOptions) do
                     local OptionBtn = Instance.new("TextButton")
                     OptionBtn.Parent = ListScroll
                     OptionBtn.BackgroundColor3 = Theme.Card
