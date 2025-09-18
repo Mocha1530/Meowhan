@@ -835,12 +835,12 @@ end
                     MutationMachineModel["Text"] = child.Text
                 elseif child.Parent == MutMachine:FindFirstChild("PetModelLocation") then
                     if child:IsA("Model") then
-                        MutationMachine["Mutating"] = child
+                        MutationMachineModel["Mutating"] = child
                     else
-                        MutationMachine["Mutating"] = "None"
+                        MutationMachineModel["Mutating"] = "None"
                     end
                 end
-                if MutationMachineModel["Text"] and MutationMachine["Mutating"] then
+                if MutationMachineModel["Text"] and MutationMachineModel["Mutating"] then
                     return MutationMachineModel
                 end
             end
@@ -2674,7 +2674,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.140")
+AboutSection:Label("Version: 1.3.141")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
