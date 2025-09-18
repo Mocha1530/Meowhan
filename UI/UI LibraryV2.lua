@@ -1869,7 +1869,7 @@ function Library:CreateWindow(title)
                 end
                 
                 return {
-                    Set = function(value)
+                    Set = function(self, value)
                         if multiSelect then
                             if type(value) ~= "table" then
                                 value = {value}
@@ -1938,11 +1938,11 @@ function Library:CreateWindow(title)
                             return getValue(selected)
                         end
                     end,
-                    Refresh = function(newOptions)
+                    Refresh = function(self, newOptions)
                         options = newOptions
-                        if type(newOptions) == "table" then
+                        if type(options) == "table" then
                             local newIsArray = true
-                            for k, v in pairs(newOptions) do
+                            for k, v in pairs(options) do
                                 if type(k) ~= "number" then
                                     newIsArray = false
                                     break
@@ -1950,17 +1950,17 @@ function Library:CreateWindow(title)
                             end
                             
                             if newIsArray then
-                                displayOptions = newOptions
+                                displayOptions = options
                                 valueMap = {}
-                                for _, v in ipairs(newOptions) do
+                                for _, v in ipairs(options) do
                                     valueMap[v] = v
                                 end
                                 isKeyValue = false
                             else
                                 isKeyValue = true
                                 displayOptions = {}
-                                valueMap = newOptions
-                                for k, v in pairs(newOptions) do
+                                valueMap = options
+                                for k, v in pairs(options) do
                                     table.insert(displayOptions, k)
                                 end
                             end
