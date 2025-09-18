@@ -95,9 +95,9 @@ for k_a_e_s, v_a_e_s in pairs(a_e_s_data) do
 end
 
 local ownedPets = {}
-for _, pets in pairs(Backpack:GetChildren()) do
-    if pets:GetAttributes("b") == "l" then
-        ownedPets[pets.Name] = pets:GetAttributes("PET_UUID")
+for _, pets in ipairs(Backpack:GetChildren()) do
+    if pets:GetAttribute("b") == "l" then
+        ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
     end
 end
         
