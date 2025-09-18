@@ -1832,7 +1832,7 @@ function Library:CreateWindow(title)
                     
                     if opened then
                         ListContainer.Visible = true
-                        local listHeight = math.min(#options * (IsMobile and 28 or 24) + 8, 150)
+                        local listHeight = math.min(#displayOptions * (IsMobile and 28 or 24) + 8, 150)
                         DropdownFrame.Size = UDim2.new(1, 0, 0, (IsMobile and 36 or 32) + listHeight + 4)
                         Tween(ListContainer, {Size = UDim2.new(1, 0, 0, listHeight)}, 0.2)
                         Tween(Arrow, {Rotation = 0}, 0.2)
@@ -1974,7 +1974,7 @@ function Library:CreateWindow(title)
                         end
                         
                         -- Add new options
-                        for index, option in ipairs(options) do
+                        for index, option in ipairs(displayOptions) do
                             local OptionBtn = Instance.new("TextButton")
                             OptionBtn.Parent = ListScroll
                             OptionBtn.BackgroundColor3 = Theme.Card
