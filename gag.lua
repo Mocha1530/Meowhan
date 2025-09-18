@@ -833,13 +833,16 @@ end
             for _, child in ipairs(MutMachine:GetDescendants()) do
                 if child:IsA("TextLabel") and child.Name == "TimerTextLabel" then
                     MutationMachineModel["Text"] = child.Text
-                elseif child.Parent == MutMachine:FindFirstChild("PetModelLocation") then
-                    if child:IsA("Model") then
-                        MutationMachineModel["Mutating"] = child
-						warn(child.Name)
-                    elseif not MutationMachineModel["Mutating"] then
-                        MutationMachineModel["Mutating"] = "None"
-                        warn("None")
+                elseif child.Name == "PetModelLocation" then
+                    for _, grandkid in ipairs(child:GetChildren()) do
+                        if grandkid:IsA("Model") then
+                            MutationMachineModel["Mutating"] = grandkid
+                            warn(grandkid.Name)
+                            break
+                        elseif not MutationMachineModel["Mutating"] then
+                            MutationMachineModel["Mutating"] = "None"
+                            warn("None")
+                        end
                     end
                 end
                 if MutationMachineModel["Text"] and MutationMachineModel["Mutating"] then
