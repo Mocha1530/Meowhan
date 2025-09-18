@@ -882,12 +882,19 @@ end
             table.insert(parts, tonumber(part))
         end
         
+        local result = 5
         if #parts == 3 then
-            return parts[1] * 3600 + parts[2] * 60 + parts[3]
+            result = parts[1] * 3600 + parts[2] * 60 + parts[3]
+            warn(tostring(result))
+            return result
         elseif #parts == 2 then
-            return parts[1] * 60 + parts[2]
+            result = parts[1] * 60 + parts[2]
+            warn(tostring(result))
+            return result
         elseif #parts == 1 then
-            return parts[1]
+            result = parts[1]
+            warn(tostring(result))
+            return result
         else
             return 5
         end
