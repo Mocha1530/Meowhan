@@ -832,7 +832,7 @@ end
         if MutMachine then
             for _, child in ipairs(MutMachine:GetDescendants()) do
                 if child:IsA("TextLabel") and child.Name == "TimerTextLabel" then
-                    MutationMachine["Text"] = child.Text
+                    MutationMachineModel["Text"] = child.Text
                 elseif child.Parent == MutMachine:FindFirstChild("PetModelLocation") then
                     if child:IsA("Model") then
                         MutationMachine["Mutating"] = child
@@ -840,7 +840,7 @@ end
                         MutationMachine["Mutating"] = "None"
                     end
                 end
-                if MutationMachine["Text"] and MutationMachine["Mutating"] then
+                if MutationMachineModel["Text"] and MutationMachine["Mutating"] then
                     return MutationMachineModel
                 end
             end
@@ -922,8 +922,8 @@ end
     local function startAutoStartMachine()
         spawn(function()
             while Running.autoStartMachine and autoStartMachineEnabled do
-                local timerStatus = getMutationMachineTimer()
-                if timerStatus == nil or timerStatus == "" then
+                local timerStatus = getMutationMachine()
+                if timerStatus.Text == nil or timerStatus.Text == "" then
                     MutationMachine:FireServer("StartMachine")
                 end
                 task.wait(10)
