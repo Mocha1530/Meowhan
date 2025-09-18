@@ -116,6 +116,7 @@ local DEFAULT_CONFIG = {
     PetToMutate = "",
     PetMutations = {},
     AutoStartPetMutation = false,
+    AutoMutatePet = false,
     AutoClaimMutatedPet = false,
 
     -- Event
@@ -285,6 +286,7 @@ local InfoTab = Window:Tab("Info")
 
     -- Mutation Machine Vars
     local autoStartMachineEnabled = config.AutoStartPetMutation
+    local autoMutatePetEnabled = config.AutoMutatePet
     local autoClaimPetEnabled = config.AutoClaimMutatedPet
     local selectedPetToMutate = config.PetToMutate or ""
     local selectedPetMutations = config.PetMutations or {}
@@ -822,14 +824,24 @@ end
 
     -- Machine Function
         -- Mutation Machine Timer
-    local function getMutationMachineTimer()
+    local function getMutationMachine()
+        local MutationMachineModel = {}
         local NPCS = Workspace:FindFirstChild("NPCS")
         local MutMachine = NPCS:FindFirstChild("PetMutationMachine")
-    
+        
         if MutMachine then
             for _, child in ipairs(MutMachine:GetDescendants()) do
                 if child:IsA("TextLabel") and child.Name == "TimerTextLabel" then
-                    return child.Text
+                    MutationMachine["Text"] = child.Text
+                elseif child.Parent == MutMachine:FindFirstChild("PetModelLocation") then
+                    if child:IsA("Model") then
+                        MutationMachine["Mutating"] = child
+                    else
+                        MutationMachine["Mutating"] = "None"
+                    end
+                end
+                if MutationMachine["Text"] and MutationMachine["Mutating"] then
+                    return MutationMachineModel
                 end
             end
         end
@@ -837,21 +849,72 @@ end
         return nil
     end
 
+    local function findPet(UUID, Mutation)
+        UUID = UUID or ""
+        Mutation = Mutation or {}
+        for _, pet in ipairs(Backpack:GetChildren()) do
+            if pet:GetAttribute("b") == "l" then
+                if not pet:GetAttribute("d") and pet:GetAttribute("PET_UUID") == UUID then
+                    local found = true
+                    for _, petMut in ipairs(Mutation) do
+                        if pet.Name:find(petMut, 1, true) then
+                            found = false
+                            break
+                        end
+                    end
+                    if found then
+                        return pet
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local function getMutTime(Text)
+        local parts = {}
+        for part in Text:gmatch("[^:]+") do
+            table.insert(parts, tonumber(part))
+        end
+        
+        if #parts == 3 then
+            return parts[1] * 3600 + parts[2] * 60 + parts[3]
+        elseif #parts == 2 then
+            return parts[1] * 60 + parts[2]
+        elseif #parts == 1 then
+            return parts[1]
+        else
+            return 5
+        end
+    end
+
     local function startAutoClaimPet()
         spawn(function()
-            while Running.autoClaimPet and autoClaimPetEnabled do
-                local timerStatus = getMutationMachineTimer()
-                if timerStatus == "READY" then
+            while Running.autoClaimPet and (autoClaimPetEnabled or autoMutatePetEnabled) do
+                local MutationMachineModel = getMutationMachine()
+                if MutationMachineModel.Text == "READY" and autoClaimPetEnabled then
                     MutationMachine:FireServer("ClaimMutatedPet")
                     task.wait(2)
+                elseif autoMutatePetEnabled and MutationMachineModel.Mutating == "None" then
+                    local Pet = findPet(selectedPetToMutate, selectedPetMutations)
+                    if Pet then
+                        Character.Humanoid:EquipTool(pet)
+                        MutationMachine:FireServer("SubmitHeldPet")
+                    end
+                    task.wait(5)
                 else
-                    task.wait(1)
+                    local time = getMutTime(MutationMachineModel.Text)
+                    if time then
+                        task.wait(time)
+                    else
+                        task.wait(10)
+                    end
                 end
             end
         end)
     end
     
-    if autoClaimPetEnabled then
+    if autoClaimPetEnabled or autoMutatePetEnabled then
        startAutoClaimPet()
     end
 
@@ -1875,17 +1938,46 @@ MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedP
 	end
 end, true)
 
+MutationMachineSection:Toggle("Auto Mutate Pet", function(state)
+    local starMut = false
+    if state then
+        if not autoMutatePetEnabled and not autoClaimPetEnabled then
+            startMut = true
+        end
+        Window:Notify("Auto Mutate Pet Enabled", 2)
+    else
+        Window:Notify("Auto Mutate Pet Disabled", 2)
+    end
+        
+    autoMutatePetEnabled = state
+    config.AutoMutatePet = state
+    saveConfig(config)
+
+    if startMut then
+        startAutoClaimPet()
+    end
+end, {
+    default = autoMutatePetEnabled
+})
+
   -- Auto claim toggle
 MutationMachineSection:Toggle("Auto Claim Pet", function(state)
+    local starClaim = false
+    if state then
+        if not autoMutatePetEnabled and not autoClaimPetEnabled then
+            starClaim = true
+        end
+        Window:Notify("Auto Claim Pet Enabled", 2)
+    else
+        Window:Notify("Auto Claim Pet Disabled", 2)
+    end
+
     autoClaimPetEnabled = state
     config.AutoClaimMutatedPet = state
     saveConfig(config)
 
-    if state then
+    if starClaim then
         startAutoClaimPet()
-        Window:Notify("Auto Claim Pet Enabled", 2)
-    else
-        Window:Notify("Auto Claim Pet Disabled", 2)
     end
 end, {
     default = autoClaimPetEnabled
@@ -2582,7 +2674,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.130")
+AboutSection:Label("Version: 1.3.140")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
