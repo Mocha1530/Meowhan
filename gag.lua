@@ -94,6 +94,13 @@ for k_a_e_s, v_a_e_s in pairs(a_e_s_data) do
     end
 end
 
+local ownedPets = {}
+for _, pets in pairs(Backpack:GetChildren()) do
+    if pets:GetAttributes("b") == "l" then
+        ownedPets[pets.Name] = pets:GetAttributes("PET_UUID")
+    end
+end
+        
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
 local CONFIG_FILENAME = "GrowAGarden.json"
@@ -256,13 +263,14 @@ local function saveFile(folder, filename, data)
 end
 
 -- Create UI
-local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/testing/UI/Test%20Dropdown.lua'))()
+local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/testing/UI/Test%20Dropdown.lua'))()
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
 
 local MainTab = Window:Tab("Main")
 local EventTab = Window:Tab("Event")
+local MachineTab = Window:Tab("Machine")
 local ShopTab = Window:Tab("Shop")
 local SettingsTab = Window:Tab("Settings")
 local InfoTab = Window:Tab("Info")
@@ -296,6 +304,8 @@ local InfoTab = Window:Tab("Info")
         local feedRequestedEnabled = config.FeedRequested
         local feedAllRequestedEnabled = config.FeedAllRequested
         local requestedPlant = nil
+        local OaklayProgress = nil
+        local OaklayTrait = nil
 
     -- Shop Vars
         -- Seed Shop Vars
@@ -354,18 +364,14 @@ local function holdItem(itemName)
         warn("Backpack not found for player: " .. LocalPlayer.Name)
         return false
     end
-
-    if not Character then
-        Character = LocalPlayer.CharacterAdded:Wait()
-    end
-
+    
     local item = Backpack:FindFirstChild(itemName)
     if not item then
         warn("Item not found in backpack: " .. itemName)
         return false
     end
 
-    item.Parent = Character
+    Character.Humanoid:EquipTool(item)
     return true
 end
 
@@ -483,10 +489,8 @@ local function findItem(filters)
             end
             
             if matchesAllFilters then
-                if holdItem(child.Name) then
-                    action()
-                    return true
-                end
+                action(child.Name)
+                return true
             end
         end
     end
@@ -619,14 +623,19 @@ end
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 local fruitsToCollect = {}
                 if autoCollectRequestedEnabed then
-                    if PlantTraits[requestedPlant] then
-                        fruitsToCollect = findFruit({
-                            name = PlantTraits[requestedPlant],
-                            type = "Fruit",
-                            action = function(fruit) end
-                        })
+                    if not OaklayProgress.Text:find("Cooldown", 1, true) then
+                        if PlantTraits[requestedPlant] then
+                            fruitsToCollect = findFruit({
+                                name = PlantTraits[requestedPlant],
+                                type = "Fruit",
+                                action = function(fruit) end
+                            })
+                        else
+                            task.wait(5)
+                        end
                     else
                         task.wait(5)
+                        break
                     end
                 elseif autoCollectSelectedFruitsEnabled then
                     fruitsToCollect = findFruit({
@@ -760,8 +769,6 @@ end
     end]]
 
     -- Auto Feed Requested
-    local OaklayProgress = nil
-    local OaklayTrait = nil
     for _, v_e in ipairs(UpdateItems:GetDescendants()) do
         if v_e:IsA("TextLabel") then
             if v_e.Name == "TraitTextLabel" then
@@ -787,8 +794,10 @@ end
                             findItem({
                                 name = PlantTraits[requestedPlant],
                                 type = "j",
-                                action = function()
-                                            GameEvents.FallMarketEvent.SubmitHeldPlant:FireServer()
+                                action = function(itemName)
+                                            if holdItem(itemName) then
+                                                GameEvents.FallMarketEvent.SubmitHeldPlant:FireServer()
+                                            end
                                         end
                             })
                             task.wait(0.5)
@@ -811,6 +820,58 @@ end
         startAutoFeedRequested()
     end
 
+    -- Machine Function
+        -- Mutation Machine Timer
+    local function getMutationMachineTimer()
+        local NPCS = Workspace:FindFirstChild("NPCS")
+        local MutMachine = NPCS:FindFirstChild("PetMutationMachine")
+    
+        if MutMachine then
+            for _, child in ipairs(MutMachine:GetDescendants()) do
+                if child:IsA("TextLabel") and child.Name == "TimerTextLabel" then
+                    return child.Text
+                end
+            end
+        end
+    
+        return nil
+    end
+
+    local function startAutoClaimPet()
+        spawn(function()
+            while Running.autoClaimPet and autoClaimPetEnabled do
+                local timerStatus = getMutationMachineTimer()
+                if timerStatus == "READY" then
+                    MutationMachine:FireServer("ClaimMutatedPet")
+                    task.wait(2)
+                else
+                    task.wait(1)
+                end
+            end
+        end)
+    end
+    
+    if autoClaimPetEnabled then
+       startAutoClaimPet()
+    end
+
+        -- Mutation Machine (Vuln)
+    local function startAutoStartMachine()
+        spawn(function()
+            while Running.autoStartMachine and autoStartMachineEnabled do
+                local timerStatus = getMutationMachineTimer()
+                if timerStatus == nil or timerStatus == "" then
+                    MutationMachine:FireServer("StartMachine")
+                end
+                task.wait(10)
+            end
+        end)
+    end
+    
+    if autoStartMachineEnabled then
+        startAutoStartMachine()
+    end
+    
     -- Shop Function
     local ShopControllers = {}
 
@@ -882,11 +943,13 @@ end
                     
                     local itemsToBuy = {}
                     
-                    if controller.autoBuySelected and #controller.selectedItems > 0 then
+                    if controller.autoBuySelected then
                         if shopType ~= "Events" then
-                            for _, itemName in ipairs(controller.selectedItems) do
-                                if controller.stock[itemName] and controller.stock[itemName] > 0 then
-                                    table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                            if #controller.selectedItems > 0 then
+                                for _, itemName in ipairs(controller.selectedItems) do
+                                    if controller.stock[itemName] and controller.stock[itemName] > 0 then
+                                        table.insert(itemsToBuy, {name = itemName, count = controller.stock[itemName]})
+                                    end
                                 end
                             end
                         else
@@ -993,29 +1056,41 @@ end
         end
     )
 
-    if config.BuySelectedSeeds or config.BuyAllSeeds then
-        seedController.startBuying()
-    end
-        
-    if config.BuySelectedGears or config.BuyAllGears then
-        gearController.startBuying()
-    end
-
-    if config.BuySelectedEggs or config.BuyAllEggs then
-        eggController.startBuying()
+    local shopTypes = {
+        "Seeds", "Gears", "Eggs", "Cosmetics", "Crates", "Events"
+    }
+    for _, v in ipairs(shopTypes) do
+        if config["BuySelected" .. v] or config["BuyAll" .. v] then
+            ShopControllers[v].startBuying()
+        end
     end
 
-    if config.BuySelectedCosmetics or config.BuyAllCosmetics then
-        cosmeticController.startBuying()
-    end
+    --[[ lol why th am I hardcoding it
 
-    if config.BuySelectedCrates or config.BuyAllCrates then
-        crateController.startBuying()
-    end
-
-    if config.BuySelectedEvents or config.BuyAllEvents then
-        eventController.startBuying()
-    end
+        if config.BuySelectedSeeds or config.BuyAllSeeds then
+            seedController.startBuying()
+        end
+            
+        if config.BuySelectedGears or config.BuyAllGears then
+            gearController.startBuying()
+        end
+    
+        if config.BuySelectedEggs or config.BuyAllEggs then
+            eggController.startBuying()
+        end
+    
+        if config.BuySelectedCosmetics or config.BuyAllCosmetics then
+            cosmeticController.startBuying()
+        end
+    
+        if config.BuySelectedCrates or config.BuyAllCrates then
+            crateController.startBuying()
+        end
+    
+        if config.BuySelectedEvents or config.BuyAllEvents then
+            eventController.startBuying()
+        end
+    ]]
 
     -- Egg ESP
     local DataClient = {}
@@ -1517,8 +1592,6 @@ end)
 
 -- Main Tab
 local CollectFruitSection = MainTab:Section("Collect Fruit")
-local MutationMachineSection = MainTab:Section("Mutation Machine")
-local MutationMachineVulnSection = MainTab:Section("Mutation Machine (Vuln)")
 
 CollectFruitSection:Dropdown("Select Fruits: ", a_s_list, selectedFruitsToCollect, function(selected)
     if selected then
@@ -1568,135 +1641,6 @@ CollectFruitSection:Toggle("Auto Collect Fruit", function(state)
 end, {
     default = autoCollectSelectedFruitsEnabled,
     group = "Auto_Collect"
-})
-
--- Mutation Machine Timer
-local function getMutationMachineTimer()
-    local model = Workspace:FindFirstChild("NPCS")
-
-    if model then
-        model = model:FindFirstChild("PetMutationMachine")
-        if model then
-            model = model:FindFirstChild("Model")
-            if model then
-                for _, child in ipairs(model:GetChildren()) do
-                    if child:IsA("Part") and child:FindFirstChild("BillboardPart") then
-                        local billboardPart = child.BillboardPart
-                        if billboardPart then
-                            local billboardGui = billboardPart:FindFirstChild("BillboardGui")
-                            if billboardGui then
-                                local timerTextLabel = billboardGui:FindFirstChild("TimerTextLabel")
-                                if timerTextLabel then
-                                    return timerTextLabel.Text
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return nil
-end
-
--- Mutation Machine (Vuln)
-local function startAutoStartMachine()
-    spawn(function()
-        while Running.autoStartMachine and autoStartMachineEnabled do
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == nil or timerStatus == "" then
-                MutationMachine:FireServer("StartMachine")
-            end
-            task.wait(10)
-        end
-    end)
-end
-
-if autoStartMachineEnabled then
-    startAutoStartMachine()
-end
-
-MutationMachineVulnSection:Button("Submit Held Pet", function()
-    MutationMachine:FireServer("SubmitHeldPet")
-end)
-
-MutationMachineVulnSection:Button("Start Machine", function()
-    local timerStatus = getMutationMachineTimer()
-    if timerStatus == nil or timerStatus == "" then
-        MutationMachine:FireServer("StartMachine")
-        Window:Notify("Machine Started", 2)
-    else
-        Window:Notify("Machine Already Started", 2)
-    end
-end)
-
-MutationMachineVulnSection:Toggle("Auto Start Machine", function(state)
-    autoStartMachineEnabled = state
-    config.AutoStartPetMutation = state
-    saveConfig(config)
-
-    if state then
-        startAutoStartMachine()
-        Window:Notify("Auto Start Machine Enabled", 2)
-    else
-        Window:Notify("Auto Start Machine Disabled", 2)
-    end
-end, {
-    default = autoStartMachineEnabled
-})
-
--- Mutation machine functions
-local function startAutoClaimPet()
-    spawn(function()
-        while Running.autoClaimPet and autoClaimPetEnabled do
-            local timerStatus = getMutationMachineTimer()
-            if timerStatus == "READY" then
-                MutationMachine:FireServer("ClaimMutatedPet")
-                task.wait(2)
-            else
-                task.wait(1)
-            end
-        end
-    end)
-end
-
-if autoClaimPetEnabled then
-   startAutoClaimPet()
-end
-
-  -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", {"Test1", "Test2", "Test3"}, selectedPetToMutate, function(selected)
-    if selected then
-        selectedPetToMutate = selected
-        config.PetToMutate = selected
-        saveConfig(config)
-    end
-end)
-
-  -- Select mutation
-MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
-	if selected then
-        selectedPetMutations = selected
-        config.PetMutations = selected
-        saveConfig(config)
-	end
-end, true)
-
-  -- Auto claim toggle
-MutationMachineSection:Toggle("Auto Claim Pet", function(state)
-    autoClaimPetEnabled = state
-    config.AutoClaimMutatedPet = state
-    saveConfig(config)
-
-    if state then
-        startAutoClaimPet()
-        Window:Notify("Auto Claim Pet Enabled", 2)
-    else
-        Window:Notify("Auto Claim Pet Disabled", 2)
-    end
-end, {
-    default = autoClaimPetEnabled
 })
 
 -- Event Tab
@@ -1908,6 +1852,75 @@ end, {
         default = feedAllRequestedEnabled,
         group = "Feed"
     })
+
+-- Machine Tab
+local MutationMachineSection = MachineTab:Section("Mutation Machine")
+
+  -- Select pet dropdown
+MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
+    if selected then
+        selectedPetToMutate = selected
+        config.PetToMutate = selected
+        saveConfig(config)
+        Window:Notify("Selected: " .. selected)
+    end
+end)
+
+  -- Select mutation
+MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
+	if selected then
+        selectedPetMutations = selected
+        config.PetMutations = selected
+        saveConfig(config)
+	end
+end, true)
+
+  -- Auto claim toggle
+MutationMachineSection:Toggle("Auto Claim Pet", function(state)
+    autoClaimPetEnabled = state
+    config.AutoClaimMutatedPet = state
+    saveConfig(config)
+
+    if state then
+        startAutoClaimPet()
+        Window:Notify("Auto Claim Pet Enabled", 2)
+    else
+        Window:Notify("Auto Claim Pet Disabled", 2)
+    end
+end, {
+    default = autoClaimPetEnabled
+})
+
+MutationMachineSection:Label("Mutation Machine Vuln")
+
+MutationMachineSection:Button("Submit Held Pet", function()
+    MutationMachine:FireServer("SubmitHeldPet")
+end)
+
+MutationMachineSection:Button("Start Machine", function()
+    local timerStatus = getMutationMachineTimer()
+    if timerStatus == nil or timerStatus == "" then
+        MutationMachine:FireServer("StartMachine")
+        Window:Notify("Machine Started", 2)
+    else
+        Window:Notify("Machine Already Started", 2)
+    end
+end)
+
+MutationMachineSection:Toggle("Auto Start Machine", function(state)
+    autoStartMachineEnabled = state
+    config.AutoStartPetMutation = state
+    saveConfig(config)
+
+    if state then
+        startAutoStartMachine()
+        Window:Notify("Auto Start Machine Enabled", 2)
+    else
+        Window:Notify("Auto Start Machine Disabled", 2)
+    end
+end, {
+    default = autoStartMachineEnabled
+})
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
@@ -2569,7 +2582,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.125")
+AboutSection:Label("Version: 1.3.130")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
