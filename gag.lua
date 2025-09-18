@@ -263,7 +263,7 @@ local function saveFile(folder, filename, data)
 end
 
 -- Create UI
-local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/testing/UI/Test%20Dropdown.lua'))()
+local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/testing/UI/Test%20Dropdown.lua'))()
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
@@ -1857,7 +1857,7 @@ end, {
 local MutationMachineSection = MachineTab:Section("Mutation Machine")
 
   -- Select pet dropdown
-MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
+MutationMachineSection:Dropdown("Select Pet: ", { ["Queen bee"] = "baba", ["Ant King"] = "bibi" }, selectedPetToMutate, function(selected)
     if selected then
         selectedPetToMutate = selected
         config.PetToMutate = selected
