@@ -1,4 +1,4 @@
---[[
+	--[[
 	Grow A Garden automation and more by Mocha1530
 ]]
 
@@ -836,7 +836,7 @@ end
                 elseif child.Parent == MutMachine:FindFirstChild("PetModelLocation") then
                     if child:IsA("Model") then
                         MutationMachineModel["Mutating"] = child
-                    else
+                    elseif not MutationMachineModel["Mutating"] then
                         MutationMachineModel["Mutating"] = "None"
                     end
                 end
@@ -2674,7 +2674,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.142")
+AboutSection:Label("Version: 1.3.143")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
