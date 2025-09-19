@@ -637,7 +637,7 @@ end
 -- Tab Functions
     -- Auto Collect
     local function startCollectCrops()
-        spawn(function()
+        task.spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
                 local fruitsToCollect = {}
                 if autoCollectRequestedEnabed then
@@ -653,7 +653,6 @@ end
                         end
                     else
                         task.wait(5)
-                        break
                     end
                 elseif autoCollectSelectedFruitsEnabled then
                     fruitsToCollect = findFruit({
@@ -671,7 +670,7 @@ end
                 if #fruitsToCollect > 0 then
                     for _, fruit in ipairs(fruitsToCollect) do
                         if Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) then
-                            if fruit.Parent then
+                            if not OaklayProgress.Text:find("Cooldown", 1, true) then
                                 local success, err = pcall(function()
                                     GameEvents.Crops.Collect:FireServer({fruit})
                                 end)
@@ -680,12 +679,15 @@ end
                                     warn("Failed to collect fruit: " .. err)
                                 end
                                 task.wait(0.1)
+                            else
+                                task.wait(5)
+                                break
                             end
                         else
+                            task.wait(5)
                             break
                         end
                     end
-                    task.wait(0.1)
                 else
                     task.wait(1)
                 end
