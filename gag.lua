@@ -20,6 +20,7 @@ local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local UpdateItems = Workspace.Interaction.UpdateItems
+local EventFolder = Workspace:FindFirstChild("Fall Festival")
 local placeId = game.PlaceId
 local CraftingData = require(ReplicatedStorage:FindFirstChild("Data"):FindFirstChild("CraftingData"))
 local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
@@ -670,7 +671,7 @@ end
 
 -- Tab Functions
     -- Auto Collect
-    for _, v_e in ipairs(UpdateItems:GetDescendants()) do
+    for _, v_e in ipairs(EventFolder:GetDescendants()) do
         if v_e:IsA("TextLabel") then
             if v_e.Name == "TraitTextLabel" then
                 OaklayTrait = v_e
