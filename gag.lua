@@ -226,13 +226,14 @@ local DEFAULT_CONFIG = {
     JobId = ""
 }
 local Running = {
-    autoStartMachine = true,
-    autoClaimPet = true,
     collectCrops = true,
     autoSubmitGlimmering = true,
     autoMakeAWish = true,
     autoRestartWish = true,
     autoFeedRequested = true,
+    autoStartMachine = true,
+    autoClaimPet = true,
+    autoCraft = true,
     showMutationTimer = true,
     autoBuyStocks = true,
     autoBuySeeds = true,
