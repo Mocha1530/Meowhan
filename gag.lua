@@ -746,7 +746,7 @@ end
                         end
                     end
                 else
-                    task.wait(1)
+                    task.wait(10)
                 end
             end
         end)
