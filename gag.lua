@@ -1063,7 +1063,7 @@ end
                 if itemsToCraft["GearEventWorkbench"] or itemsToCraft["SeedEventWorkbench"] then
                     for k, v in pairs(itemsToCraft) do
                         if Running.autoCraft and autoCraftEnabled then
-                            GameEvents.CraftingGlobalObjectService:FireServer("Claim", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireServer("Claim", v.Object, k, 1)
                             GameEvents.CraftingGlobalObjectService:FireServer("Cancel", v.Object, k)
                             task.wait(0.05)
                             GameEvents.CraftingGlobalObjectService:FireServer("SetRecipe", v.Object, k, v.Item)
