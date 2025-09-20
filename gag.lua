@@ -23,7 +23,7 @@ local UpdateItems = Workspace.Interaction.UpdateItems
 local EventFolder = Workspace:FindFirstChild("Fall Festival")
 local placeId = game.PlaceId
 local CraftingData = require(ReplicatedStorage:FindFirstChild("Data"):FindFirstChild("CraftingData"))
-local EventShopData = require(ReplicatedStorage:FindFirstChild("Data"):FindFirstChid("EventShopData"))
+local EventShopData = require(ReplicatedStorage:FindFirstChild("Data"):FindFirstChild("EventShopData"))
 local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
