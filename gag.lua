@@ -149,13 +149,6 @@ local DEFAULT_CONFIG = {
     FruitWeightModeToCollect = "None",
     AutoCollectSelectedFruits = false,
 
-    -- Mutation Machine
-    PetToMutate = "",
-    PetMutations = {},
-    AutoStartPetMutation = false,
-    AutoMutatePet = false,
-    AutoClaimMutatedPet = false,
-
     -- Event
         --[[ Fairy Event
         CollectGlimmering = false,
@@ -170,7 +163,19 @@ local DEFAULT_CONFIG = {
         CollectRequested = false,
         FeedRequested = false,
         FeedAllRequested = false,
+    -- Machine
+        -- Mutation Machine
+        PetToMutate = "",
+        PetMutations = {},
+        AutoStartPetMutation = false,
+        AutoMutatePet = false,
+        AutoClaimMutatedPet = false,
 
+        -- Crafting Tables
+        GearRecipe = {},
+        SeedRecipe = {},
+        AutoCraft = false,
+    
     -- Shop
         -- Seed Shop
         SelectedSeeds = {},
@@ -321,14 +326,6 @@ local InfoTab = Window:Tab("Info")
     local selectedWeightMode = config.FruitWeightModeToCollect or "None"
     local autoCollectSelectedFruitsEnabled = config.AutoCollectSelectedFruits
 
-    -- Mutation Machine Vars
-    local autoStartMachineEnabled = config.AutoStartPetMutation
-    local autoMutatePetEnabled = config.AutoMutatePet
-    local autoClaimPetEnabled = config.AutoClaimMutatedPet
-    local selectedPetToMutate = config.PetToMutate or ""
-    local selectedPetMutations = config.PetMutations or {}
-    local MutationMachine = GameEvents.PetMutationMachineService_RE
-
     -- Event vars
         --[[ Fairy Event
         local autoCollectGlimmeringEnabed = config.CollectGlimmering
@@ -345,6 +342,20 @@ local InfoTab = Window:Tab("Info")
         local requestedPlant = nil
         local OaklayProgress = nil
         local OaklayTrait = nil
+
+    -- Machine Vars
+        -- Mutation Machine
+        local autoStartMachineEnabled = config.AutoStartPetMutation
+        local autoMutatePetEnabled = config.AutoMutatePet
+        local autoClaimPetEnabled = config.AutoClaimMutatedPet
+        local selectedPetToMutate = config.PetToMutate or ""
+        local selectedPetMutations = config.PetMutations or {}
+        local MutationMachine = GameEvents.PetMutationMachineService_RE
+
+        -- Crafting Table
+        local selectedGearRecipe = config.GearRecipe or {}
+        local selectedSeedRecipe = config.SeedRecipe or {}
+        local autoCraftEnabled = config.AutoCraft
 
     -- Shop Vars
         -- Seed Shop Vars
