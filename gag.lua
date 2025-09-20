@@ -1013,6 +1013,15 @@ end
     end
 
     -- Auto Craft
+    local function getCraftingTime(object)
+        local Timer = object:FindFirstChild("Timer", true)
+        if Timer and Timer:IsA("TextLabel") then
+            return true
+        else
+            return false
+        end
+    end
+                    
     local function getCraftingItem(item)
         local Item = itemRecipes[item]
         local ItemData = {}
@@ -1036,14 +1045,14 @@ end
         task.spawn(function()
             while Running.autoCraft and autoCraftEnabled do
                 local itemsToCraft = {}
-                if selectedGearRecipe ~= "" then
+                if selectedGearRecipe ~= "" and not getCraftingTime(CraftingTables.EventCraftingWorkBench) then
                     local gears = getCraftingItem(selectedGearRecipe)
                     if not itemsToCraft["GearEventWorkbench"] then
                         itemsToCraft["GearEventWorkbench"] = {}
                     end
                     itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears }
                 end
-                if selectedSeedRecipe ~= "" then
+                if selectedSeedRecipe ~= "" and not getCraftingTime(CraftingTables.SeedEventCraftingWorkBench) then
                     local seeds = getCraftingItem(selectedSeedRecipe)
                     if not itemsToCraft["SeedEventWorkbench"] then
                         itemsToCraft["SeedEventWorkbench"] = {}
@@ -1070,7 +1079,7 @@ end
                                     break
                                 end
                             end
-                            GameEvents.CraftingGlobalObjectService:FireServer("Claim", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireServer("Craft", v.Object, k)
                         else
                             break                    
                         end
@@ -2865,7 +2874,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.250")
+AboutSection:Label("Version: 1.3.251")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
