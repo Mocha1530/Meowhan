@@ -1033,50 +1033,52 @@ end
     end        
     
     local function startAutoCraft()
-        while Running.autoCraft and autoCraftEnabled do
-            local itemsToCraft = {}
-            if selectedGearRecipe ~= "" then
-                local gears = getCraftingItem(selectedGearRecipe)
-                if not itemsToCraft["GearEventWorkbench"] then
-                    itemsToCraft["GearEventWorkbench"] = {}
+        task.spawn(function()
+            while Running.autoCraft and autoCraftEnabled do
+                local itemsToCraft = {}
+                if selectedGearRecipe ~= "" then
+                    local gears = getCraftingItem(selectedGearRecipe)
+                    if not itemsToCraft["GearEventWorkbench"] then
+                        itemsToCraft["GearEventWorkbench"] = {}
+                    end
+                    itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears}
                 end
-                itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears}
-            end
-            if selectedSeedRecipe ~= "" then
-                local seeds = getCraftingItem(selectedSeedRecipe)
-                if not if not itemsToCraft["SeedEventWorkbench"] then
-                    itemsToCraft["SeedEventWorkbench"] = {}
+                if selectedSeedRecipe ~= "" then
+                    local seeds = getCraftingItem(selectedSeedRecipe)
+                    if not if not itemsToCraft["SeedEventWorkbench"] then
+                        itemsToCraft["SeedEventWorkbench"] = {}
+                    end
+                    itemsToCraft["SeedEventWorkbench"] = { Object = CraftingTables.SeedEventCraftingWorkBench, Item = selectedSeedRecipe, Recipe = seeds}
                 end
-                itemsToCraft["SeedEventWorkbench"] = { Object = CraftingTables.SeedEventCraftingWorkBench, Item = selectedSeedRecipe, Recipe = seeds}
-            end
-            if itemsToCraft["GearEventWorkbench"] and itemsToCraft["SeedEventWorkbench"] then
-                for k, v in pairs(itemsToCraft) do
-                    if Running.autoCraft and autoCraftEnabled then
-                        GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
-                        GameEvents.CraftingGlobalObjectService:FireEvent("Cancel", v.Object, k)
-                        task.wait(0.05)
-                        GameEvents.CraftingGlobalObjectService:FireEvent("SetRecipe", v.Object, k, v.Item)
-                        for _, val in ipairs(v.Recipe) do
-                            if Running.autoCraft and autoCraftEnabled then
-                                GameEvents.CraftingGlobalObjectService:FireEvent("InputItem", v.Object, k, val.Index, { 
-                                        ItemType = val.Type,
-                                        ItemData = {
-                                            UUID = val.UUID
-                                        }
-                                })
-                                task.wait(0.05)
-                            else
-                                break
+                if itemsToCraft["GearEventWorkbench"] and itemsToCraft["SeedEventWorkbench"] then
+                    for k, v in pairs(itemsToCraft) do
+                        if Running.autoCraft and autoCraftEnabled then
+                            GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireEvent("Cancel", v.Object, k)
+                            task.wait(0.05)
+                            GameEvents.CraftingGlobalObjectService:FireEvent("SetRecipe", v.Object, k, v.Item)
+                            for _, val in ipairs(v.Recipe) do
+                                if Running.autoCraft and autoCraftEnabled then
+                                    GameEvents.CraftingGlobalObjectService:FireEvent("InputItem", v.Object, k, val.Index, { 
+                                            ItemType = val.Type,
+                                            ItemData = {
+                                                UUID = val.UUID
+                                            }
+                                    })
+                                    task.wait(0.05)
+                                else
+                                    break
+                                end
                             end
+                            GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
+                        else
+                            break                    
                         end
-                        GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
-                    else
-                        break                    
                     end
                 end
+                task.wait(10)
             end
-            task.wait(10)
-        end
+        end)
     end
 
     if Running.autoCraft and autoCraftEnabled then
