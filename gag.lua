@@ -1053,13 +1053,13 @@ end
                 if itemsToCraft["GearEventWorkbench"] or itemsToCraft["SeedEventWorkbench"] then
                     for k, v in pairs(itemsToCraft) do
                         if Running.autoCraft and autoCraftEnabled then
-                            GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
-                            GameEvents.CraftingGlobalObjectService:FireEvent("Cancel", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireServer("Claim", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireServer("Cancel", v.Object, k)
                             task.wait(0.05)
-                            GameEvents.CraftingGlobalObjectService:FireEvent("SetRecipe", v.Object, k, v.Item)
+                            GameEvents.CraftingGlobalObjectService:FireServer("SetRecipe", v.Object, k, v.Item)
                             for _, val in ipairs(v.Recipe) do
                                 if Running.autoCraft and autoCraftEnabled then
-                                    GameEvents.CraftingGlobalObjectService:FireEvent("InputItem", v.Object, k, val.Index, { 
+                                    GameEvents.CraftingGlobalObjectService:FireServer("InputItem", v.Object, k, val.Index, { 
                                             ItemType = val.Type,
                                             ItemData = {
                                                 UUID = val.UUID
@@ -1070,7 +1070,7 @@ end
                                     break
                                 end
                             end
-                            GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
+                            GameEvents.CraftingGlobalObjectService:FireServer("Claim", v.Object, k)
                         else
                             break                    
                         end
@@ -2865,7 +2865,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.249")
+AboutSection:Label("Version: 1.3.250")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
