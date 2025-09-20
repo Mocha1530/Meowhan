@@ -1014,7 +1014,7 @@ end
 
     -- Auto Craft
     local function getCraftingItem(item)
-        Item = itemRecipes[item]
+        local Item = itemRecipes[item]
         local ItemData = {}
 
         for i, v in ipairs(Item) do
@@ -1041,16 +1041,16 @@ end
                     if not itemsToCraft["GearEventWorkbench"] then
                         itemsToCraft["GearEventWorkbench"] = {}
                     end
-                    itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears}
+                    itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears }
                 end
                 if selectedSeedRecipe ~= "" then
                     local seeds = getCraftingItem(selectedSeedRecipe)
-                    if not if not itemsToCraft["SeedEventWorkbench"] then
+                    if not itemsToCraft["SeedEventWorkbench"] then
                         itemsToCraft["SeedEventWorkbench"] = {}
                     end
-                    itemsToCraft["SeedEventWorkbench"] = { Object = CraftingTables.SeedEventCraftingWorkBench, Item = selectedSeedRecipe, Recipe = seeds}
+                    itemsToCraft["SeedEventWorkbench"] = { Object = CraftingTables.SeedEventCraftingWorkBench, Item = selectedSeedRecipe, Recipe = seeds }
                 end
-                if itemsToCraft["GearEventWorkbench"] and itemsToCraft["SeedEventWorkbench"] then
+                if itemsToCraft["GearEventWorkbench"] or itemsToCraft["SeedEventWorkbench"] then
                     for k, v in pairs(itemsToCraft) do
                         if Running.autoCraft and autoCraftEnabled then
                             GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
