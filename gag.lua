@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local UserInputService = game:GetService("UserInputService")
 
+local CraftingTables = Workspace:FindFirstChild("CraftingTables")
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:FindFirstChild("Backpack")
 local PlayerGui = Players.LocalPlayer.PlayerGui
@@ -172,8 +173,8 @@ local DEFAULT_CONFIG = {
         AutoClaimMutatedPet = false,
 
         -- Crafting Tables
-        GearRecipe = {},
-        SeedRecipe = {},
+        GearRecipe = "",
+        SeedRecipe = "",
         AutoCraft = false,
     
     -- Shop
@@ -306,7 +307,7 @@ local function saveFile(folder, filename, data)
 end
 
 -- Create UI
-local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/main/UI/UI%20LibraryV2.lua'))()
+local UILib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/UI/UI%20LibraryV2.lua'))()
 local Window = UILib:CreateWindow("  Grow A Garden")
 local config = loadConfig()
 local currentJobId = game.JobId
@@ -353,8 +354,8 @@ local InfoTab = Window:Tab("Info")
         local MutationMachine = GameEvents.PetMutationMachineService_RE
 
         -- Crafting Table
-        local selectedGearRecipe = config.GearRecipe or {}
-        local selectedSeedRecipe = config.SeedRecipe or {}
+        local selectedGearRecipe = config.GearRecipe or ""
+        local selectedSeedRecipe = config.SeedRecipe or ""
         local autoCraftEnabled = config.AutoCraft
 
     -- Shop Vars
@@ -1009,7 +1010,78 @@ end
     if autoStartMachineEnabled then
         startAutoStartMachine()
     end
+
+    -- Auto Craft
+    local function getCraftingItem(item)
+        Item = itemRecipes[item]
+        local ItemData = {}
+
+        for i, v in ipairs(Item) do
+            for _, val in ipairs(Backpack:GetChildren()) do
+                if val.Name:find(v.ItemName, 1, true) then
+                    table.insert(ItemData, {
+                        Index = i,
+                        ["Type"] = v.ItemType,
+                        UUID = val:GetAttribute("c"),
+                    })
+                    break
+                end
+            end
+        end
+        return ItemData
+    end        
     
+    local function startAutoCraft()
+        while Running.autoCraft and autoCraftEnabled do
+            local itemsToCraft = {}
+            if selectedGearRecipe ~= "" then
+                local gears = getCraftingItem(selectedGearRecipe)
+                if not itemsToCraft["GearEventWorkbench"] then
+                    itemsToCraft["GearEventWorkbench"] = {}
+                end
+                itemsToCraft["GearEventWorkbench"] = { Object = CraftingTables.EventCraftingWorkBench, Item = selectedGearRecipe, Recipe = gears}
+            end
+            if selectedSeedRecipe ~= "" then
+                local seeds = getCraftingItem(selectedSeedRecipe)
+                if not if not itemsToCraft["SeedEventWorkbench"] then
+                    itemsToCraft["SeedEventWorkbench"] = {}
+                end
+                itemsToCraft["SeedEventWorkbench"] = { Object = CraftingTables.SeedEventCraftingWorkBench, Item = selectedSeedRecipe, Recipe = seeds}
+            end
+            if itemsToCraft["GearEventWorkbench"] and itemsToCraft["SeedEventWorkbench"] then
+                for k, v in pairs(itemsToCraft) do
+                    if Running.autoCraft and autoCraftEnabled then
+                        GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
+                        GameEvents.CraftingGlobalObjectService:FireEvent("Cancel", v.Object, k)
+                        task.wait(0.05)
+                        GameEvents.CraftingGlobalObjectService:FireEvent("SetRecipe", v.Object, k, v.Item)
+                        for _, val in ipairs(v.Recipe) do
+                            if Running.autoCraft and autoCraftEnabled then
+                                GameEvents.CraftingGlobalObjectService:FireEvent("InputItem", v.Object, k, val.Index, { 
+                                        ItemType = val.Type,
+                                        ItemData = {
+                                            UUID = val.UUID
+                                        }
+                                })
+                                task.wait(0.05)
+                            else
+                                break
+                            end
+                        end
+                        GameEvents.CraftingGlobalObjectService:FireEvent("Claim", v.Object, k)
+                    else
+                        break                    
+                    end
+                end
+            end
+            task.wait(10)
+        end
+    end
+
+    if Running.autoCraft and autoCraftEnabled then
+        startAutoCraft()
+    end
+                    
     -- Shop Function
     local ShopControllers = {}
 
@@ -2119,6 +2191,13 @@ local CraftingTableSection = MachineTab:Section("Crafting Table")
         autoCraftEnabled = state
         config.AutoCraft = state
         saveConfig(config)
+
+        if state then
+            startAutoCraft()
+            Window:Notify("Auto Craft Enabled", 2)
+        else
+            Window:Notify("Auto Craft Disabled", 2)
+        end
     end, {
         default = autoCraftEnabled
     })
@@ -2783,7 +2862,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.149")
+AboutSection:Label("Version: 1.3.249")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
