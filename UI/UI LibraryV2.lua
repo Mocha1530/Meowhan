@@ -1776,7 +1776,7 @@ function Library:CreateWindow(title)
                             end
                         else
                             if selected == option then
-                                selected = nil
+                                selected = ""
                             else
                                 selected = option
                             end
