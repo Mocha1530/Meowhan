@@ -77,7 +77,7 @@ for k_a_c, _ in pairs(a_c_data["Cosmetic Crates"]) do
     table.insert(a_c_list.crates, k_a_c)
 end
 
-local a_e_s_data = EventShopData --[[loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/EventShopData.lua", true))()]]
+local a_e_s_data = loadstring(game:HttpGet("https://raw.githubusercontent.com/Mocha1530/Meowhan/refs/heads/main/gag/data/EventShopData.lua", true))() --[[EventShopData]]
 local a_e_s_list = {
     seed = {},
     gear = {},
@@ -1186,7 +1186,7 @@ end
                             for shop, items in pairs(controller.selectedItems) do
                                 for _, itemName in ipairs(items) do
                                     local item = controller.stock[itemName]
-                                    table.insert(itemsToBuy, {name = itemName, count = item.StockAmount[2], shopIndex = item.ShopIndex})
+                                    table.insert(itemsToBuy, {name = itemName, count = item.StockAmount, shopIndex = item.ShopIndex})
                                 end
                             end
                         end
@@ -1197,7 +1197,7 @@ end
                                     table.insert(itemsToBuy, {name = itemName, count = count})
                                 end
                             else
-                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount[2], shopIndex = count.ShopIndex})
+                                table.insert(itemsToBuy, {name = itemName, count = count.StockAmount, shopIndex = count.ShopIndex})
                             end
                         end
                     end
