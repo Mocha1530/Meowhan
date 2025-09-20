@@ -20,7 +20,7 @@ local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local UpdateItems = Workspace.Interaction.UpdateItems
 local placeId = game.PlaceId
-local CraftingData = require(ReplicatedStorage):FindFirstChild("Data"):FindFirstChild("CraftingData"))
+local CraftingData = require(ReplicatedStorage:FindFirstChild("Data"):FindFirstChild("CraftingData"))
 local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
@@ -2119,7 +2119,9 @@ local CraftingTableSection = MachineTab:Section("Crafting Table")
         autoCraftEnabled = state
         config.AutoCraft = state
         saveConfig(config)
-    end)
+    end, {
+        default = autoCraftEnabled
+    })
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
