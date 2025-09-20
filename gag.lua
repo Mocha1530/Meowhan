@@ -597,7 +597,7 @@ local function findFruit(filters)
     local function checkFruit(fruit)
         local Age = fruit:FindFirstChild("Age", true)
         local MaxAge = fruit:GetAttribute("MaxAge")
-        if (Age and Age:IsA("NumberVaue")) and Age.Value ~= MaxAge then
+        if (Age and Age:IsA("NumberValue")) and Age.Value ~= MaxAge then
             return false
         end
             
