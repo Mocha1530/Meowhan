@@ -1,6 +1,6 @@
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
-local PlyerGui = Players.LocalPlayer.PlayerGui
+local PlayerGui = Players.LocalPlayer.PlayerGui
 local Character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
 Players.LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
