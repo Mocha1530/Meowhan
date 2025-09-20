@@ -1631,7 +1631,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or tostring(selected) or ""
+                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected or ""
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
