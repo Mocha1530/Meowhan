@@ -1965,6 +1965,46 @@ function Library:CreateWindow(title)
                                 end
                             end
                         end
+
+                        if multiSelect then
+                            selected = {}
+                            if type(default) == "table" then
+                                if isKeyValue then
+                                    for _, v in ipairs(default) do
+                                        for k, val in pairs(valueMap) do
+                                            if val == v then
+                                                table.insert(selected, k)
+                                                break
+                                            end
+                                        end
+                                    end
+                                else
+                                    selected = default
+                                end
+                            elseif default then
+                                if isKeyValue then
+                                    for k, val in pairs(valueMap) do
+                                        if val == default then
+                                            table.insert(selected, k)
+                                            break
+                                        end
+                                    end
+                                else
+                                    table.insert(selected, default)
+                                end
+                            end
+                        else
+                            if isKeyValue and default then
+                                for k, val in pairs(valueMap) do
+                                    if val == default then
+                                        selected = k
+                                        break
+                                    end
+                                end
+                            else
+                                selected = default or displayOptions[1] or ""
+                            end
+                        end
                         
                         -- Clear existing options
                         for _, child in ipairs(ListScroll:GetChildren()) do
@@ -1972,6 +2012,10 @@ function Library:CreateWindow(title)
                                 child:Destroy()
                             end
                         end
+
+                        -- Clear search and update label
+                        ListSearch.Text = ""
+                        updateSelectedLabel()
                         
                         -- Add new options
                         for index, option in ipairs(displayOptions) do
