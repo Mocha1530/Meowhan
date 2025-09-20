@@ -20,6 +20,7 @@ local PlayerGui = Players.LocalPlayer.PlayerGui
 local GameEvents = ReplicatedStorage.GameEvents
 local UpdateItems = Workspace.Interaction.UpdateItems
 local placeId = game.PlaceId
+local CraftingData = require(ReplicatedStorage):FindFirstChild("Data"):FindFirstChild("CraftingData"))
 local DataService = require(ReplicatedStorage:FindFirstChild("Modules"):FindFirstChild("DataService"))
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
@@ -96,13 +97,13 @@ end
 
 local ownedPets = {}
 local function getOwnedPets()
-    ownedPets = {}
-    local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay", true)
+    table.clear(ownedPets)
     for _, pets in ipairs(Backpack:GetChildren()) do
         if pets:GetAttribute("b") == "l" then
             ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
         end
     end
+    local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay", true)
     for _, pets in ipairs(PetDisplay.ScrollingFrame:GetChildren()) do
         if pets:IsA("Frame") and pets.Name ~= "PetTemplate" then
             local nameLabel = pets:FindFirstChild("PET_TYPE", true)
@@ -116,6 +117,26 @@ local function getOwnedPets()
 end
 
 getOwnedPets()
+
+local itemRecipes = {}
+local craftingItems = {}
+local RecipeByMachine = CraftingData.CraftingRecipeRegistry.RecipiesSortedByMachineType
+for a, v in pairs(RecipeByMachine) do
+    for b, val in pairs(v) do
+        if not craftingItems[a] then
+            craftingItems[a] = {}
+        end
+        table.insert(craftingItems[a], b)
+        for c, vals in ipairs(val.Inputs) do
+            local var1 = itemRecipes[b]
+            if not var1 then
+                var1 = {}
+                itemRecipes[b] = var1
+            end
+            var1[c] = { ItemType = vals.ItemType, ItemName = vals.ItemData.ItemName }
+        end
+    end
+end
         
 local IMAGE_FOLDER = "Meowhan/Image/GrowAGarden/"
 local CONFIG_FOLDER = "Meowhan/Config/"
@@ -636,6 +657,21 @@ end
 
 -- Tab Functions
     -- Auto Collect
+    for _, v_e in ipairs(UpdateItems:GetDescendants()) do
+        if v_e:IsA("TextLabel") then
+            if v_e.Name == "TraitTextLabel" then
+                OaklayTrait = v_e
+                requestedPlant = extractItem(v_e.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+            elseif v_e.Name == "ProgressionLabel" then
+                OaklayProgress = v_e
+            end
+        end
+        if OaklayProgress and OaklayTrait then break end
+    end
+    
+    OaklayTrait:GetPropertyChangedSignal("Text"):Connect(function()
+        requestedPlant = extractItem(OaklayTrait.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
+    end)
     local function startCollectCrops()
         task.spawn(function()
             while Running.collectCrops and (autoCollectRequestedEnabed or autoCollectSelectedFruitsEnabled) do
@@ -789,24 +825,8 @@ end
     end]]
 
     -- Auto Feed Requested
-    for _, v_e in ipairs(UpdateItems:GetDescendants()) do
-        if v_e:IsA("TextLabel") then
-            if v_e.Name == "TraitTextLabel" then
-                OaklayTrait = v_e
-                requestedPlant = extractItem(v_e.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
-            elseif v_e.Name == "ProgressionLabel" then
-                OaklayProgress = v_e
-            end
-        end
-        if OaklayProgress and OaklayTrait then break end
-    end
-    
-    OaklayTrait:GetPropertyChangedSignal("Text"):Connect(function()
-        requestedPlant = extractItem(OaklayTrait.Text, "%>([a-zA-Z]+[%s]?[a-zA-Z]+)%<", true)
-    end)
-
     local function startAutoFeedRequested()
-        spawn(function()
+        task.spawn(function()
             while Running.autoFeedRequested and (feedRequestedEnabled or feedAllRequestedEnabled) do
                 if not OaklayProgress.Text:find("Cooldown", 1, true) then
                     if feedRequestedEnabled then
@@ -875,10 +895,12 @@ end
         Mutation = Mutation or {}
         local activePet = PlayerGui.ActivePetUI:FindFirstChild(UUID, true)
         if activePet then
-            activeMut = activePet:FindFirstChild("PET_TYPE", true)
+            local activeMut = activePet:FindFirstChild("PET_TYPE", true)
+            local activeAgeLabel = activePet:FindFirstChild("PET_AGE", true)
+            local activeAge = activeAgeLabel.Text:match("%d+")
             if activeMut then
                 for _, petMut in ipairs(Mutation) do
-                    if activeMut.Text:find(petMut, 1, true) then
+                    if not activeMut.Text:find(petMut, 1, true) and tonumber(activeAge) >= 50 then
                         GameEvents.PetsService:FireServer("UnequipPet", UUID)
                         break
                     end
@@ -926,7 +948,7 @@ end
     end
 
     local function startAutoClaimPet()
-        spawn(function()
+        task.spawn(function()
             while Running.autoClaimPet and (autoClaimPetEnabled or autoMutatePetEnabled) do
                 local MutationMachineModel = getMutationMachine()
                 if MutationMachineModel.Text == "READY" and autoClaimPetEnabled then
@@ -957,7 +979,7 @@ end
 
         -- Mutation Machine (Vuln)
     local function startAutoStartMachine()
-        spawn(function()
+        task.spawn(function()
             while Running.autoStartMachine and autoStartMachineEnabled do
                 local timerStatus = getMutationMachine()
                 if timerStatus.Text == nil or timerStatus.Text == "" then
@@ -1042,7 +1064,7 @@ end
         controller.updateStock()
         
         controller.startBuying = function()
-            spawn(function()
+            task.spawn(function()
                 while Running.autoBuyStocks and (controller.autoBuySelected or controller.autoBuyAll) do
                     controller.updateStock()
                     
@@ -1960,107 +1982,133 @@ end, {
 
 -- Machine Tab
 local MutationMachineSection = MachineTab:Section("Mutation Machine")
+local CraftingTableSection = MachineTab:Section("Crafting Table")
 
-  -- Select pet dropdown
-local petSelection = MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
-    if selected then
-        selectedPetToMutate = selected
-        config.PetToMutate = selected
-        saveConfig(config)
-        Window:Notify("Selected: " .. selected)
-    end
-end)
-
-  -- Select mutation
-MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
-	if selected then
-        selectedPetMutations = selected
-        config.PetMutations = selected
-        saveConfig(config)
-	end
-end, true)
-
-MutationMachineSection:Button("Refresh Pet Selection", function()
-    if getOwnedPets() then
-        petSelection:Refresh(ownedPets)
-    end
-end)
-
-MutationMachineSection:Toggle("Auto Mutate Pet", function(state)
-    local starMut = false
-    if state then
-        if not autoMutatePetEnabled and not autoClaimPetEnabled then
-            startMut = true
+-- Mutation Machine
+    -- Select pet dropdown
+    local petSelection = MutationMachineSection:Dropdown("Select Pet: ", ownedPets, selectedPetToMutate, function(selected)
+        if selected then
+            selectedPetToMutate = selected
+            config.PetToMutate = selected
+            saveConfig(config)
+            Window:Notify("Selected: " .. selected)
         end
-        Window:Notify("Auto Mutate Pet Enabled", 2)
-    else
-        Window:Notify("Auto Mutate Pet Disabled", 2)
-    end
-        
-    autoMutatePetEnabled = state
-    config.AutoMutatePet = state
-    saveConfig(config)
+    end)
 
-    if startMut then
-        startAutoClaimPet()
-    end
-end, {
-    default = autoMutatePetEnabled
-})
-
-  -- Auto claim toggle
-MutationMachineSection:Toggle("Auto Claim Pet", function(state)
-    local starClaim = false
-    if state then
-        if not autoMutatePetEnabled and not autoClaimPetEnabled then
-            starClaim = true
+    -- Select mutation
+    MutationMachineSection:Dropdown("Select Mutation: ", MachineMutations, selectedPetMutations, function(selected)
+    	if selected then
+            selectedPetMutations = selected
+            config.PetMutations = selected
+            saveConfig(config)
+    	end
+    end, true)
+    
+    MutationMachineSection:Button("Refresh Pet Selection", function()
+        if getOwnedPets() then
+            petSelection:Refresh(ownedPets)
         end
-        Window:Notify("Auto Claim Pet Enabled", 2)
-    else
-        Window:Notify("Auto Claim Pet Disabled", 2)
-    end
+    end)
+    
+    MutationMachineSection:Toggle("Auto Mutate Pet", function(state)
+        local starMut = false
+        if state then
+            if not autoMutatePetEnabled and not autoClaimPetEnabled then
+                startMut = true
+            end
+            Window:Notify("Auto Mutate Pet Enabled", 2)
+        else
+            Window:Notify("Auto Mutate Pet Disabled", 2)
+        end
+            
+        autoMutatePetEnabled = state
+        config.AutoMutatePet = state
+        saveConfig(config)
+    
+        if startMut then
+            startAutoClaimPet()
+        end
+    end, {
+        default = autoMutatePetEnabled
+    })
 
-    autoClaimPetEnabled = state
-    config.AutoClaimMutatedPet = state
-    saveConfig(config)
+    -- Auto claim toggle
+    MutationMachineSection:Toggle("Auto Claim Pet", function(state)
+        local starClaim = false
+        if state then
+            if not autoMutatePetEnabled and not autoClaimPetEnabled then
+                starClaim = true
+            end
+            Window:Notify("Auto Claim Pet Enabled", 2)
+        else
+            Window:Notify("Auto Claim Pet Disabled", 2)
+        end
+    
+        autoClaimPetEnabled = state
+        config.AutoClaimMutatedPet = state
+        saveConfig(config)
+    
+        if starClaim then
+            startAutoClaimPet()
+        end
+    end, {
+        default = autoClaimPetEnabled
+    })
+    
+    MutationMachineSection:Label("Mutation Machine Vuln")
+    
+    MutationMachineSection:Button("Submit Held Pet", function()
+        MutationMachine:FireServer("SubmitHeldPet")
+    end)
+    
+    MutationMachineSection:Button("Start Machine", function()
+        local timerStatus = getMutationMachineTimer()
+        if timerStatus == nil or timerStatus == "" then
+            MutationMachine:FireServer("StartMachine")
+            Window:Notify("Machine Started", 2)
+        else
+            Window:Notify("Machine Already Started", 2)
+        end
+    end)
+    
+    MutationMachineSection:Toggle("Auto Start Machine", function(state)
+        autoStartMachineEnabled = state
+        config.AutoStartPetMutation = state
+        saveConfig(config)
+    
+        if state then
+            startAutoStartMachine()
+            Window:Notify("Auto Start Machine Enabled", 2)
+        else
+            Window:Notify("Auto Start Machine Disabled", 2)
+        end
+    end, {
+        default = autoStartMachineEnabled
+    })
 
-    if starClaim then
-        startAutoClaimPet()
-    end
-end, {
-    default = autoClaimPetEnabled
-})
+-- Crafting Table
+    -- Select Gear Recipe
+    CraftingTableSection:Dropdown("Select Gear Recipe", craftingItems.GearEventWorkbench, selectedGearRecipe, function(selected)
+        if selected then
+            selectedGearRecipe = selected
+            config.GearRecipe = selected
+            saveConfig(config)
+        end
+    end)
 
-MutationMachineSection:Label("Mutation Machine Vuln")
+    CraftingTableSection:Dropdown("Select Seed Recipe", craftingItems.SeedEventWorkbench, selectedSeedRecipe, function(selected)
+        if selected then
+            selectedSeedRecipe = selected
+            config.SeedRecipe = selected
+            saveConfig(config)
+        end
+    end)
 
-MutationMachineSection:Button("Submit Held Pet", function()
-    MutationMachine:FireServer("SubmitHeldPet")
-end)
-
-MutationMachineSection:Button("Start Machine", function()
-    local timerStatus = getMutationMachineTimer()
-    if timerStatus == nil or timerStatus == "" then
-        MutationMachine:FireServer("StartMachine")
-        Window:Notify("Machine Started", 2)
-    else
-        Window:Notify("Machine Already Started", 2)
-    end
-end)
-
-MutationMachineSection:Toggle("Auto Start Machine", function(state)
-    autoStartMachineEnabled = state
-    config.AutoStartPetMutation = state
-    saveConfig(config)
-
-    if state then
-        startAutoStartMachine()
-        Window:Notify("Auto Start Machine Enabled", 2)
-    else
-        Window:Notify("Auto Start Machine Disabled", 2)
-    end
-end, {
-    default = autoStartMachineEnabled
-})
+    CraftingTableSection:Toggle("Auto Craft", function(state)
+        autoCraftEnabled = state
+        config.AutoCraft = state
+        saveConfig(config)
+    end)
 
 -- Shop Tab
 local SeedShopSection = ShopTab:Section("Seed Shop")
@@ -2722,7 +2770,7 @@ local StatsSection = InfoTab:Section("Session Statistics")
 
 -- About
 AboutSection:Label("Meowhan Grow A Garden Exploit")
-AboutSection:Label("Version: 1.3.147")
+AboutSection:Label("Version: 1.3.149")
 
 -- Stats
 local GameInfo = MarketplaceService:GetProductInfo(game.PlaceId)
