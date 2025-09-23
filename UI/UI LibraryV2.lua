@@ -1970,6 +1970,8 @@ function Library:CreateWindow(title)
                     end,
                     Refresh = function(self, newOptions)
                         options = newOptions
+                        displayOptions = {}
+                        valueMap = {}
                         if type(options) == "table" then
                         	if type(options[1]) == "table" and options[1].label and options[1].value then
                         		isKeyValue = true
