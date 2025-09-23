@@ -1781,8 +1781,8 @@ function Library:CreateWindow(title)
                     OptionBtn.MouseButton1Click:Connect(function()
                         if multiSelect then
                             if table.find(selected.value, option.value) then
-                                table.remove(selected.label, option.label)
-                                table.remove(selected.value, option.value)
+                                table.remove(selected.label, table.find(selected.label, option.label))
+                                table.remove(selected.value, table.find(selected.value, option.value))
                             else
                                 if limit == 1 or #selected.value < limit then
                                     table.insert(selected.label, option.label)
@@ -2048,7 +2048,7 @@ function Library:CreateWindow(title)
                         
                         -- Add new options
                         for index, option in ipairs(valueMap) do
-                            local OptionBtn = Instance.new("StringValue")
+                            local OptionBtn = Instance.new("TextButton")
                             OptionBtn.Parent = ListScroll
                             OptionBtn.BackgroundColor3 = Theme.Card
                             OptionBtn.BackgroundTransparency = 1
@@ -2068,7 +2068,7 @@ function Library:CreateWindow(title)
                             OptionCorner.CornerRadius = UDim.new(0, 6)
                             OptionCorner.Parent = OptionBtn
         
-                            local OptionData = Instance.new("TextValue")
+                            local OptionData = Instance.new("StringValue")
                             OptionData.Name = "Value"
                             OptionData.Value = option.value
                             OptionData.Parent = OptionBtn
