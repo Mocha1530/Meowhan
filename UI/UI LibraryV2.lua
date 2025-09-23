@@ -1763,7 +1763,7 @@ function Library:CreateWindow(title)
                     OptionCorner.CornerRadius = UDim.new(0, 6)
                     OptionCorner.Parent = OptionBtn
 
-                    local OptionData = Instance.new("TextValue")
+                    local OptionData = Instance.new("StringValue")
                     OptionData.Name = "Value"
                     OptionData.Value = option.value
                     OptionData.Parent = OptionBtn
@@ -2048,7 +2048,7 @@ function Library:CreateWindow(title)
                         
                         -- Add new options
                         for index, option in ipairs(valueMap) do
-                            local OptionBtn = Instance.new("TextButton")
+                            local OptionBtn = Instance.new("StringValue")
                             OptionBtn.Parent = ListScroll
                             OptionBtn.BackgroundColor3 = Theme.Card
                             OptionBtn.BackgroundTransparency = 1
