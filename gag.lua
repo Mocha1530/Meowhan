@@ -113,7 +113,8 @@ local function getOwnedPets()
             local ageLabel = pets:FindFirstChild("PET_AGE", true)
             local age = ageLabel.Text:match("%d+")
             local name = nameLabel.Text .. " [Age " .. age .. "]"
-            ownedPets[name] = pets.Name
+            table.insert(ownedPets, {label = name, value = pets.Name})
+            --[[ownedPets[name] = pets.Name]]
         end
     end
     return ownedPets
