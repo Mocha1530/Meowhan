@@ -1522,26 +1522,18 @@ function Library:CreateWindow(title)
                 local valueMap = {}
                 
                 if type(options) == "table" then
-                    local isArray = true
-                    for k, v in pairs(options) do
-                        if type(k) ~= "number" then
-                            isArray = false
-                            break
-                        end
-                    end
-                    
-                    if isArray then
-                        displayOptions = options
-                        for _, v in ipairs(options) do
-                            valueMap[v] = v 
+                	if type(options[1]) == "table" and options[1].label and options[1].value then
+                		isKeyValue = true
+                    	for i, option in ipairs(options) do
+                        	table.insert(displayOptions, option.label)
+                			table.insert(valueMap, {label = option.label, value = option.value})
                         end
                     else
-                        isKeyValue = true
-                        for k, v in pairs(options) do
-                            table.insert(displayOptions, k)
-                            valueMap[k] = v
-                        end
-                    end
+                		displayOptions = options
+                		for _, v in ipairs(options) do
+                			table.insert(valueMap, {label = v, value = v})
+                		end
+                	end
                 end
                 --[[
                 local selected
@@ -1555,44 +1547,54 @@ function Library:CreateWindow(title)
                         selected = default or options[1] or "" 
                     end
                 ]]
-                local selected
+                local selected = {
+                    label = nil,
+                    value = nil
+                }
                 if multiSelect then
-                    selected = {}
+                    selected.label = {}
+                    selected.value = {}
                     if type(default) == "table" then
                         if isKeyValue then
                             for _, v in ipairs(default) do
-                                for k, val in pairs(valueMap) do
-                                    if val == v then
-                                        table.insert(selected, k)
+                                for _, val in ipairs(valueMap) do
+                                    if val.value == v then
+                                        table.insert(selected.label, val.label)
+                                        table.insert(selected.value, val.value)
                                         break
                                     end
                                 end
                             end
                         else
-                            selected = default
+                            selected.label = default
+                            selected.value = default
                         end
                     elseif default then
                         if isKeyValue then
-                            for k, val in pairs(valueMap) do
-                                if val == default then
-                                    table.insert(selected, k)
+                            for _, val in pairs(valueMap) do
+                                if val.value == default then
+                                    table.insert(selected.label, val.label)
+                                    table.insert(selected.value, val.value)
                                     break
                                 end
                             end
                         else
-                            table.insert(selected, default)
+                            table.insert(selected.label, default)
+                            table.insert(selected.value, default)
                         end
                     end
                 else
                     if isKeyValue and default then
-                        for k, val in pairs(valueMap) do
-                            if val == default then
-                                selected = k
+                        for _, val in pairs(valueMap) do
+                            if val.value == default then
+                                selected.label = val.label
+                                selected.value = val.value
                                 break
                             end
                         end
                     else
-                        selected = default or displayOptions[1] or ""
+                        selected.label = default or valueMap[1].label or ""
+                        selected.value = default or valueMap[1].value or ""
                     end
                 end
                 local opened = false
@@ -1631,7 +1633,7 @@ function Library:CreateWindow(title)
                 SelectedLabel.Position = UDim2.new(0.5, 0, 0, 0)
                 SelectedLabel.Size = UDim2.new(0.5, -30, 1, 0)
                 SelectedLabel.Font = Enum.Font.Gotham
-                SelectedLabel.Text = multiSelect and table.concat(selected, ", ") or selected or ""
+                SelectedLabel.Text = multiSelect and table.concat(selected.label, ", ") or selected.label or ""
                 SelectedLabel.TextColor3 = Theme.Accent
                 SelectedLabel.TextSize = IsMobile and 11 or 12
                 SelectedLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -1702,15 +1704,23 @@ function Library:CreateWindow(title)
                 SearchCorner.Parent = ListSearch
 
                 local function getValue(key)
-                    return isKeyValue and valueMap[key] or key
+                    if isKeyValue then
+                        for _, v in ipairs(valueMap) do
+                            if v.value == key then
+                                return v.value
+                            end
+                        end
+                    else
+                        return key
+                    end
                 end
                 
                 local function updateSelectedLabel()
                     local display = nil
                     if multiSelect then
-                        display = table.concat(selected, ", ")
+                        display = table.concat(selected.label, ", ")
                     else
-                        display = selected or ""
+                        display = selected.label or ""
                     end
                     SelectedLabel.Text = display
                 end
@@ -1732,29 +1742,34 @@ function Library:CreateWindow(title)
                 end
                 
                 -- Create option buttons
-                for index, option in ipairs(displayOptions) do
+                for index, option in ipairs(valueMap) do
                     local OptionBtn = Instance.new("TextButton")
                     OptionBtn.Parent = ListScroll
                     OptionBtn.BackgroundColor3 = Theme.Card
                     OptionBtn.BackgroundTransparency = 1
                     OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                     OptionBtn.Font = Enum.Font.Gotham
-                    OptionBtn.Text = option
+                    OptionBtn.Text = option.label
                     if multiSelect then
-                        OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
-                        OptionBtn.LayoutOrder = table.find(selected, option) and -1 or index
+                        OptionBtn.TextColor3 = table.find(selected.value, option.value) and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = table.find(selected.value, option.value) and -1 or index
                     else
-                        OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
-                        OptionBtn.LayoutOrder = option == selected and -1 or index
+                        OptionBtn.TextColor3 = option.value == selected.value and Theme.Accent or Theme.TextDim
+                        OptionBtn.LayoutOrder = option.value == selected.value and -1 or index
                     end
                     OptionBtn.TextSize = IsMobile and 11 or 12
 
                     local OptionCorner = Instance.new("UICorner")
                     OptionCorner.CornerRadius = UDim.new(0, 6)
                     OptionCorner.Parent = OptionBtn
+
+                    local OptionData = Instance.new("TextValue")
+                    OptionData.Name = "Value"
+                    OptionData.Value = option.value
+                    OptionData.Parent = OptionBtn
                     
                     OptionBtn.MouseEnter:Connect(function()
-                        if multiSelect and not table.find(selected, option) or option ~= selected then
+                        if multiSelect and not table.find(selected.value, option.value) or option.value ~= selected.value then
                             Tween(OptionBtn, {BackgroundTransparency = 0.8})
                         end
                     end)
@@ -1765,32 +1780,37 @@ function Library:CreateWindow(title)
                     
                     OptionBtn.MouseButton1Click:Connect(function()
                         if multiSelect then
-                            if table.find(selected, option) then
-                                table.remove(selected, table.find(selected, option))
+                            if table.find(selected.value, option.value) then
+                                table.remove(selected.label, option.label)
+                                table.remove(selected.value, option.value)
                             else
-                                if limit == 1 or #selected < limit then
-                                    table.insert(selected, option)
+                                if limit == 1 or #selected.value < limit then
+                                    table.insert(selected.label, option.label)
+                                    table.insert(selected.value, option.value)
                                 else
                                     return
                                 end
                             end
                         else
-                            if selected == option then
-                                selected = ""
+                            if selected.value == option.value then
+                                selected.label = ""
+                                selected.value = ""
                             else
-                                selected = option
+                                selected.label = option.label
+                                selected.value = option.value
                             end
                         end
                         
                         -- Update colors
                         for index, child in ipairs(ListScroll:GetChildren()) do
                             if child:IsA("TextButton") then
+                                local val = child:FindFirstChild("Value")
                                 if multiSelect then
-                                    child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
-                                    child.LayoutOrder = table.find(selected, child.Text) and -1 or index
+                                    child.TextColor3 = table.find(selected.value, val.Value) and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = table.find(selected.value, val.Value) and -1 or index
                                 else
-                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
-                                    child.LayoutOrder = child.Text == selected and -1 or index
+                                    child.TextColor3 = val.Value == selected.value and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = val.Value == selected.value and -1 or index
                                 end
                             end
                         end
@@ -1809,13 +1829,13 @@ function Library:CreateWindow(title)
                     
                         if callback then
                             if multiSelect then
-                                local values = {}
-                                for _, key in ipairs(selected) do
+                                local values = selected.value
+                                --[[for _, key in ipairs(selected) do
                                     table.insert(values, getValue(key))
-                                end
+                                end]]
                                 callback(values)
                             else
-                                callback(getValue(selected))
+                                callback(selected.value)
                             end
                         end
                     end)
@@ -1856,15 +1876,15 @@ function Library:CreateWindow(title)
                     end
                 end)
 
-                if callback and default then
+                if callback then
                     if multiSelect then
-                        local values = {}
-                        for _, key in ipairs(selected) do
+                        local values = selected.value
+                        --[[for _, key in ipairs(selected) do
                             table.insert(values, getValue(key))
-                        end
+                        end]]
                         callback(values)
                     else
-                        callback(getValue(selected))
+                        callback(selected.value)
                     end
                 end
                 
@@ -1875,134 +1895,143 @@ function Library:CreateWindow(title)
                                 value = {value}
                             end
                             
-                            selected = {}
+                            selected = {
+                                label = {},
+                                value = {}
+                            }
                             for _, val in ipairs(value) do
                                 if isKeyValue then
-                                    for k, v in pairs(valueMap) do
-                                        if v == val then
-                                            table.insert(selected, k)
+                                    for _, v in ipairs(valueMap) do
+                                        if v.value == val then
+                                            table.insert(selected.label, v.label)
+                                            table.insert(selected.value, v.value)
                                             break
                                         end
                                     end
                                 else
                                     if table.find(displayOptions, val) then
-                                        table.insert(selected, val)
+                                        table.insert(selected.label, val)
+                                        table.insert(selected.value, val)
                                     end
                                 end
                             end
                         else
                             if isKeyValue then
-                                for k, v in pairs(valueMap) do
-                                    if v == value then
-                                        selected = k
+                                for _, v in ipairs(valueMap) do
+                                    if v.value == value then
+                                        selected["label"] = v.label
+                                        selected["value"] = v.value
                                         break
                                     end
                                 end
                             else
                                 if table.find(displayOptions, value) then
-                                    selected = value
+                                    selected["label"] = value
+                                    selected["value"] = value
                                 end
                             end
                         end
                         
-                        for _, child in ipairs(ListScroll:GetChildren()) do
+                        for index, child in ipairs(ListScroll:GetChildren()) do
                             if child:IsA("TextButton") then
+                                local val = child:FindFirstChild("Value")
                                 if multiSelect then
-                                    child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
+                                    child.TextColor3 = table.find(selected.value, val.Value) and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = table.find(selected.value, val.Value) and -1 or index
                                 else
-                                    child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
+                                    child.TextColor3 = val.Value == selected.value and Theme.Accent or Theme.TextDim
+                                    child.LayoutOrder = val.Value == selected.value and -1 or index
                                 end
                             end
                         end
                         
-                        if callback and default then
+                        if callback then
                             if multiSelect then
-                                local values = {}
-                                for _, key in ipairs(selected) do
+                                local values = selected.value
+                                --[[for _, key in ipairs(selected) do
                                     table.insert(values, getValue(key))
-                                end
+                                end]]
                                 callback(values)
                             else
-                                callback(getValue(selected))
+                                callback(selected.value)
                             end
                         end
                     end,
                     Get = function()
                         if multiSelect then
-                            local values = {}
-                            for _, key in ipairs(selected) do
+                            local values = selected.value
+                            --[[for _, key in ipairs(selected) do
                                 table.insert(values, getValue(key))
-                            end
+                            end]]
                             return values
                         else
-                            return getValue(selected)
+                            return selected.value
                         end
                     end,
                     Refresh = function(self, newOptions)
                         options = newOptions
                         if type(options) == "table" then
-                            local newIsArray = true
-                            for k, v in pairs(options) do
-                                if type(k) ~= "number" then
-                                    newIsArray = false
-                                    break
+                        	if type(options[1]) == "table" and options[1].label and options[1].value then
+                        		isKeyValue = true
+                            	for i, option in ipairs(options) do
+                                	table.insert(displayOptions, option.label)
+                        			table.insert(valueMap, {label = option.label, value = option.value})
                                 end
-                            end
-                            
-                            if newIsArray then
-                                displayOptions = options
-                                valueMap = {}
-                                for _, v in ipairs(options) do
-                                    valueMap[v] = v
-                                end
-                                isKeyValue = false
                             else
-                                isKeyValue = true
-                                displayOptions = {}
-                                valueMap = options
-                                for k, v in pairs(options) do
-                                    table.insert(displayOptions, k)
-                                end
-                            end
+                        		displayOptions = options
+                        		for _, v in ipairs(options) do
+                        			table.insert(valueMap, {label = v, value = v})
+                        		end
+                        	end
                         end
-
+                        local selected = {
+                            label = nil,
+                            value = nil
+                        }
                         if multiSelect then
-                            selected = {}
+                            selected.label = {}
+                            selected.value = {}
                             if type(default) == "table" then
                                 if isKeyValue then
                                     for _, v in ipairs(default) do
-                                        for k, val in pairs(valueMap) do
-                                            if val == v then
-                                                table.insert(selected, k)
+                                        for _, val in ipairs(valueMap) do
+                                            if val.value == v then
+                                                table.insert(selected.label, val.label)
+                                                table.insert(selected.value, val.value)
                                                 break
                                             end
                                         end
                                     end
                                 else
-                                    selected = default
+                                    selected.label = default
+                                    selected.value = default
                                 end
                             elseif default then
                                 if isKeyValue then
-                                    for k, val in pairs(valueMap) do
-                                        if val == default then
-                                            table.insert(selected, k)
+                                    for _, val in pairs(valueMap) do
+                                        if val.value == default then
+                                            table.insert(selected.label, val.label)
+                                            table.insert(selected.value, val.value)
                                             break
                                         end
                                     end
                                 else
-                                    table.insert(selected, default)
+                                    table.insert(selected.label, default)
+                                    table.insert(selected.value, default)
                                 end
                             end
                         else
                             if isKeyValue and default then
-                                for k, val in pairs(valueMap) do
-                                    if val == default then
-                                        selected = k
+                                for _, val in pairs(valueMap) do
+                                    if val.value == default then
+                                        selected.label = val.label
+                                        selected.value = val.value
                                         break
                                     end
                                 end
                             else
-                                selected = default or displayOptions[1] or ""
+                                selected.label = default or valueMap[1].label or ""
+                                selected.value = default or valueMap[1].value or ""
                             end
                         end
                         
@@ -2018,29 +2047,34 @@ function Library:CreateWindow(title)
                         updateSelectedLabel()
                         
                         -- Add new options
-                        for index, option in ipairs(displayOptions) do
+                        for index, option in ipairs(valueMap) do
                             local OptionBtn = Instance.new("TextButton")
                             OptionBtn.Parent = ListScroll
                             OptionBtn.BackgroundColor3 = Theme.Card
                             OptionBtn.BackgroundTransparency = 1
                             OptionBtn.Size = UDim2.new(1, 0, 0, IsMobile and 28 or 24)
                             OptionBtn.Font = Enum.Font.Gotham
-                            OptionBtn.Text = option
+                            OptionBtn.Text = option.label
                             if multiSelect then
-                                OptionBtn.TextColor3 = table.find(selected, option) and Theme.Accent or Theme.TextDim
-                                OptionBtn.LayoutOrder = table.find(selected, option) and -1 or index
+                                OptionBtn.TextColor3 = table.find(selected.value, option.value) and Theme.Accent or Theme.TextDim
+                                OptionBtn.LayoutOrder = table.find(selected.value, option.value) and -1 or index
                             else
-                                OptionBtn.TextColor3 = option == selected and Theme.Accent or Theme.TextDim
-                                OptionBtn.LayoutOrder = option == selected and -1 or index
+                                OptionBtn.TextColor3 = option.value == selected.value and Theme.Accent or Theme.TextDim
+                                OptionBtn.LayoutOrder = option.value == selected.value and -1 or index
                             end
                             OptionBtn.TextSize = IsMobile and 11 or 12
         
                             local OptionCorner = Instance.new("UICorner")
                             OptionCorner.CornerRadius = UDim.new(0, 6)
                             OptionCorner.Parent = OptionBtn
+        
+                            local OptionData = Instance.new("TextValue")
+                            OptionData.Name = "Value"
+                            OptionData.Value = option.value
+                            OptionData.Parent = OptionBtn
                             
                             OptionBtn.MouseEnter:Connect(function()
-                                if multiSelect and not table.find(selected, option) or option ~= selected then
+                                if multiSelect and not table.find(selected.value, option.value) or option.value ~= selected.value then
                                     Tween(OptionBtn, {BackgroundTransparency = 0.8})
                                 end
                             end)
@@ -2051,32 +2085,37 @@ function Library:CreateWindow(title)
                             
                             OptionBtn.MouseButton1Click:Connect(function()
                                 if multiSelect then
-                                    if table.find(selected, option) then
-                                        table.remove(selected, table.find(selected, option))
+                                    if table.find(selected.value, option.value) then
+                                        table.remove(selected.label, option.label)
+                                        table.remove(selected.value, option.value)
                                     else
-                                        if limit == 1 or #selected < limit then
-                                            table.insert(selected, option)
+                                        if limit == 1 or #selected.value < limit then
+                                            table.insert(selected.label, option.label)
+                                            table.insert(selected.value, option.value)
                                         else
                                             return
                                         end
                                     end
                                 else
-                                    if selected == option then
-                                        selected = nil
+                                    if selected.value == option.value then
+                                        selected.label = ""
+                                        selected.value = ""
                                     else
-                                        selected = option
+                                        selected.label = option.label
+                                        selected.value = option.value
                                     end
                                 end
                                 
                                 -- Update colors
                                 for index, child in ipairs(ListScroll:GetChildren()) do
                                     if child:IsA("TextButton") then
+                                        local val = child:FindFirstChild("Value")
                                         if multiSelect then
-                                            child.TextColor3 = table.find(selected, child.Text) and Theme.Accent or Theme.TextDim
-                                            child.LayoutOrder = table.find(selected, child.Text) and -1 or index
+                                            child.TextColor3 = table.find(selected.value, val.Value) and Theme.Accent or Theme.TextDim
+                                            child.LayoutOrder = table.find(selected.value, val.Value) and -1 or index
                                         else
-                                            child.TextColor3 = child.Text == selected and Theme.Accent or Theme.TextDim
-                                            child.LayoutOrder = child.Text == selected and -1 or index
+                                            child.TextColor3 = val.Value == selected.value and Theme.Accent or Theme.TextDim
+                                            child.LayoutOrder = val.Value == selected.value and -1 or index
                                         end
                                     end
                                 end
@@ -2095,13 +2134,13 @@ function Library:CreateWindow(title)
                             
                                 if callback then
                                     if multiSelect then
-                                        local values = {}
-                                        for _, key in ipairs(selected) do
+                                        local values = selected.value
+                                        --[[for _, key in ipairs(selected) do
                                             table.insert(values, getValue(key))
-                                        end
+                                        end]]
                                         callback(values)
                                     else
-                                        callback(getValue(selected))
+                                        callback(selected.value)
                                     end
                                 end
                             end)
