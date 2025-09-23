@@ -103,7 +103,7 @@ local function getOwnedPets()
     table.clear(ownedPets)
     for _, pets in ipairs(Backpack:GetChildren()) do
         if pets:GetAttribute("b") == "l" then
-            ownedPets[pets.Name] = pets:GetAttribute("PET_UUID")
+            table.insert(ownedPets, {label = pets.Name, value = pets:GetAttribute("PET_UUID")})
         end
     end
     local PetDisplay = PlayerGui.ActivePetUI:FindFirstChild("PetDisplay", true)
